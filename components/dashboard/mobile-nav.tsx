@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Settings } from 'lucide-react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
@@ -70,6 +71,7 @@ export function MobileNavSheet({
             <LanguageToggle variant="rail" />
             <ThemeToggle variant="rail" />
           </div>
+          <Link href="/dashboard/settings" onClick={()=>setMobileOpen(false)} className="flex h-10 items-center gap-[22px] rounded-lg pl-[10px] text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent"><Settings className="h-5 w-5" />{t('dashboard.nav.settings')}</Link>
           <Link
             href="/dashboard/settings"
             onClick={() => setMobileOpen(false)}

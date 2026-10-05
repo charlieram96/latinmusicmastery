@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,7 +62,7 @@ export function PricingForm({ prices }: PricingFormProps) {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor={`${key}.dollars`}>Amount (USD)</Label>
+                <Label htmlFor={`${key}.dollars`}><AdminText text={"Amount (USD)"} /></Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
                   <Input
@@ -94,7 +97,7 @@ export function PricingForm({ prices }: PricingFormProps) {
               </div>
 
               <div className="sm:col-span-2 space-y-1.5">
-                <Label htmlFor={`${key}.description`}>Internal description</Label>
+                <Label htmlFor={`${key}.description`}><AdminText text={"Internal description"} /></Label>
                 <Input
                   id={`${key}.description`}
                   name={`${key}.description`}
@@ -104,7 +107,7 @@ export function PricingForm({ prices }: PricingFormProps) {
               </div>
             </div>
 
-            <p className="mt-4 text-xs text-muted-foreground">Last updated: {updated}</p>
+            <p className="mt-4 text-xs text-muted-foreground"><AdminText text={"Last updated:"} /> {updated}</p>
           </div>
         )
       })}
@@ -125,12 +128,12 @@ export function PricingForm({ prices }: PricingFormProps) {
 
       <div className="flex items-center justify-end gap-3">
         <Button type="submit" disabled={pending}>
-          {pending ? 'Saving…' : 'Save prices'}
+          {pending ? <AdminText text={"Saving…"} /> : 'Save prices'}
         </Button>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        <strong>Reminder:</strong> Stripe prices are immutable. If you change an amount, create a new
+        <strong><AdminText text={"Reminder:"} /></strong> Stripe prices are immutable. If you change an amount, create a new
         recurring price in Stripe (under the right Product), paste its ID into the field above, and
         archive the old price in Stripe. New subscriptions will use the new price; existing
         subscriptions keep their original price until you migrate them.

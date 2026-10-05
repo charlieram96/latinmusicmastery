@@ -1,0 +1,403 @@
+{
+  "schemaVersion": "2.0",
+  "id": "compuesto-practica-12-8-01",
+  "title": {
+    "es": "12/8 · ascenso y descenso"
+  },
+  "meter": "12/8",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "compuesto-practica-12-8-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8,
+      "mark": "accent"
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n2",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8,
+      "mark": null
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n3",
+      "onsetBeats": "1",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8,
+      "mark": null
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n4",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "mark": "accent"
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n5",
+      "onsetBeats": "2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8,
+      "mark": null
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n6",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8,
+      "mark": null
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n7",
+      "onsetBeats": "3",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8,
+      "mark": "accent"
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n8",
+      "onsetBeats": "7/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8,
+      "mark": null
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n9",
+      "onsetBeats": "4",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8,
+      "mark": null
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n10",
+      "onsetBeats": "9/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8,
+      "mark": "accent"
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n11",
+      "onsetBeats": "5",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8,
+      "mark": null
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n12",
+      "onsetBeats": "11/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8,
+      "mark": null
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n13",
+      "onsetBeats": "6",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n14",
+      "onsetBeats": "13/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n15",
+      "onsetBeats": "7",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n16",
+      "onsetBeats": "15/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n17",
+      "onsetBeats": "8",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n18",
+      "onsetBeats": "17/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n19",
+      "onsetBeats": "9",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n20",
+      "onsetBeats": "19/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n21",
+      "onsetBeats": "10",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n22",
+      "onsetBeats": "21/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n23",
+      "onsetBeats": "11",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "compuesto-practica-12-8-01.n24",
+      "onsetBeats": "23/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    }
+  ],
+  "notation": {
+    "title": "12/8 · ascenso y descenso",
+    "meter": "12/8",
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 8,
+          "mark": "accent"
+        },
+        {
+          "pitch": "D4",
+          "dur": 8,
+          "mark": null
+        },
+        {
+          "pitch": "E4",
+          "dur": 8,
+          "mark": null
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "mark": "accent"
+        },
+        {
+          "pitch": "F4",
+          "dur": 8,
+          "mark": null
+        },
+        {
+          "pitch": "E4",
+          "dur": 8,
+          "mark": null
+        },
+        {
+          "pitch": "D4",
+          "dur": 8,
+          "mark": "accent"
+        },
+        {
+          "pitch": "E4",
+          "dur": 8,
+          "mark": null
+        },
+        {
+          "pitch": "F4",
+          "dur": 8,
+          "mark": null
+        },
+        {
+          "pitch": "E4",
+          "dur": 8,
+          "mark": "accent"
+        },
+        {
+          "pitch": "D4",
+          "dur": 8,
+          "mark": null
+        },
+        {
+          "pitch": "C4",
+          "dur": 8,
+          "mark": null
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        }
+      ]
+    ],
+    "beams": [
+      [
+        0,
+        1,
+        2
+      ],
+      [
+        3,
+        4,
+        5
+      ],
+      [
+        6,
+        7,
+        8
+      ],
+      [
+        9,
+        10,
+        11
+      ],
+      [
+        12,
+        13,
+        14
+      ],
+      [
+        15,
+        16,
+        17
+      ],
+      [
+        18,
+        19,
+        20
+      ],
+      [
+        21,
+        22,
+        23
+      ]
+    ]
+  }
+}

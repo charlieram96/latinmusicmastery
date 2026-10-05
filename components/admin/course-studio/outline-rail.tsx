@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState } from 'react'
 import {
   DndContext,
@@ -57,21 +60,17 @@ export function OutlineRail({
   return (
     <div className="flex min-h-full flex-col px-3 py-4">
       <div className="mb-3 flex items-baseline justify-between px-1">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">
-          Outline
-        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/70"> <AdminText text={"Outline"} /> </span>
         <span className="text-[10px] tabular-nums text-muted-foreground/50">
           {sections.length} {sections.length === 1 ? 'module' : 'modules'} · {classCount}{' '}
-          {classCount === 1 ? 'class' : 'classes'}
+          {classCount === 1 ? 'class' : <AdminText text={"classes"} />}
         </span>
       </div>
 
       {sections.length === 0 && !addingModule && (
         <div className="mx-1 mb-3 rounded-xl border border-dashed border-border bg-background/40 px-4 py-6 text-center">
           <Layers className="mx-auto mb-2 h-5 w-5 text-muted-foreground/40" />
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Structure your course into modules, then fill each module with classes.
-          </p>
+          <p className="text-xs leading-relaxed text-muted-foreground"> <AdminText text={"Structure your course into modules, then fill each module with classes."} /> </p>
         </div>
       )}
 
@@ -113,9 +112,7 @@ export function OutlineRail({
             onClick={() => setAddingModule(true)}
             className="flex w-full items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-left text-[12.5px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/[0.04] hover:text-foreground"
           >
-            <Plus className="h-3.5 w-3.5" />
-            New module
-          </button>
+            <Plus className="h-3.5 w-3.5" /> <AdminText text={"New module"} /> </button>
         )}
       </div>
     </div>

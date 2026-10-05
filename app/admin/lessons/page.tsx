@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,16 +22,12 @@ export default async function LessonsPage() {
     <div className="container mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Lessons</h1>
-          <p className="text-muted-foreground">
-            Manage all lessons across courses
-          </p>
+          <h1 className="text-3xl font-bold mb-2"><AdminText text={"Lessons"} /></h1>
+          <p className="text-muted-foreground"> <AdminText text={"Manage all lessons across courses"} /> </p>
         </div>
         <Button asChild>
           <Link href="/admin/lessons/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Lesson
-          </Link>
+            <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Lesson"} /> </Link>
         </Button>
       </div>
 
@@ -47,18 +44,17 @@ export default async function LessonsPage() {
                       <Lock className="w-4 h-4 text-orange-600" />
                     )}
                     <h3 className="text-lg font-semibold">{lesson.title}</h3>
-                    {lesson.is_free && <Badge variant="secondary">Free</Badge>}
+                    {lesson.is_free && <Badge variant="secondary"><AdminText text={"Free"} /></Badge>}
                   </div>
                   <p className="text-sm text-muted-foreground mb-2">
                     {lesson.course.title} • {lesson.course.musical_style?.name ?? 'Fundamentals'}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {lesson.duration_minutes ? `${lesson.duration_minutes} min` : 'No duration'} •
-                    {' '}{lesson.exercises?.length || 0} exercises
-                  </p>
+                    {' '}{lesson.exercises?.length || 0} <AdminText text={"exercises"} /> </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/lessons/${lesson.id}`}>Edit</Link>
+                  <Link href={`/admin/lessons/${lesson.id}`}><AdminText text={"Edit"} /></Link>
                 </Button>
               </CardContent>
             </Card>
@@ -67,14 +63,12 @@ export default async function LessonsPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>No Lessons</CardTitle>
+            <CardTitle><AdminText text={"No Lessons"} /></CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Create lessons to fill your courses with content.
-            </p>
+            <p className="text-muted-foreground mb-4"> <AdminText text={"Create lessons to fill your courses with content."} /> </p>
             <Button asChild>
-              <Link href="/admin/lessons/new">Add Lesson</Link>
+              <Link href="/admin/lessons/new"><AdminText text={"Add Lesson"} /></Link>
             </Button>
           </CardContent>
         </Card>

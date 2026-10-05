@@ -243,15 +243,17 @@ export function ChronometerControl({
 export function Pendulum({
   size,
   swingStyle,
+  active = true,
 }: {
   size: 'sm' | 'lg';
   swingStyle: CSSProperties;
+  active?: boolean;
 }) {
   const dim = size === 'sm' ? 22 : 44;
   return (
     <span
       className="st-chrono"
-      style={{ width: dim, height: dim }}
+      style={{ width: dim, height: dim, '--chrono-color': active ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))' } as CSSProperties}
       aria-hidden
     >
       <span className="st-chrono-body" />

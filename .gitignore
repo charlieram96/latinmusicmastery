@@ -46,3 +46,8 @@ next-env.d.ts
 # Blender automatic revision backups
 /art/playsense/*.blend[0-9]
 /scripts/blender/__pycache__/
+
+# Local dependency cache and artifact rendering scratch files
+/.pnpm-store/
+/tmp/
+**/__pycache__/

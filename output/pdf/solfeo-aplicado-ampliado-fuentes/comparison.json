@@ -1,0 +1,1502 @@
+{
+  "scope": "Pezzuti: 83 páginas de archivo, índice de 50 apartados. Segundo PDF: las 70 páginas aportadas. Comparación temática y de tipos de práctica, no reproducción ni equivalencia nota por nota.",
+  "entries": [
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "1",
+      "sourcePages": "5",
+      "topic": "Elementos de rítmica",
+      "action": "Conservado: figuras, silencios y equivalencias.",
+      "targets": [
+        {
+          "id": "figuras",
+          "page": 19,
+          "title": "1.5 · Figuras musicales y silencios"
+        },
+        {
+          "id": "relaciones",
+          "page": 20,
+          "title": "1.6 · Relaciones de duración"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "2",
+      "sourcePages": "6",
+      "topic": "Primeras células rítmicas",
+      "action": "Conservado: práctica métrica inicial.",
+      "targets": [
+        {
+          "id": "combinaciones",
+          "page": 33,
+          "title": "2.5 · Blancas, negras y silencios"
+        },
+        {
+          "id": "taller-2-a",
+          "page": 38,
+          "title": "Taller A · Lectura rítmica y melódica"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "3",
+      "sourcePages": "7",
+      "topic": "Figuras y silencios combinados",
+      "action": "Conservado y ampliado con dictados.",
+      "targets": [
+        {
+          "id": "silencio-compas",
+          "page": 26,
+          "title": "Silencio de compás completo"
+        },
+        {
+          "id": "taller-2-a",
+          "page": 38,
+          "title": "Taller A · Lectura rítmica y melódica"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "4",
+      "sourcePages": "8",
+      "topic": "Escala básica y preparación melódica",
+      "action": "Escala en ambos sentidos; lección de 16 compases.",
+      "targets": [
+        {
+          "id": "escala",
+          "page": 90,
+          "title": "5.1 · Escala mayor y grados tonales"
+        },
+        {
+          "id": "repertorio-01",
+          "page": 202,
+          "title": "Lección 01 · Lectura conjunta en Do"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "5",
+      "sourcePages": "9",
+      "topic": "Lectura melódica inicial",
+      "action": "Lecciones ampliadas.",
+      "targets": [
+        {
+          "id": "repertorio-02",
+          "page": 204,
+          "title": "Lección 02 · Blancas y dirección melódica"
+        },
+        {
+          "id": "repertorio-03",
+          "page": 206,
+          "title": "Lección 03 · Organización ternaria"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "6",
+      "sourcePages": "10",
+      "topic": "Grados de Do mayor",
+      "action": "Conservado y ampliado.",
+      "targets": [
+        {
+          "id": "escala",
+          "page": 90,
+          "title": "5.1 · Escala mayor y grados tonales"
+        },
+        {
+          "id": "repertorio-05",
+          "page": 210,
+          "title": "Lección 05 · Terceras preparadas"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "7",
+      "sourcePages": "11",
+      "topic": "Fórmulas rítmicas y pulso ternario",
+      "action": "Conservado.",
+      "targets": [
+        {
+          "id": "compas",
+          "page": 25,
+          "title": "2.2 · Cifra de compás y líneas divisorias"
+        },
+        {
+          "id": "taller-2-a",
+          "page": 38,
+          "title": "Taller A · Lectura rítmica y melódica"
+        },
+        {
+          "id": "repertorio-03",
+          "page": 206,
+          "title": "Lección 03 · Organización ternaria"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "8",
+      "sourcePages": "13",
+      "topic": "Fa mayor",
+      "action": "Escala, armadura y lección.",
+      "targets": [
+        {
+          "id": "tonal-2-mayor",
+          "page": 107,
+          "title": "6.6 · Fa mayor"
+        },
+        {
+          "id": "repertorio-10",
+          "page": 220,
+          "title": "Lección 10 · Entonación en Fa mayor"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "9",
+      "sourcePages": "14",
+      "topic": "Lectura con acompañamiento y dos voces",
+      "action": "Lectura simultánea ampliada.",
+      "targets": [
+        {
+          "id": "dos-voces",
+          "page": 187,
+          "title": "10.5 · Lectura simultánea y ejercicio final"
+        },
+        {
+          "id": "lectura-conjunta-retornos-1",
+          "page": 195,
+          "title": "Lectura conjunta y signos de retorno · 1/3"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "10",
+      "sourcePages": "15",
+      "topic": "Alteración y dos voces",
+      "action": "Ejemplos nuevos.",
+      "targets": [
+        {
+          "id": "alteraciones-entonadas-1",
+          "page": 152,
+          "title": "Entonación de alteraciones accidentales"
+        },
+        {
+          "id": "independencia-0",
+          "page": 188,
+          "title": "Coordinación de dos ritmos"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "11",
+      "sourcePages": "16",
+      "topic": "Sol mayor",
+      "action": "Lección y armadura.",
+      "targets": [
+        {
+          "id": "repertorio-09",
+          "page": 218,
+          "title": "Lección 09 · Entonación en Sol mayor"
+        },
+        {
+          "id": "orden-sostenidos",
+          "page": 92,
+          "title": "5.3 · Orden de los sostenidos"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "12",
+      "sourcePages": "17",
+      "topic": "Práctica a dos voces",
+      "action": "Añadida coordinación progresiva.",
+      "targets": [
+        {
+          "id": "independencia-0",
+          "page": 188,
+          "title": "Coordinación de dos ritmos"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "13",
+      "sourcePages": "18",
+      "topic": "Compás y unidades",
+      "action": "Añadido cuadro comparativo.",
+      "targets": [
+        {
+          "id": "unidades",
+          "page": 27,
+          "title": "2.3 · Unidad de compás, tiempo y subdivisión"
+        },
+        {
+          "id": "unidades-cuadro",
+          "page": 28,
+          "title": "Unidades métricas: cuadro comparativo"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "14",
+      "sourcePages": "19",
+      "topic": "Compases con blanca como pulso",
+      "action": "Práctica adaptada por indicación editorial a 2/4, 3/4 y 4/4, con negra como pulso.",
+      "targets": [
+        {
+          "id": "compas-blanca-2",
+          "page": 29,
+          "title": "Lectura en 2/4: la negra como pulso"
+        },
+        {
+          "id": "compas-blanca-3",
+          "page": 30,
+          "title": "Lectura en 3/4: la negra como pulso"
+        },
+        {
+          "id": "compas-blanca-4",
+          "page": 31,
+          "title": "Lectura en 4/4: la negra como pulso"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "15",
+      "sourcePages": "22",
+      "topic": "Marcación del compás",
+      "action": "Conservados diagramas de marcación.",
+      "targets": [
+        {
+          "id": "marcar-2",
+          "page": 34,
+          "title": "2.6 · Marcación del compás de 2/4"
+        },
+        {
+          "id": "marcar-3",
+          "page": 35,
+          "title": "2.7 · Marcación del compás de 3/4"
+        },
+        {
+          "id": "marcar-4",
+          "page": 36,
+          "title": "2.8 · Marcación del compás de 4/4"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "16",
+      "sourcePages": "23",
+      "topic": "Dictado y entonación a dos voces",
+      "action": "Añadidos procedimiento y modelos.",
+      "targets": [
+        {
+          "id": "dictado-procedimiento",
+          "page": 88,
+          "title": "Dictado rítmico y melódico"
+        },
+        {
+          "id": "dictado-modelo-1",
+          "page": 250,
+          "title": "Dictado 1: Valores básicos"
+        },
+        {
+          "id": "independencia-0",
+          "page": 188,
+          "title": "Coordinación de dos ritmos"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "17",
+      "sourcePages": "24",
+      "topic": "Dos voces en práctica",
+      "action": "Añadido estudio completo de retorno.",
+      "targets": [
+        {
+          "id": "lectura-conjunta-retornos-1",
+          "page": 195,
+          "title": "Lectura conjunta y signos de retorno · 1/3"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "18",
+      "sourcePages": "25",
+      "topic": "Intervalos melódicos, armónicos y compuestos",
+      "action": "Añadida representación simultánea.",
+      "targets": [
+        {
+          "id": "intervalo",
+          "page": 44,
+          "title": "3.3 · Número y especie de los intervalos"
+        },
+        {
+          "id": "intervalos-simultaneos-0",
+          "page": 60,
+          "title": "Intervalos armónicos"
+        },
+        {
+          "id": "intervalos-simultaneos-1",
+          "page": 61,
+          "title": "Intervalos compuestos"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "19",
+      "sourcePages": "26",
+      "topic": "La menor",
+      "action": "Conservado.",
+      "targets": [
+        {
+          "id": "menor",
+          "page": 94,
+          "title": "5.5 · Relativa menor: tres formas"
+        },
+        {
+          "id": "repertorio-11",
+          "page": 222,
+          "title": "Lección 11 · La menor y sensible"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "20",
+      "sourcePages": "27",
+      "topic": "Terceras y cuartas",
+      "action": "Añadida práctica específica.",
+      "targets": [
+        {
+          "id": "terceras-control",
+          "page": 53,
+          "title": "Entonación de terceras mayores y menores"
+        },
+        {
+          "id": "intervalo-preparado-4",
+          "page": 55,
+          "title": "Preparación de la cuarta justa"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "21",
+      "sourcePages": "28",
+      "topic": "Ligaduras, puntillos y dictado de intervalos",
+      "action": "Ampliados triple puntillo y dictados.",
+      "targets": [
+        {
+          "id": "puntillos",
+          "page": 68,
+          "title": "4.2 · Puntillo y ligadura de prolongación"
+        },
+        {
+          "id": "triple-puntillo",
+          "page": 69,
+          "title": "Doble y triple puntillo: suma de duraciones"
+        },
+        {
+          "id": "dictado-modelo-3",
+          "page": 252,
+          "title": "Dictado 3: Ligadura y silencio"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "22",
+      "sourcePages": "29",
+      "topic": "Quintas y sextas",
+      "action": "Añadida preparación en ambos sentidos.",
+      "targets": [
+        {
+          "id": "intervalo-preparado-5",
+          "page": 56,
+          "title": "Preparación de la quinta justa"
+        },
+        {
+          "id": "intervalo-preparado-6",
+          "page": 57,
+          "title": "Preparación de la sexta mayor"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "23",
+      "sourcePages": "30",
+      "topic": "Séptimas, octavas y resumen",
+      "action": "Añadida preparación.",
+      "targets": [
+        {
+          "id": "intervalo-preparado-7",
+          "page": 58,
+          "title": "Preparación de la séptima mayor"
+        },
+        {
+          "id": "intervalo-preparado-8",
+          "page": 59,
+          "title": "Preparación de la octava justa"
+        },
+        {
+          "id": "intervalos-5",
+          "page": 50,
+          "title": "3.9 · Séptimas y octavas"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "24",
+      "sourcePages": "31",
+      "topic": "Lectura a dos voces",
+      "action": "Ampliada.",
+      "targets": [
+        {
+          "id": "independencia-0",
+          "page": 188,
+          "title": "Coordinación de dos ritmos"
+        },
+        {
+          "id": "lectura-conjunta-retornos-1",
+          "page": 195,
+          "title": "Lectura conjunta y signos de retorno · 1/3"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "25",
+      "sourcePages": "32",
+      "topic": "Fórmulas rítmicas con ligaduras",
+      "action": "Ampliadas variantes.",
+      "targets": [
+        {
+          "id": "puntillos",
+          "page": 68,
+          "title": "4.2 · Puntillo y ligadura de prolongación"
+        },
+        {
+          "id": "sincopas-niveles",
+          "page": 71,
+          "title": "Síncopa y contratiempo en distintos niveles"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "26",
+      "sourcePages": "33",
+      "topic": "Dictados con figuras ligadas",
+      "action": "Añadido modelo.",
+      "targets": [
+        {
+          "id": "dictado-modelo-3",
+          "page": 252,
+          "title": "Dictado 3: Ligadura y silencio"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "27",
+      "sourcePages": "35",
+      "topic": "División de unidades",
+      "action": "Añadido cuadro original con tres columnas.",
+      "targets": [
+        {
+          "id": "unidades-cuadro",
+          "page": 28,
+          "title": "Unidades métricas: cuadro comparativo"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "28",
+      "sourcePages": "36",
+      "topic": "Semicorcheas",
+      "action": "Añadidas células y ampliado repertorio.",
+      "targets": [
+        {
+          "id": "semicorcheas-progresivas",
+          "page": 67,
+          "title": "Semicorcheas: división y agrupación"
+        },
+        {
+          "id": "repertorio-13",
+          "page": 226,
+          "title": "Lección 13 · Re mayor y dominante"
+        },
+        {
+          "id": "repertorio-19",
+          "page": 238,
+          "title": "Lección 19 · Repeticiones y finales alternativos"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "29",
+      "sourcePages": "37",
+      "topic": "Dictado y lectura con semicorcheas",
+      "action": "Añadidos modelos.",
+      "targets": [
+        {
+          "id": "dictado-modelo-4",
+          "page": 253,
+          "title": "Dictado 4: Semicorcheas"
+        },
+        {
+          "id": "repertorio-13",
+          "page": 226,
+          "title": "Lección 13 · Re mayor y dominante"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "30",
+      "sourcePages": "38",
+      "topic": "Puntillo simple",
+      "action": "Conservado y aplicado.",
+      "targets": [
+        {
+          "id": "puntillos",
+          "page": 68,
+          "title": "4.2 · Puntillo y ligadura de prolongación"
+        },
+        {
+          "id": "repertorio-07",
+          "page": 214,
+          "title": "Lección 07 · Puntillo y compensación rítmica"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "31",
+      "sourcePages": "39",
+      "topic": "Mi menor natural",
+      "action": "Añadida lectura que conserva la subtónica.",
+      "targets": [
+        {
+          "id": "menor-natural-lectura",
+          "page": 95,
+          "title": "Lectura en Mi menor natural"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "32",
+      "sourcePages": "41",
+      "topic": "Alteraciones y tono",
+      "action": "Conservadas correcciones del usuario.",
+      "targets": [
+        {
+          "id": "tonos",
+          "page": 41,
+          "title": "3.1 · Tono y semitono"
+        },
+        {
+          "id": "alteraciones",
+          "page": 42,
+          "title": "3.2 · Alteraciones y equivalencia enarmónica"
+        },
+        {
+          "id": "enarmonia-ejemplos",
+          "page": 43,
+          "title": "Enarmonía y alteraciones dobles"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "33",
+      "sourcePages": "43",
+      "topic": "Clasificación interválica",
+      "action": "Conservado y reforzado.",
+      "targets": [
+        {
+          "id": "intervalo",
+          "page": 44,
+          "title": "3.3 · Número y especie de los intervalos"
+        },
+        {
+          "id": "intervalos-0",
+          "page": 45,
+          "title": "3.4 · Segundas"
+        },
+        {
+          "id": "intervalos-5",
+          "page": 50,
+          "title": "3.9 · Séptimas y octavas"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "34",
+      "sourcePages": "44",
+      "topic": "Segundas mayores y menores",
+      "action": "Añadida serie ascendente y descendente.",
+      "targets": [
+        {
+          "id": "segundas-control-0",
+          "page": 51,
+          "title": "Entonación de segundas mayores"
+        },
+        {
+          "id": "segundas-control-1",
+          "page": 52,
+          "title": "Entonación de segundas menores"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "35",
+      "sourcePages": "45",
+      "topic": "Entonación de alteraciones y referencia tonal",
+      "action": "Añadidas diez células cromáticas y lectura tonal.",
+      "targets": [
+        {
+          "id": "alteraciones-entonadas-0",
+          "page": 151,
+          "title": "Entonación de alteraciones accidentales"
+        },
+        {
+          "id": "alteraciones-entonadas-1",
+          "page": 152,
+          "title": "Entonación de alteraciones accidentales"
+        },
+        {
+          "id": "alteraciones-entonadas-2",
+          "page": 153,
+          "title": "Entonación de alteraciones accidentales"
+        },
+        {
+          "id": "centros-tonales",
+          "page": 154,
+          "title": "Referencias tonales y cambio de centro"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "36",
+      "sourcePages": "50",
+      "topic": "Ritmos combinados",
+      "action": "Ampliados.",
+      "targets": [
+        {
+          "id": "semicorcheas-progresivas",
+          "page": 67,
+          "title": "Semicorcheas: división y agrupación"
+        },
+        {
+          "id": "sincopas-niveles",
+          "page": 71,
+          "title": "Síncopa y contratiempo en distintos niveles"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "37",
+      "sourcePages": "51",
+      "topic": "Lecciones a dos voces",
+      "action": "Añadida coordinación y retorno.",
+      "targets": [
+        {
+          "id": "independencia-0",
+          "page": 188,
+          "title": "Coordinación de dos ritmos"
+        },
+        {
+          "id": "independencia-1",
+          "page": 189,
+          "title": "Tres contra dos: subdivisiones simultáneas"
+        },
+        {
+          "id": "lectura-conjunta-retornos-1",
+          "page": 195,
+          "title": "Lectura conjunta y signos de retorno · 1/3"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "38",
+      "sourcePages": "55",
+      "topic": "Tresillo: valores iguales y mixtos",
+      "action": "Añadidas doce comparaciones.",
+      "targets": [
+        {
+          "id": "tresillos-variados-0",
+          "page": 79,
+          "title": "Tresillos sobre la redonda"
+        },
+        {
+          "id": "tresillos-variados-1",
+          "page": 80,
+          "title": "Tresillos sobre la blanca"
+        },
+        {
+          "id": "tresillos-variados-2",
+          "page": 81,
+          "title": "Tresillos sobre la negra"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "39",
+      "sourcePages": "56",
+      "topic": "Aplicación rítmica del tresillo",
+      "action": "Aplicación y dictado.",
+      "targets": [
+        {
+          "id": "repertorio-18",
+          "page": 236,
+          "title": "Lección 18 · Tresillos y quintillos"
+        },
+        {
+          "id": "dictado-modelo-5",
+          "page": 254,
+          "title": "Dictado 5: Tresillo y puntillo"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "40",
+      "sourcePages": "57",
+      "topic": "Clave de Fa y lectura progresiva",
+      "action": "Añadidos mapa y tres estudios.",
+      "targets": [
+        {
+          "id": "fa",
+          "page": 178,
+          "title": "10.1 · Clave de Fa en cuarta línea"
+        },
+        {
+          "id": "fa-mapa-ampliado",
+          "page": 179,
+          "title": "Clave de Fa: registro y líneas adicionales"
+        },
+        {
+          "id": "fa-estudio-1",
+          "page": 180,
+          "title": "Lectura conjunta y terceras en clave de Fa"
+        },
+        {
+          "id": "fa-estudio-2",
+          "page": 181,
+          "title": "Tresillos y alteraciones en clave de Fa"
+        },
+        {
+          "id": "fa-estudio-3",
+          "page": 182,
+          "title": "Lectura con finales alternativos en clave de Fa"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "41",
+      "sourcePages": "64",
+      "topic": "Acento y síncopa larga y breve",
+      "action": "Ampliados niveles métricos.",
+      "targets": [
+        {
+          "id": "acentos",
+          "page": 157,
+          "title": "8.2 · Acentos e intensidad puntual"
+        },
+        {
+          "id": "sincopas-niveles",
+          "page": 71,
+          "title": "Síncopa y contratiempo en distintos niveles"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "42",
+      "sourcePages": "66",
+      "topic": "Síncopa breve y contratiempo",
+      "action": "Añadidas variantes.",
+      "targets": [
+        {
+          "id": "sincopas-niveles",
+          "page": 71,
+          "title": "Síncopa y contratiempo en distintos niveles"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "43",
+      "sourcePages": "67",
+      "topic": "Especies de tercera",
+      "action": "Añadidas disminuida y aumentada.",
+      "targets": [
+        {
+          "id": "terceras-control",
+          "page": 53,
+          "title": "Entonación de terceras mayores y menores"
+        },
+        {
+          "id": "terceras-alteradas",
+          "page": 54,
+          "title": "Terceras disminuidas y aumentadas"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "44",
+      "sourcePages": "68",
+      "topic": "Entonación de terceras",
+      "action": "Añadida práctica.",
+      "targets": [
+        {
+          "id": "terceras-control",
+          "page": 53,
+          "title": "Entonación de terceras mayores y menores"
+        },
+        {
+          "id": "terceras-alteradas",
+          "page": 54,
+          "title": "Terceras disminuidas y aumentadas"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "45",
+      "sourcePages": "71",
+      "topic": "Dictados de terceras",
+      "action": "Modelos escritos y práctica simultánea.",
+      "targets": [
+        {
+          "id": "dictado-modelo-2",
+          "page": 251,
+          "title": "Dictado 2: Corcheas y terceras"
+        },
+        {
+          "id": "intervalos-simultaneos-0",
+          "page": 60,
+          "title": "Intervalos armónicos"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "46",
+      "sourcePages": "72",
+      "topic": "Ritmos combinados y birritmia",
+      "action": "Añadida coordinación de dos ritmos.",
+      "targets": [
+        {
+          "id": "independencia-0",
+          "page": 188,
+          "title": "Coordinación de dos ritmos"
+        },
+        {
+          "id": "independencia-1",
+          "page": 189,
+          "title": "Tres contra dos: subdivisiones simultáneas"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "47",
+      "sourcePages": "74",
+      "topic": "Canto y ritmo simultáneos",
+      "action": "Aplicación coordinada y tonal.",
+      "targets": [
+        {
+          "id": "independencia-0",
+          "page": 188,
+          "title": "Coordinación de dos ritmos"
+        },
+        {
+          "id": "repertorio-09",
+          "page": 218,
+          "title": "Lección 09 · Entonación en Sol mayor"
+        },
+        {
+          "id": "repertorio-12",
+          "page": 224,
+          "title": "Lección 12 · Re menor y fraseo"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "48",
+      "sourcePages": "77",
+      "topic": "Recapitulación de segundas y terceras",
+      "action": "Recapitulación distribuida.",
+      "targets": [
+        {
+          "id": "segundas-control-0",
+          "page": 51,
+          "title": "Entonación de segundas mayores"
+        },
+        {
+          "id": "terceras-control",
+          "page": 53,
+          "title": "Entonación de terceras mayores y menores"
+        },
+        {
+          "id": "repertorio-05",
+          "page": 210,
+          "title": "Lección 05 · Terceras preparadas"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "49",
+      "sourcePages": "79",
+      "topic": "Seisillo y doble tresillo",
+      "action": "Añadidas comparación y aplicación.",
+      "targets": [
+        {
+          "id": "seisillos-aplicados",
+          "page": 83,
+          "title": "Tresillos y seisillos en la lectura melódica"
+        },
+        {
+          "id": "seisillo-agrupacion",
+          "page": 84,
+          "title": "Seisillo y doble tresillo: agrupación interna"
+        }
+      ]
+    },
+    {
+      "reference": "Pezzuti, Parte I",
+      "entry": "50",
+      "sourcePages": "81",
+      "topic": "Lecciones de conjunto y navegación final",
+      "action": "Danza nueva de 16 compases y estudio nuevo a dos voces con casillas, segno y D.S. al Fine; no reproducción de los arreglos de la fuente.",
+      "targets": [
+        {
+          "id": "danza-conjunto-1",
+          "page": 191,
+          "title": "Danza de cierre: acentuación cruzada · 1/4"
+        },
+        {
+          "id": "danza-conjunto-4",
+          "page": 194,
+          "title": "Danza de cierre: acentuación cruzada · 4/4"
+        },
+        {
+          "id": "lectura-conjunta-retornos-1",
+          "page": 195,
+          "title": "Lectura conjunta y signos de retorno · 1/3"
+        },
+        {
+          "id": "lectura-conjunta-retornos-3",
+          "page": 197,
+          "title": "Lectura conjunta y signos de retorno · 3/3"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "1-4",
+      "topic": "Notación y emisión vocal",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "pentagrama",
+          "page": 16,
+          "title": "1.2 · Pentagrama, líneas y espacios"
+        },
+        {
+          "id": "sol",
+          "page": 17,
+          "title": "1.3 · Clave de Sol y ubicación de las notas"
+        },
+        {
+          "id": "figuras",
+          "page": 19,
+          "title": "1.5 · Figuras musicales y silencios"
+        },
+        {
+          "id": "repertorio-intro",
+          "page": 201,
+          "title": "Repertorio progresivo de solfeo y entonación"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "5-8",
+      "topic": "Preparación de intervalos",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "terceras-control",
+          "page": 53,
+          "title": "Entonación de terceras mayores y menores"
+        },
+        {
+          "id": "intervalo-preparado-4",
+          "page": 55,
+          "title": "Preparación de la cuarta justa"
+        },
+        {
+          "id": "intervalo-preparado-8",
+          "page": 59,
+          "title": "Preparación de la octava justa"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "9-10",
+      "topic": "Aires y compases",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "agogica",
+          "page": 158,
+          "title": "8.3 · Tempo y agógica"
+        },
+        {
+          "id": "compas-blanca-2",
+          "page": 29,
+          "title": "Lectura en 2/4: la negra como pulso"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "11-12",
+      "topic": "Puntillo y síncopa",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "puntillos",
+          "page": 68,
+          "title": "4.2 · Puntillo y ligadura de prolongación"
+        },
+        {
+          "id": "sincopas-niveles",
+          "page": 71,
+          "title": "Síncopa y contratiempo en distintos niveles"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "13-18",
+      "topic": "Corchea, intervalos, alteraciones e indicadores",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "corcheas",
+          "page": 66,
+          "title": "4.1 · Corcheas y semicorcheas"
+        },
+        {
+          "id": "alteraciones",
+          "page": 42,
+          "title": "3.2 · Alteraciones y equivalencia enarmónica"
+        },
+        {
+          "id": "dinamica",
+          "page": 156,
+          "title": "8.1 · Dinámica y matices"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "19-20",
+      "topic": "Tresillos y semicorcheas",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "tresillos-variados-2",
+          "page": 81,
+          "title": "Tresillos sobre la negra"
+        },
+        {
+          "id": "semicorcheas-progresivas",
+          "page": 67,
+          "title": "Semicorcheas: división y agrupación"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "21-24",
+      "topic": "Lectura progresiva y fusas",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "repertorio-13",
+          "page": 226,
+          "title": "Lección 13 · Re mayor y dominante"
+        },
+        {
+          "id": "repertorio-20-2",
+          "page": 241,
+          "title": "Lección 20 · Estudio de integración en Do · continuación"
+        },
+        {
+          "id": "figuras",
+          "page": 19,
+          "title": "1.5 · Figuras musicales y silencios"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "25-27",
+      "topic": "Variantes rítmicas y transposición",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "consolidacion",
+          "page": 148,
+          "title": "7.2 · Lectura y escritura integradas"
+        },
+        {
+          "id": "irregulares-0",
+          "page": 78,
+          "title": "4.6 · Dosillo, tresillo y cuatrosillo"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "28-30",
+      "topic": "Recapitulación y compás ternario",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "compas",
+          "page": 25,
+          "title": "2.2 · Cifra de compás y líneas divisorias"
+        },
+        {
+          "id": "repertorio-03",
+          "page": 206,
+          "title": "Lección 03 · Organización ternaria"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "31-35",
+      "topic": "Tonos, modos, compases y Sol mayor",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "menor",
+          "page": 94,
+          "title": "5.5 · Relativa menor: tres formas"
+        },
+        {
+          "id": "orden-sostenidos",
+          "page": 92,
+          "title": "5.3 · Orden de los sostenidos"
+        },
+        {
+          "id": "repertorio-09",
+          "page": 218,
+          "title": "Lección 09 · Entonación en Sol mayor"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "36-40",
+      "topic": "Lectura en Fa y Mi menor",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "fa-estudio-1",
+          "page": 180,
+          "title": "Lectura conjunta y terceras en clave de Fa"
+        },
+        {
+          "id": "fa-estudio-2",
+          "page": 181,
+          "title": "Tresillos y alteraciones en clave de Fa"
+        },
+        {
+          "id": "menor-natural-lectura",
+          "page": 95,
+          "title": "Lectura en Mi menor natural"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "41-42",
+      "topic": "Doble puntillo y apoyatura",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "triple-puntillo",
+          "page": 69,
+          "title": "Doble y triple puntillo: suma de duraciones"
+        },
+        {
+          "id": "apoyaturas",
+          "page": 164,
+          "title": "Apoyaturas y notas de adorno"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "43-46",
+      "topic": "Fa mayor y Re menor",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "repertorio-10",
+          "page": 220,
+          "title": "Lección 10 · Entonación en Fa mayor"
+        },
+        {
+          "id": "repertorio-12",
+          "page": 224,
+          "title": "Lección 12 · Re menor y fraseo"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "47-49",
+      "topic": "Mordentes y resolución escrita",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "adornos-realizados",
+          "page": 165,
+          "title": "Adornos: signo y realización elegida"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "50-54",
+      "topic": "6/8, Re mayor y Sol menor",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "compuestos",
+          "page": 72,
+          "title": "4.4 · Compases simples y compuestos"
+        },
+        {
+          "id": "repertorio-13",
+          "page": 226,
+          "title": "Lección 13 · Re mayor y dominante"
+        },
+        {
+          "id": "menor",
+          "page": 94,
+          "title": "5.5 · Relativa menor: tres formas"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "55-56",
+      "topic": "Si menor y grupetos",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "menor",
+          "page": 94,
+          "title": "5.5 · Relativa menor: tres formas"
+        },
+        {
+          "id": "adornos-realizados",
+          "page": 165,
+          "title": "Adornos: signo y realización elegida"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "57-58",
+      "topic": "6/4 y Si bemol mayor",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "compuesto-practica-6-4",
+          "page": 74,
+          "title": "Lectura en 6/4"
+        },
+        {
+          "id": "repertorio-14",
+          "page": 228,
+          "title": "Lección 14 · Si bemol mayor y matices"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "59-60",
+      "topic": "Adornos y lectura expresiva",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "adornos-realizados",
+          "page": 165,
+          "title": "Adornos: signo y realización elegida"
+        },
+        {
+          "id": "fraseo",
+          "page": 160,
+          "title": "8.5 · Fraseo, respiración y suspensión"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "61-62",
+      "topic": "Sol menor y 12/8",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "menor",
+          "page": 94,
+          "title": "5.5 · Relativa menor: tres formas"
+        },
+        {
+          "id": "compuesto-practica-12-8",
+          "page": 76,
+          "title": "Lectura en 12/8"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "63-65",
+      "topic": "9/8 y recapitulación avanzada",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "compuesto-practica-9-8",
+          "page": 75,
+          "title": "Lectura en 9/8"
+        },
+        {
+          "id": "repertorio-20",
+          "page": 240,
+          "title": "Lección 20 · Estudio de integración en Do"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "66-67",
+      "topic": "Procedimiento del dictado",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "dictado-procedimiento",
+          "page": 88,
+          "title": "Dictado rítmico y melódico"
+        },
+        {
+          "id": "dictado-modelo-1",
+          "page": 250,
+          "title": "Dictado 1: Valores básicos"
+        },
+        {
+          "id": "dictado-modelo-6",
+          "page": 255,
+          "title": "Dictado 6: Alteraciones accidentales"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "68",
+      "topic": "Clave de Do en primera línea",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "do-primera",
+          "page": 184,
+          "title": "Clave de Do en primera línea"
+        }
+      ]
+    },
+    {
+      "reference": "Segundo PDF aportado",
+      "entry": "",
+      "sourcePages": "69-70",
+      "topic": "La mayor y continuidad de lectura",
+      "action": "Cobertura temática contrastada; conservar o ampliar con notación original de LMM.",
+      "targets": [
+        {
+          "id": "orden-sostenidos",
+          "page": 92,
+          "title": "5.3 · Orden de los sostenidos"
+        },
+        {
+          "id": "tonal-5-mayor",
+          "page": 116,
+          "title": "6.12 · La mayor"
+        }
+      ]
+    }
+  ]
+}

@@ -113,19 +113,19 @@ export function HighwayPreview({
           </button>
           {visible && (playing ? (
             <button
-              onClick={stop}
+              aria-label={st("Stop")} title={st("Stop")} onClick={stop}
               className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm transition hover:bg-muted"
             >
               <Pause className="h-4 w-4" />
-              {st("Stop")}</button>
+              </button>
           ) : (
             <button
-              onClick={start}
+              aria-label={st("Preview")} title={st("Preview")} onClick={start}
               disabled={!hasEvents}
               className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-sm text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Play className="h-4 w-4" />
-              {st("Preview")}</button>
+              </button>
           ))}
           {progress > 0 && !playing && (
             <button

@@ -24,22 +24,12 @@ describe('resolveInitialSelection', () => {
       drawer: { type: 'class', id: 'c2' },
     })
   })
-  it('falls back to the first lesson when the requested lesson is unknown', () => {
-    expect(resolveInitialSelection(sections, { classId: 'nope', itemId: 'i3' })).toEqual({
-      center: { type: 'class', id: 'c1' },
-      drawer: { type: 'class', id: 'c1' },
-    })
+  it('keeps modules closed when a saved lesson no longer exists', () => {
+    expect(resolveInitialSelection(sections, { classId: 'nope', itemId: 'i3' })).toEqual({ center: null, drawer: { type: 'none' } })
   })
-  it('defaults to the first lesson, then first module, then course settings', () => {
-    expect(resolveInitialSelection(sections)).toEqual({
-      center: { type: 'class', id: 'c1' },
-      drawer: { type: 'class', id: 'c1' },
-    })
-    const emptyModules = [{ id: 'm1', classes: [] }] as unknown as SectionWithClasses[]
-    expect(resolveInitialSelection(emptyModules)).toEqual({
-      center: { type: 'module', id: 'm1' },
-      drawer: { type: 'module', id: 'm1' },
-    })
-    expect(resolveInitialSelection([])).toEqual({ center: null, drawer: { type: 'course' } })
+  it('starts with a closed inspector and no selected class or module', () => {
+    expect(resolveInitialSelection(sections)).toEqual({ center: null, drawer: { type: 'none' } })
+    expect(resolveInitialSelection([{ id: 'm1', classes: [] }] as unknown as SectionWithClasses[])).toEqual({ center: null, drawer: { type: 'none' } })
+    expect(resolveInitialSelection([])).toEqual({ center: null, drawer: { type: 'none' } })
   })
 })

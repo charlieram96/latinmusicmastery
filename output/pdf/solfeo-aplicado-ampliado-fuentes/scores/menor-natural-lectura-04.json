@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "2.0",
+  "id": "menor-natural-lectura-04",
+  "title": {
+    "es": "Compases 7-8"
+  },
+  "meter": "3/4",
+  "keyFifths": 1,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "menor-natural-lectura-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "3",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 2,
+      "dot": true
+    },
+    {
+      "id": "menor-natural-lectura-04.n2",
+      "onsetBeats": "3",
+      "durationBeats": "3",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2,
+      "dot": true
+    }
+  ],
+  "notation": {
+    "title": "Compases 7-8",
+    "meter": "3/4",
+    "key": 1,
+    "bars": [
+      [
+        {
+          "pitch": "A4",
+          "dur": 2,
+          "dot": true
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 2,
+          "dot": true
+        }
+      ]
+    ],
+    "barStyles": {
+      "1": "final"
+    }
+  }
+}

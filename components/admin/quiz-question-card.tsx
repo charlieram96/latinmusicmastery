@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react'
@@ -47,13 +50,11 @@ export function QuizQuestionCard({
         <span className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
           <button type="button" {...attributes} {...listeners} title="Drag to reorder" aria-label="Drag to reorder" className="grid h-7 w-6 cursor-grab place-items-center rounded text-muted-foreground/60 hover:text-foreground active:cursor-grabbing">
             <GripVertical className="h-4 w-4" />
-          </button>
-          Question {index + 1}
+          </button> <AdminText text={"Question"} /> {index + 1}
         </span>
         <div className="flex items-center gap-1">
           <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-xs" aria-pressed={previewOpen} onClick={onTogglePreview}>
-            {previewOpen ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />} Preview
-          </Button>
+            {previewOpen ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />} <AdminText text={"Preview"} /> </Button>
           <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={onRemove} aria-label="Delete question">
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -61,7 +62,7 @@ export function QuizQuestionCard({
       </div>
 
       <div className="grid gap-2">
-        <Label>Question Type</Label>
+        <Label><AdminText text={"Question Type"} /></Label>
         <Select
           value={q.question_type}
           onValueChange={(v) => onPatch({ question_type: v as QuestionType, options: null, options_es: null, correct_answer: '', audio_url: null, image_url: null })}

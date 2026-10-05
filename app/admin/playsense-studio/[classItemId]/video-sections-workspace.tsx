@@ -448,7 +448,7 @@ function VideoSectionsBody({
               highwayOpen={false}
             />
           ) : (
-            <LessonMetronomeEditor onSaved={setLessonMetronome} classItemId={classItemId} videoUrl={videoUrl} durationSeconds={videoDurationSeconds} scoreStarts={sections.flatMap(s=>s.videoStartSeconds==null?[]:[s.videoStartSeconds])}/>
+            <LessonMetronomeEditor title={title} onSaved={setLessonMetronome} classItemId={classItemId} videoUrl={videoUrl} durationSeconds={videoDurationSeconds} scoreStarts={sections.flatMap(s=>s.videoStartSeconds==null?[]:[s.videoStartSeconds])}/>
 
           )}
         </main>

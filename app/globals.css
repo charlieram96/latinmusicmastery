@@ -1149,8 +1149,8 @@ html:has([data-marketing]) {
   width: 78%;
   height: 84%;
   transform: translateX(-50%);
-  background: color-mix(in srgb, hsl(var(--primary)) 22%, transparent);
-  border: 1px solid hsl(var(--primary));
+  background: color-mix(in srgb, var(--chrono-color, hsl(var(--primary))) 22%, transparent);
+  border: 1px solid var(--chrono-color, hsl(var(--primary)));
   border-radius: 8% 8% 14% 14%;
   clip-path: polygon(38% 0%, 62% 0%, 100% 100%, 0% 100%);
 }
@@ -1162,7 +1162,7 @@ html:has([data-marketing]) {
   width: 7%;
   min-width: 1.5px;
   height: 74%;
-  background: hsl(var(--primary));
+  background: var(--chrono-color, hsl(var(--primary)));
   border-radius: 2px;
   transform-origin: bottom center;
   transform: translateX(-50%) rotate(0deg);
@@ -1180,7 +1180,7 @@ html:has([data-marketing]) {
   min-width: 4px;
   aspect-ratio: 1;
   transform: translateX(-50%);
-  background: hsl(var(--primary));
+  background: var(--chrono-color, hsl(var(--primary)));
   border-radius: 2px;
 }
 .st-chrono-pivot {
@@ -1191,7 +1191,7 @@ html:has([data-marketing]) {
   min-width: 3px;
   aspect-ratio: 1;
   transform: translateX(-50%);
-  background: hsl(var(--primary));
+  background: var(--chrono-color, hsl(var(--primary)));
   border-radius: 50%;
 }
 @keyframes st-chrono-swing {

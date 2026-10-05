@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -134,9 +137,9 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">User not found</p>
+          <p className="text-muted-foreground mb-4"><AdminText text={"User not found"} /></p>
           <Button asChild>
-            <Link href="/admin/users">Back to Users</Link>
+            <Link href="/admin/users"><AdminText text={"Back to Users"} /></Link>
           </Button>
         </div>
       </div>
@@ -152,11 +155,9 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
       <div className="mb-6">
         <Button asChild variant="ghost" size="sm" className="mb-4">
           <Link href="/admin/users">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Users
-          </Link>
+            <ArrowLeft className="w-4 h-4 mr-2" /> <AdminText text={"Back to Users"} /> </Link>
         </Button>
-        <h1 className="text-3xl font-bold">User Details</h1>
+        <h1 className="text-3xl font-bold"><AdminText text={"User Details"} /></h1>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -164,9 +165,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Profile
-            </CardTitle>
+              <User className="w-5 h-5" /> <AdminText text={"Profile"} /> </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center text-center">
             <Avatar className="w-20 h-20 mb-4">
@@ -186,13 +185,10 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
               )}
               {linkedTeacher && (
                 <Badge variant="secondary">
-                  <GraduationCap className="w-3 h-3 mr-1" />
-                  Teacher
-                </Badge>
+                  <GraduationCap className="w-3 h-3 mr-1" /> <AdminText text={"Teacher"} /> </Badge>
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-4">
-              Joined {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+            <p className="text-xs text-muted-foreground mt-4"> <AdminText text={"Joined"} /> {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
             </p>
           </CardContent>
         </Card>
@@ -200,12 +196,12 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         {/* Edit Form */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Edit User</CardTitle>
-            <CardDescription>Update user settings and permissions</CardDescription>
+            <CardTitle><AdminText text={"Edit User"} /></CardTitle>
+            <CardDescription><AdminText text={"Update user settings and permissions"} /></CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <Label htmlFor="full_name">Full Name</Label>
+              <Label htmlFor="full_name"><AdminText text={"Full Name"} /></Label>
               <Input
                 id="full_name"
                 value={fullName}
@@ -218,10 +214,8 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-destructive" />
                 <div>
-                  <p className="font-medium">Admin Access</p>
-                  <p className="text-sm text-muted-foreground">
-                    Grant full administrative privileges
-                  </p>
+                  <p className="font-medium"><AdminText text={"Admin Access"} /></p>
+                  <p className="text-sm text-muted-foreground"> <AdminText text={"Grant full administrative privileges"} /> </p>
                 </div>
               </div>
               <Switch
@@ -241,9 +235,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <Save className="w-4 h-4 mr-2" />
-              )}
-              Save Changes
-            </Button>
+              )} <AdminText text={"Save Changes"} /> </Button>
           </CardContent>
         </Card>
 
@@ -251,12 +243,8 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="w-5 h-5" />
-              Teacher Access
-            </CardTitle>
-            <CardDescription>
-              Link this user to a teacher profile to grant teacher portal access
-            </CardDescription>
+              <GraduationCap className="w-5 h-5" /> <AdminText text={"Teacher Access"} /> </CardTitle>
+            <CardDescription> <AdminText text={"Link this user to a teacher profile to grant teacher portal access"} /> </CardDescription>
           </CardHeader>
           <CardContent>
             {linkedTeacher ? (
@@ -275,9 +263,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Unlink className="w-4 h-4 mr-2" />
-                  )}
-                  Remove Access
-                </Button>
+                  )} <AdminText text={"Remove Access"} /> </Button>
               </div>
             ) : (
               <div className="flex gap-4">
@@ -286,7 +272,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                   onChange={(e) => setSelectedTeacherId(e.target.value)}
                   className="flex-1 px-3 py-2 rounded-md border bg-background text-sm"
                 >
-                  <option value="">Select a teacher profile...</option>
+                  <option value=""><AdminText text={"Select a teacher profile..."} /></option>
                   {availableTeachers.map((teacher) => (
                     <option key={teacher.id} value={teacher.id}>
                       {teacher.name} - {teacher.instrument}
@@ -314,9 +300,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5" />
-              Subscriptions
-            </CardTitle>
+              <CreditCard className="w-5 h-5" /> <AdminText text={"Subscriptions"} /> </CardTitle>
           </CardHeader>
           <CardContent>
             {activeSubs.length > 0 ? (
@@ -334,8 +318,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                           {sub.plan_type === 'all_access' ? 'All-Access' : sub.instrument}
                         </p>
                         {sub.current_period_end && (
-                          <p className="text-xs text-muted-foreground">
-                            Renews {new Date(sub.current_period_end).toLocaleDateString()}
+                          <p className="text-xs text-muted-foreground"> <AdminText text={"Renews"} /> {new Date(sub.current_period_end).toLocaleDateString()}
                           </p>
                         )}
                       </div>
@@ -347,7 +330,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground">No active subscriptions</p>
+              <p className="text-muted-foreground"><AdminText text={"No active subscriptions"} /></p>
             )}
           </CardContent>
         </Card>

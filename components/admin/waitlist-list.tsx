@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Mail, Search, Send } from 'lucide-react'
@@ -109,7 +112,7 @@ export function WaitlistList({ entries, instruments, styles }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b">
         <div className="flex items-center gap-2">
           <Mail className="w-4 h-4" />
-          <h2 className="font-bold">Signups</h2>
+          <h2 className="font-bold"><AdminText text={"Signups"} /></h2>
         </div>
         <div className="relative flex-1 min-w-[200px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -134,8 +137,7 @@ export function WaitlistList({ entries, instruments, styles }: Props) {
               })
             }
           >
-            <Send className="w-3.5 h-3.5" />
-            Send to selected ({selected.size})
+            <Send className="w-3.5 h-3.5" /> <AdminText text={"Send to selected ("} />{selected.size})
           </Button>
           <Button
             size="sm"
@@ -148,9 +150,7 @@ export function WaitlistList({ entries, instruments, styles }: Props) {
               })
             }
           >
-            <Send className="w-3.5 h-3.5" />
-            Send to all
-          </Button>
+            <Send className="w-3.5 h-3.5" /> <AdminText text={"Send to all"} /> </Button>
         </div>
         <span className="text-sm text-muted-foreground whitespace-nowrap">
           {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
@@ -187,12 +187,12 @@ export function WaitlistList({ entries, instruments, styles }: Props) {
                 onCheckedChange={toggleAllFiltered}
                 aria-label="Select all visible"
               />
-              <span>Email</span>
-              <span>Instruments</span>
-              <span>Genres</span>
-              <span>Expertise</span>
-              <span>Signed up</span>
-              <span className="sr-only">Actions</span>
+              <span><AdminText text={"Email"} /></span>
+              <span><AdminText text={"Instruments"} /></span>
+              <span><AdminText text={"Genres"} /></span>
+              <span><AdminText text={"Expertise"} /></span>
+              <span><AdminText text={"Signed up"} /></span>
+              <span className="sr-only"><AdminText text={"Actions"} /></span>
             </div>
 
             <div className="divide-y">

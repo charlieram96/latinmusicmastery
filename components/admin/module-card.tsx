@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Button } from '@/components/ui/button'
@@ -168,7 +171,7 @@ export function ModuleCard({
                 className={`${config.bgColor} border-transparent text-xs font-medium`}
                 style={{ color: config.color }}
               >
-                {config.label}
+                {<AdminText text={config.label} />}
               </Badge>
               {module.question_type && (
                 <Badge variant="secondary" className="text-xs">
@@ -177,9 +180,7 @@ export function ModuleCard({
               )}
               {module.is_free && (
                 <Badge className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20">
-                  <Eye className="w-3 h-3 mr-1" />
-                  Preview
-                </Badge>
+                  <Eye className="w-3 h-3 mr-1" /> <AdminText text={"Preview"} /> </Badge>
               )}
             </div>
             {module.description && (
@@ -299,7 +300,7 @@ export function ModuleCardDragOverlay({ module }: { module: CourseModule }) {
             className={`ml-2 ${config.bgColor} border-transparent text-xs`}
             style={{ color: config.color }}
           >
-            {config.label}
+            {<AdminText text={config.label} />}
           </Badge>
         </div>
       </div>

@@ -1,0 +1,1959 @@
+{
+  "schemaVersion": "2.0",
+  "id": "estudio-completo-19",
+  "title": {
+    "es": "Repeticiones y finales alternativos"
+  },
+  "meter": "2/4",
+  "keyFifths": -1,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "estudio-completo-19.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16,
+      "dynamic": "p"
+    },
+    {
+      "id": "estudio-completo-19.n2",
+      "onsetBeats": "1/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n3",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n4",
+      "onsetBeats": "3/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n5",
+      "onsetBeats": "1",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n6",
+      "onsetBeats": "5/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n7",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n8",
+      "onsetBeats": "7/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n9",
+      "onsetBeats": "2",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n10",
+      "onsetBeats": "9/4",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n11",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n12",
+      "onsetBeats": "11/4",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n13",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E5",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-19.n14",
+      "onsetBeats": "4",
+      "durationBeats": "1/4",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "F5",
+      "dur": 16,
+      "dynamic": "p"
+    },
+    {
+      "id": "estudio-completo-19.n15",
+      "onsetBeats": "17/4",
+      "durationBeats": "1/4",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "E5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n16",
+      "onsetBeats": "9/2",
+      "durationBeats": "1/4",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n17",
+      "onsetBeats": "19/4",
+      "durationBeats": "1/4",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n18",
+      "onsetBeats": "5",
+      "durationBeats": "1/4",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n19",
+      "onsetBeats": "21/4",
+      "durationBeats": "1/4",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n20",
+      "onsetBeats": "11/2",
+      "durationBeats": "1/4",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n21",
+      "onsetBeats": "23/4",
+      "durationBeats": "1/4",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n22",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 4,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dynamic": "mf"
+    },
+    {
+      "id": "estudio-completo-19.n23",
+      "onsetBeats": "7",
+      "durationBeats": "1",
+      "measure": 4,
+      "staff": 1,
+      "rest": true,
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-19.n24",
+      "onsetBeats": "8",
+      "durationBeats": "1/4",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n25",
+      "onsetBeats": "33/4",
+      "durationBeats": "1/4",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n26",
+      "onsetBeats": "17/2",
+      "durationBeats": "1/4",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n27",
+      "onsetBeats": "35/4",
+      "durationBeats": "1/4",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n28",
+      "onsetBeats": "9",
+      "durationBeats": "1/4",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n29",
+      "onsetBeats": "37/4",
+      "durationBeats": "1/4",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n30",
+      "onsetBeats": "19/2",
+      "durationBeats": "1/4",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n31",
+      "onsetBeats": "39/4",
+      "durationBeats": "1/4",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n32",
+      "onsetBeats": "10",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-19.n33",
+      "onsetBeats": "21/2",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-19.n34",
+      "onsetBeats": "11",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-19.n35",
+      "onsetBeats": "23/2",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-19.n36",
+      "onsetBeats": "12",
+      "durationBeats": "1/4",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n37",
+      "onsetBeats": "49/4",
+      "durationBeats": "1/4",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n38",
+      "onsetBeats": "25/2",
+      "durationBeats": "1/4",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n39",
+      "onsetBeats": "51/4",
+      "durationBeats": "1/4",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n40",
+      "onsetBeats": "13",
+      "durationBeats": "1/4",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n41",
+      "onsetBeats": "53/4",
+      "durationBeats": "1/4",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n42",
+      "onsetBeats": "27/2",
+      "durationBeats": "1/4",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n43",
+      "onsetBeats": "55/4",
+      "durationBeats": "1/4",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n44",
+      "onsetBeats": "14",
+      "durationBeats": "1",
+      "measure": 8,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-19.n45",
+      "onsetBeats": "15",
+      "durationBeats": "1",
+      "measure": 8,
+      "staff": 1,
+      "rest": true,
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-19.n46",
+      "onsetBeats": "16",
+      "durationBeats": "1/4",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n47",
+      "onsetBeats": "65/4",
+      "durationBeats": "1/4",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n48",
+      "onsetBeats": "33/2",
+      "durationBeats": "1/4",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n49",
+      "onsetBeats": "67/4",
+      "durationBeats": "1/4",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n50",
+      "onsetBeats": "17",
+      "durationBeats": "1/4",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n51",
+      "onsetBeats": "69/4",
+      "durationBeats": "1/4",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n52",
+      "onsetBeats": "35/2",
+      "durationBeats": "1/4",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n53",
+      "onsetBeats": "71/4",
+      "durationBeats": "1/4",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n54",
+      "onsetBeats": "18",
+      "durationBeats": "1/4",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n55",
+      "onsetBeats": "73/4",
+      "durationBeats": "1/4",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n56",
+      "onsetBeats": "37/2",
+      "durationBeats": "1/4",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n57",
+      "onsetBeats": "75/4",
+      "durationBeats": "1/4",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n58",
+      "onsetBeats": "19",
+      "durationBeats": "1",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "E5",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-19.n59",
+      "onsetBeats": "20",
+      "durationBeats": "1/4",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "F5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n60",
+      "onsetBeats": "81/4",
+      "durationBeats": "1/4",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "E5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n61",
+      "onsetBeats": "41/2",
+      "durationBeats": "1/4",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n62",
+      "onsetBeats": "83/4",
+      "durationBeats": "1/4",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n63",
+      "onsetBeats": "21",
+      "durationBeats": "1/4",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n64",
+      "onsetBeats": "85/4",
+      "durationBeats": "1/4",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n65",
+      "onsetBeats": "43/2",
+      "durationBeats": "1/4",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n66",
+      "onsetBeats": "87/4",
+      "durationBeats": "1/4",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n67",
+      "onsetBeats": "22",
+      "durationBeats": "2",
+      "measure": 12,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-19.n68",
+      "onsetBeats": "24",
+      "durationBeats": "1/4",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n69",
+      "onsetBeats": "97/4",
+      "durationBeats": "1/4",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n70",
+      "onsetBeats": "49/2",
+      "durationBeats": "1/4",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n71",
+      "onsetBeats": "99/4",
+      "durationBeats": "1/4",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n72",
+      "onsetBeats": "25",
+      "durationBeats": "1/4",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n73",
+      "onsetBeats": "101/4",
+      "durationBeats": "1/4",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n74",
+      "onsetBeats": "51/2",
+      "durationBeats": "1/4",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n75",
+      "onsetBeats": "103/4",
+      "durationBeats": "1/4",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n76",
+      "onsetBeats": "26",
+      "durationBeats": "1/4",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n77",
+      "onsetBeats": "105/4",
+      "durationBeats": "1/4",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n78",
+      "onsetBeats": "53/2",
+      "durationBeats": "1/4",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n79",
+      "onsetBeats": "107/4",
+      "durationBeats": "1/4",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16
+    },
+    {
+      "id": "estudio-completo-19.n80",
+      "onsetBeats": "27",
+      "durationBeats": "1",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-19.n81",
+      "onsetBeats": "28",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "E5",
+      "dur": 8,
+      "mark": "a tempo"
+    },
+    {
+      "id": "estudio-completo-19.n82",
+      "onsetBeats": "57/2",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-19.n83",
+      "onsetBeats": "29",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "E5",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-19.n84",
+      "onsetBeats": "59/2",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-19.n85",
+      "onsetBeats": "30",
+      "durationBeats": "2",
+      "measure": 16,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "meter": "2/4",
+    "key": -1,
+    "clef": "G",
+    "bars": [
+      [
+        {
+          "pitch": "F4",
+          "dur": 16,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        }
+      ],
+      [
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "D5",
+          "dur": 16
+        },
+        {
+          "pitch": "E5",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "F5",
+          "dur": 16,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "E5",
+          "dur": 16
+        },
+        {
+          "pitch": "D5",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "F4",
+          "dur": 16
+        }
+      ],
+      [
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dynamic": "mf"
+        },
+        {
+          "rest": true,
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "D5",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        }
+      ],
+      [
+        {
+          "pitch": "C5",
+          "dur": 8
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 8
+        },
+        {
+          "pitch": "A4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        }
+      ],
+      [
+        {
+          "pitch": "C5",
+          "dur": 4
+        },
+        {
+          "rest": true,
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "D5",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        }
+      ],
+      [
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "D5",
+          "dur": 16
+        },
+        {
+          "pitch": "E5",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "F5",
+          "dur": 16
+        },
+        {
+          "pitch": "E5",
+          "dur": 16
+        },
+        {
+          "pitch": "D5",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "D5",
+          "dur": 16
+        },
+        {
+          "pitch": "C5",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        }
+      ],
+      [
+        {
+          "pitch": "A4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "Bb4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "F4",
+          "dur": 16
+        }
+      ],
+      [
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "A4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "F4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "E5",
+          "dur": 8,
+          "mark": "a tempo"
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "E5",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 2
+        }
+      ]
+    ],
+    "beams": [
+      [
+        0,
+        1,
+        2,
+        3
+      ],
+      [
+        4,
+        5,
+        6,
+        7
+      ],
+      [
+        8,
+        9,
+        10,
+        11
+      ],
+      [
+        13,
+        14,
+        15,
+        16
+      ],
+      [
+        17,
+        18,
+        19,
+        20
+      ],
+      [
+        23,
+        24,
+        25,
+        26
+      ],
+      [
+        27,
+        28,
+        29,
+        30
+      ],
+      [
+        31,
+        32
+      ],
+      [
+        33,
+        34
+      ],
+      [
+        35,
+        36,
+        37,
+        38
+      ],
+      [
+        39,
+        40,
+        41,
+        42
+      ],
+      [
+        45,
+        46,
+        47,
+        48
+      ],
+      [
+        49,
+        50,
+        51,
+        52
+      ],
+      [
+        53,
+        54,
+        55,
+        56
+      ],
+      [
+        58,
+        59,
+        60,
+        61
+      ],
+      [
+        62,
+        63,
+        64,
+        65
+      ],
+      [
+        67,
+        68,
+        69,
+        70
+      ],
+      [
+        71,
+        72,
+        73,
+        74
+      ],
+      [
+        75,
+        76,
+        77,
+        78
+      ],
+      [
+        80,
+        81
+      ],
+      [
+        82,
+        83
+      ]
+    ],
+    "tupletGroups": [],
+    "slurs": [
+      [
+        0,
+        12
+      ],
+      [
+        23,
+        34
+      ],
+      [
+        45,
+        57
+      ],
+      [
+        67,
+        79
+      ]
+    ],
+    "ties": [],
+    "spans": [
+      {
+        "text": "rit.",
+        "from": 67,
+        "to": 79
+      }
+    ],
+    "gliss": [],
+    "endings": [
+      {
+        "number": "1",
+        "from": 5,
+        "to": 5
+      },
+      {
+        "number": "2",
+        "from": 6,
+        "to": 6
+      }
+    ],
+    "barStyles": {
+      "5": "repeat",
+      "15": "final"
+    },
+    "wedges": [
+      {
+        "from": 13,
+        "to": 21,
+        "type": "crescendo"
+      }
+    ],
+    "systems": [
+      {
+        "title": "Compases 1-2",
+        "meter": "2/4",
+        "key": -1,
+        "bars": [
+          [
+            {
+              "pitch": "F4",
+              "dur": 16,
+              "dynamic": "p"
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            }
+          ],
+          [
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "D5",
+              "dur": 16
+            },
+            {
+              "pitch": "E5",
+              "dur": 4
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6,
+            7
+          ],
+          [
+            8,
+            9,
+            10,
+            11
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            12
+          ]
+        ],
+        "tempo": "Cantabile · negra = 60"
+      },
+      {
+        "title": "Compases 3-4",
+        "meter": "2/4",
+        "key": -1,
+        "bars": [
+          [
+            {
+              "pitch": "F5",
+              "dur": 16,
+              "dynamic": "p"
+            },
+            {
+              "pitch": "E5",
+              "dur": 16
+            },
+            {
+              "pitch": "D5",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            },
+            {
+              "pitch": "F4",
+              "dur": 16
+            }
+          ],
+          [
+            {
+              "pitch": "G4",
+              "dur": 4,
+              "dynamic": "mf"
+            },
+            {
+              "rest": true,
+              "dur": 4
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6,
+            7
+          ]
+        ],
+        "hairpin": "cresc",
+        "hairpinFrom": 0,
+        "hairpinTo": 8
+      },
+      {
+        "title": "Compases 5-6",
+        "meter": "2/4",
+        "key": -1,
+        "bars": [
+          [
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "D5",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            }
+          ],
+          [
+            {
+              "pitch": "C5",
+              "dur": 8
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 8
+            },
+            {
+              "pitch": "A4",
+              "dur": 8
+            },
+            {
+              "pitch": "G4",
+              "dur": 8
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6,
+            7
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            10,
+            11
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            11
+          ]
+        ],
+        "barStyles": {
+          "1": "repeat"
+        },
+        "endings": [
+          {
+            "number": "1",
+            "from": 1,
+            "to": 1
+          }
+        ]
+      },
+      {
+        "title": "Compases 7-8",
+        "meter": "2/4",
+        "key": -1,
+        "bars": [
+          [
+            {
+              "pitch": "F4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            }
+          ],
+          [
+            {
+              "pitch": "C5",
+              "dur": 4
+            },
+            {
+              "rest": true,
+              "dur": 4
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6,
+            7
+          ]
+        ],
+        "endings": [
+          {
+            "number": "2",
+            "from": 0,
+            "to": 0
+          }
+        ]
+      },
+      {
+        "title": "Compases 9-10",
+        "meter": "2/4",
+        "key": -1,
+        "bars": [
+          [
+            {
+              "pitch": "F4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "D5",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            }
+          ],
+          [
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "D5",
+              "dur": 16
+            },
+            {
+              "pitch": "E5",
+              "dur": 4
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6,
+            7
+          ],
+          [
+            8,
+            9,
+            10,
+            11
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            12
+          ]
+        ]
+      },
+      {
+        "title": "Compases 11-12",
+        "meter": "2/4",
+        "key": -1,
+        "bars": [
+          [
+            {
+              "pitch": "F5",
+              "dur": 16
+            },
+            {
+              "pitch": "E5",
+              "dur": 16
+            },
+            {
+              "pitch": "D5",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "D5",
+              "dur": 16
+            },
+            {
+              "pitch": "C5",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            }
+          ],
+          [
+            {
+              "pitch": "A4",
+              "dur": 2
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6,
+            7
+          ]
+        ]
+      },
+      {
+        "title": "Compases 13-14",
+        "meter": "2/4",
+        "key": -1,
+        "bars": [
+          [
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "Bb4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            },
+            {
+              "pitch": "F4",
+              "dur": 16
+            }
+          ],
+          [
+            {
+              "pitch": "G4",
+              "dur": 16
+            },
+            {
+              "pitch": "A4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 16
+            },
+            {
+              "pitch": "F4",
+              "dur": 16
+            },
+            {
+              "pitch": "G4",
+              "dur": 4
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6,
+            7
+          ],
+          [
+            8,
+            9,
+            10,
+            11
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            12
+          ]
+        ],
+        "spans": [
+          {
+            "text": "rit."
+          }
+        ]
+      },
+      {
+        "title": "Compases 15-16",
+        "meter": "2/4",
+        "key": -1,
+        "bars": [
+          [
+            {
+              "pitch": "E5",
+              "dur": 8,
+              "mark": "a tempo"
+            },
+            {
+              "pitch": "G4",
+              "dur": 8
+            },
+            {
+              "pitch": "E5",
+              "dur": 8
+            },
+            {
+              "pitch": "G4",
+              "dur": 8
+            }
+          ],
+          [
+            {
+              "pitch": "F4",
+              "dur": 2
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        "barStyles": {
+          "1": "final"
+        }
+      }
+    ]
+  }
+}

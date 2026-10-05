@@ -1,0 +1,102 @@
+{
+  "duration": 93,
+  "fps": 24,
+  "scenes": [
+    [
+      "intro",
+      5,
+      "TU MÚSICA.",
+      "TU CAMINO.",
+      "Una guía visual para empezar a estudiar en LMM.",
+      "TIMBAL  /  SON CUBANO"
+    ],
+    [
+      "teachers",
+      12,
+      "Encuentra",
+      "tu maestro.",
+      "Conoce distintos estilos y elige con quién aprender.",
+      "MAESTROS"
+    ],
+    [
+      "patricio",
+      6,
+      "Patricio",
+      "“el Chino” Díaz",
+      "Nuestro recorrido: timbal y son cubano.",
+      "MAESTRO SELECCIONADO"
+    ],
+    [
+      "courses",
+      8,
+      "Elige",
+      "Timbal + Son.",
+      "Explorar cursos → Instrumento Timbal → Son Cubano Timbal.",
+      "01 / TU CURSO"
+    ],
+    [
+      "course",
+      7,
+      "Una ruta,",
+      "paso a paso.",
+      "El curso organiza tu aprendizaje en módulos y clases.",
+      "02 / RUTA DE APRENDIZAJE"
+    ],
+    [
+      "module",
+      8,
+      "Fundamentos",
+      "del Timbal.",
+      "Entra en Fundamentos del Timbal en el Son y selecciona Ritmo Básico del Timbal en el Son.",
+      "03 / TU MÓDULO"
+    ],
+    [
+      "exercise",
+      9,
+      "Ahora,",
+      "tu turno.",
+      "En la clase de ritmo básico, abre Ejercicio 1: Cáscara, mano derecha.",
+      "04 / EJERCICIO 1"
+    ],
+    [
+      "views",
+      7,
+      "Tú eliges",
+      "qué ver.",
+      "Activa u oculta Video, Partitura y PlaySense según lo que quieras estudiar.",
+      "05 / TU ESPACIO"
+    ],
+    [
+      "controls",
+      8,
+      "Practica",
+      "a tu ritmo.",
+      "Reproduce, pausa o vuelve al principio. Stop reinicia; Terminar toma cierra el intento.",
+      "06 / REPRODUCCIÓN"
+    ],
+    [
+      "mixer",
+      9,
+      "Toca con",
+      "la banda.",
+      "Abre Tocar junto con: silencia cada MP3 y ajusta el volumen de sus instrumentos.",
+      "07 / ACOMPAÑAMIENTO"
+    ],
+    [
+      "quiz",
+      9,
+      "Escucha.",
+      "Comprueba.",
+      "Introducción: El Timbal en el Son → Cuestionario 1. Lee, elige y comprueba tu respuesta.",
+      "08 / CUESTIONARIO"
+    ],
+    [
+      "outro",
+      5,
+      "Aprende. Practica.",
+      "Hazlo tuyo.",
+      "Timbal · Son · Patricio “el Chino” Díaz",
+      "LATIN MUSIC MASTERY"
+    ]
+  ]
+}

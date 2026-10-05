@@ -209,7 +209,7 @@ export class StageRenderer {
     const theme = STAGE_THEMES[options.theme]
     const studio = theme.id === 'studio'
     this.farZ = studio ? -25 : FAR_Z
-    // With MSAA in the post chain, 1.35x is indistinguishable from 1.5x on retina screens and ~20% cheaper.
+    // Cap the render scale to keep the animated scene affordable on retina screens.
     this.maxPixelRatio = this.pixelRatio = Math.min(window.devicePixelRatio || 1, options.quality === 'low' ? 1 : studio ? 1.35 : 1.5)
     this.renderer.setPixelRatio(this.pixelRatio)
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -648,19 +648,22 @@ export class StageRenderer {
         const accent = note.accent ? 1.2 : 1
         const reveal = this.miami && !this.options.reducedMotion ? Math.min(1, Math.max(0, (APPROACH_SECONDS - delta) / .35)) : 1
         const entryScale = .6 + reveal * .4
+        // Place the note itself on the strike line at its timestamp.
+        // The surrounding glow is decorative; it does not define hit timing.
+        const noteZ = z
         this.dummy.rotation.set(0, 0, 0)
         if (this.miami) {
           // Notes rise out of the gate's light, then ride the deck on a pool of their own glow.
           const rise = (1 - reveal) * .9
-          this.dummy.position.set(lane.x, NOTE_LAYOUT.head - rise, z)
+          this.dummy.position.set(lane.x, NOTE_LAYOUT.head - rise, noteZ)
           this.dummy.scale.set(width * entryScale, accent, entryScale * (note.accent ? 1.15 : 1))
           this.dummy.updateMatrix(); this.heads.setMatrixAt(count, this.dummy.matrix)
           this.heads.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar(.12).addScalar(.05))
           this.dummy.position.y = NOTE_LAYOUT.head - rise + (NOTE_LAYOUT.core - NOTE_LAYOUT.head) * accent
           this.dummy.updateMatrix(); this.cores.setMatrixAt(count, this.dummy.matrix)
           this.cores.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar(note.accent ? 1.35 : 1))
-          this.dummy.position.set(lane.x, NOTE_LAYOUT.pool, z)
-          this.dummy.scale.set(width * 1.9 * reveal, 1, 1.9 * reveal)
+          this.dummy.position.set(lane.x, NOTE_LAYOUT.pool, noteZ)
+          this.dummy.scale.set(width * 1.9 * reveal, 1, NOTE_LAYOUT.poolLength * reveal)
           this.dummy.updateMatrix(); this.trims.setMatrixAt(count, this.dummy.matrix)
           this.trims.setColorAt(count, this.colors[note.lane])
         } else {
@@ -678,7 +681,7 @@ export class StageRenderer {
           this.trims.setColorAt(count, this.tint.set(note.accent ? 0xffe8ab : 0xf3fffc))
         }
         const tailLength = Math.min(this.exercise.instrument === 'piano' ? note.duration * speed : 1.65, 18)
-        this.dummy.position.set(lane.x, this.miami ? DECK_TOP + .01 : -0.025, z - tailLength / 2)
+        this.dummy.position.set(lane.x, this.miami ? DECK_TOP + .01 : -0.025, noteZ - tailLength / 2)
         this.dummy.scale.set(width * .72, 1, Math.max(.15, tailLength))
         this.dummy.updateMatrix(); this.tails.setMatrixAt(tailCount, this.dummy.matrix)
         this.tails.setColorAt(tailCount++, this.colors[note.lane])

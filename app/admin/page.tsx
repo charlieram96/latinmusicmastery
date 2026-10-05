@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
@@ -81,8 +82,8 @@ export default async function AdminDashboard() {
     <div className="p-6 lg:p-8">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight mb-1">Dashboard</h1>
-        <p className="text-muted-foreground">Latin Music Mastery platform overview</p>
+        <h1 className="text-4xl font-bold tracking-tight mb-1"><AdminText text={"Dashboard"} /></h1>
+        <p className="text-muted-foreground"><AdminText text={"Latin Music Mastery platform overview"} /></p>
       </div>
 
       {/* Hero Stats */}
@@ -100,7 +101,7 @@ export default async function AdminDashboard() {
               </div>
               <div className="text-3xl font-bold mb-0.5">{stat.value}</div>
               <div className="text-sm text-muted-foreground flex items-center gap-1">
-                {stat.label}
+                {<AdminText text={stat.label} />}
                 <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </Link>
@@ -112,9 +113,8 @@ export default async function AdminDashboard() {
         {/* Recent Users */}
         <div className="lg:col-span-2 rounded-xl border bg-card">
           <div className="flex items-center justify-between px-6 py-4 border-b">
-            <h2 className="font-bold text-lg">Recent Users</h2>
-            <Link href="/admin/users" className="text-xs text-primary hover:underline flex items-center gap-1">
-              View all <ArrowRight className="w-3 h-3" />
+            <h2 className="font-bold text-lg"><AdminText text={"Recent Users"} /></h2>
+            <Link href="/admin/users" className="text-xs text-primary hover:underline flex items-center gap-1"> <AdminText text={"View all"} /> <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
           <div className="divide-y">
@@ -137,7 +137,7 @@ export default async function AdminDashboard() {
                           {activeSubs[0]?.plan_type === 'all_access' ? 'All-Access' : activeSubs[0]?.instrument || 'Subscriber'}
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-xs">Free</Badge>
+                        <Badge variant="outline" className="text-xs"><AdminText text={"Free"} /></Badge>
                       )}
                       <span className="text-xs text-muted-foreground">
                         {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
@@ -147,7 +147,7 @@ export default async function AdminDashboard() {
                 )
               })
             ) : (
-              <div className="px-6 py-12 text-center text-muted-foreground text-sm">No users yet</div>
+              <div className="px-6 py-12 text-center text-muted-foreground text-sm"><AdminText text={"No users yet"} /></div>
             )}
           </div>
         </div>
@@ -156,7 +156,7 @@ export default async function AdminDashboard() {
         <div className="space-y-4">
           {/* Platform Health */}
           <div className="rounded-xl border bg-card p-5">
-            <h2 className="font-bold text-lg mb-4">Platform Health</h2>
+            <h2 className="font-bold text-lg mb-4"><AdminText text={"Platform Health"} /></h2>
             <div className="space-y-3">
               {[
                 { label: 'Countries', value: countriesCount || 0, icon: Globe },
@@ -177,7 +177,7 @@ export default async function AdminDashboard() {
 
           {/* Quick Links */}
           <div className="rounded-xl border bg-card p-5">
-            <h2 className="font-bold text-lg mb-4">Quick Access</h2>
+            <h2 className="font-bold text-lg mb-4"><AdminText text={"Quick Access"} /></h2>
             <div className="grid grid-cols-2 gap-2">
               {quickLinks.slice(0, 6).map(({ href, label, icon: Icon }) => (
                 <Link

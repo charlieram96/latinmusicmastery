@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "2.0",
+  "id": "repertorio-18-02",
+  "title": {
+    "es": "Compases 3-4"
+  },
+  "meter": "2/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "repertorio-18-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16,
+      "dynamic": "p"
+    },
+    {
+      "id": "repertorio-18-02.n2",
+      "onsetBeats": "1/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-02.n3",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-02.n4",
+      "onsetBeats": "3/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-02.n5",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-18-02.n6",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2,
+      "dynamic": "mf"
+    }
+  ],
+  "notation": {
+    "title": "Compases 3-4",
+    "meter": "2/4",
+    "key": 0,
+    "bars": [
+      [
+        {
+          "pitch": "G4",
+          "dur": 16,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "F4",
+          "dur": 16
+        },
+        {
+          "pitch": "E4",
+          "dur": 16
+        },
+        {
+          "pitch": "D4",
+          "dur": 16
+        },
+        {
+          "pitch": "E4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 2,
+          "dynamic": "mf"
+        }
+      ]
+    ],
+    "beams": [
+      [
+        0,
+        1,
+        2,
+        3
+      ]
+    ],
+    "hairpin": "cresc",
+    "hairpinFrom": 0,
+    "hairpinTo": 5
+  }
+}

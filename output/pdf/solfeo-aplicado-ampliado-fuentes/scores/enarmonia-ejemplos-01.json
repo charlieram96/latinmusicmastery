@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "2.0",
+  "id": "enarmonia-ejemplos-01",
+  "title": {
+    "es": "Mi sostenido y Fa natural · misma altura"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "enarmonia-ejemplos-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E#4",
+      "dur": 1
+    },
+    {
+      "id": "enarmonia-ejemplos-01.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Mi sostenido y Fa natural · misma altura",
+    "events": [
+      {
+        "pitch": "E#4",
+        "dur": 1
+      },
+      {
+        "pitch": "F4",
+        "dur": 1
+      }
+    ]
+  }
+}

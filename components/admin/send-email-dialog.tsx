@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useEffect, useState, useTransition } from 'react'
 import { Loader2, Send } from 'lucide-react'
 import {
@@ -118,7 +121,7 @@ export function SendEmailDialog({
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2 pr-1">
           <div className="grid gap-2">
-            <Label htmlFor="email-subject">Subject</Label>
+            <Label htmlFor="email-subject"><AdminText text={"Subject"} /></Label>
             <Input
               id="email-subject"
               value={subject}
@@ -133,15 +136,13 @@ export function SendEmailDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="email-body">Message</Label>
+            <Label htmlFor="email-body"><AdminText text={"Message"} /></Label>
             <EmailRichTextEditor value={body} onChange={setBody} disabled={pending} />
-            <p className="text-xs text-muted-foreground">
-              Use the toolbar to format your message — headings, bold, lists, and links.
-            </p>
+            <p className="text-xs text-muted-foreground"> <AdminText text={"Use the toolbar to format your message — headings, bold, lists, and links."} /> </p>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="email-signature">Signature (optional)</Label>
+            <Label htmlFor="email-signature"><AdminText text={"Signature (optional)"} /></Label>
             <Textarea
               id="email-signature"
               value={signature}
@@ -168,20 +169,14 @@ export function SendEmailDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={pending}
-          >
-            Cancel
-          </Button>
+          > <AdminText text={"Cancel"} /> </Button>
           <Button onClick={handleSubmit} disabled={!canSubmit}>
             {pending ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Sending…
-              </>
+                <Loader2 className="w-4 h-4 animate-spin" /> <AdminText text={"Sending…"} /> </>
             ) : (
               <>
-                <Send className="w-4 h-4" />
-                Send
-              </>
+                <Send className="w-4 h-4" /> <AdminText text={"Send"} /> </>
             )}
           </Button>
         </DialogFooter>

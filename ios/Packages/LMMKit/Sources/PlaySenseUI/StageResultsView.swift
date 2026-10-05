@@ -26,7 +26,7 @@ struct StageResultsView: View {
                 persistNote
                 HStack(spacing: LMMSpacing.sm) {
                     Button(lmmString("stage.exit"), action: onExit).buttonStyle(.lmmSecondary)
-                    Button(lmmString("common.retry"), action: onRetry).buttonStyle(.lmmPrimary)
+                    Button(action: onRetry) { Image(systemName: "arrow.counterclockwise") }.accessibilityLabel(lmmString("common.retry")).buttonStyle(.lmmPrimary)
                 }
             }
             .padding(LMMSpacing.lg)

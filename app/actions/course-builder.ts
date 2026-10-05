@@ -3,6 +3,8 @@
 import type { Database } from '@/types/database';
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { getCourseInstrumentOptions } from '@/lib/courses/instrument-options'
+import { selectedCourseInstrument } from '@/lib/courses/instrument-classification'
 import { validateCourseKind } from '@/lib/courses/fundamentals'
 import { validateSubtitlesInput } from '@/lib/subtitles/tracks'
 
@@ -38,6 +40,20 @@ export async function updateCourseSettings(courseId: string, patch: CourseSettin
   if (fetchError || !current) return { error: fetchError?.message || 'Course not found' }
 
   const updates: Record<string, unknown> = { ...patch }
+
+  if (patch.instrument !== undefined) {
+    const instrument = selectedCourseInstrument(patch.instrument, await getCourseInstrumentOptions())
+    if (!instrument) return { error: 'Select the course instrument or classification.' }
+    updates.instrument = instrument
+  }
+  // Keep course classification explicit when changing teachers. Never inherit
+  // the teacher's specialty list, even when legacy database defaults exist.
+  if (patch.teacher_id !== undefined && patch.instrument === undefined) {
+    if (!selectedCourseInstrument(current.instrument, await getCourseInstrumentOptions())) {
+      return { error: 'Select the course instrument or classification before assigning a teacher.' }
+    }
+    updates.instrument = current.instrument
+  }
 
   // A fundamentals course is genreless by definition.
   const isFundamentals = patch.is_fundamentals ?? current.is_fundamentals ?? false
@@ -109,11 +125,14 @@ export async function createCourseDraft(input: CreateCourseDraftInput) {
   const title = input.title.trim()
   if (!title) return { error: 'A course needs a title.' }
 
+  const instrument = selectedCourseInstrument(input.instrument, await getCourseInstrumentOptions())
+  if (!instrument) return { error: 'Select the course instrument or classification.' }
+
   const musicalStyleId = input.isFundamentals ? null : input.musicalStyleId
   const kind = validateCourseKind({
     isFundamentals: input.isFundamentals,
     musicalStyleId,
-    instrument: input.instrument,
+    instrument,
   })
   if (!kind.ok) return { error: kind.error }
 
@@ -138,7 +157,7 @@ export async function createCourseDraft(input: CreateCourseDraftInput) {
         description: null,
         musical_style_id: musicalStyleId,
         is_fundamentals: input.isFundamentals,
-        instrument: input.instrument,
+        instrument,
         teacher_id: input.teacherId,
         teacher_name: teacherName,
         is_published: false,

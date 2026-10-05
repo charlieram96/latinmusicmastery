@@ -1,5 +1,8 @@
 'use client'
 
+import { sessionLatencyMs } from '@/lib/audio/session-latency'
+import { LoopbackLatency } from '@/components/settings/loopback-latency'
+import { useSpacePlayback } from '@/hooks/use-space-playback'
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { CascaraVideoCoaching } from './cascara-video-coaching';
 import { CASCARA_COACHING_ID } from '@/lib/play-sense/cascara-coaching';
@@ -32,7 +35,7 @@ import { PartDone } from './part-done'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, ChevronDown, SlidersHorizontal, Volume2, VolumeX } from 'lucide-react'
+import { Settings2, Power, RotateCcw, Play, Pause, Square, ArrowLeft, ChevronDown, SlidersHorizontal, Volume2, VolumeX } from 'lucide-react'
 import { DEFAULT_MIX_ENTRY, readStoredBackingMix, writeStoredBackingMix, type BackingMix } from '@/lib/play-sense/backing-mix'
 import { useTranslation } from '@/components/language-provider'
 import { ExerciseModeFrame } from './exercise-mode-frame'
@@ -154,7 +157,7 @@ function ScoreExerciseSession({
   preview = false,
   mediaAudible: authoredMediaAudible = false,
 }: ScoreExerciseGameProps) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const st = useStudioText()
   const [previewVideoAudible, setPreviewVideoAudible] = useState(preview || authoredMediaAudible)
   const [videoVolume, setVideoVolume] = useState(1)
@@ -197,6 +200,26 @@ function ScoreExerciseSession({
   // level the student set (on top of the authored level) or muted. Remembered
   // per viewer; hydrated after mount so the server and first client render agree.
   const [mix, setMix] = useState<BackingMix>({})
+  const [mp3Master, setMp3Master] = useState(1)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('playsense.mp3Master')
+      const level = saved === null ? 1 : Number(saved)
+      if (Number.isFinite(level)) setMp3Master(Math.max(0, Math.min(1, level)))
+    } catch { /* Local preferences are optional. */ }
+  }, [])
+  const updateMp3Master = (level: number) => {
+    setMp3Master(level)
+    try { localStorage.setItem('playsense.mp3Master', String(level)) } catch { /* Keep the live mix. */ }
+  }
+  const playbackMix = useMemo<BackingMix>(() => {
+    const effective = { ...mix }
+    for (const track of backingTracks ?? []) {
+      const entry = mix[track.id] ?? DEFAULT_MIX_ENTRY
+      effective[track.id] = { ...entry, level: entry.level * mp3Master }
+    }
+    return effective
+  }, [mix, mp3Master, backingTracks])
   useEffect(() => { setMix(readStoredBackingMix()) }, [])
   const updateMix = (id: string, patch: Partial<typeof DEFAULT_MIX_ENTRY>) => {
     setMix((prev) => {
@@ -263,7 +286,6 @@ function ScoreExerciseSession({
     setSoundBlocked(false)
     void started?.catch((err) => { if (isAutoplayRefusal(err)) setSoundBlocked(true) })
   }
-  const start = () => { primeMedia(); void session.startExercise() }
   const loopSeconds = useMemo(() => getLoopDuration(exercise), [exercise])
   const exerciseDurationSec = loopSeconds * exercise.loopCount
   const countInBars = play?.countInBars ?? 1
@@ -299,9 +321,36 @@ function ScoreExerciseSession({
   // An explicit (possibly empty) selection only when backing tracks are
   // authored; otherwise the legacy path (exercise.audioUrl) stays in charge.
   const session = useExerciseSession(backingTracks
-    ? { backingTracks: placedTracks, backingMix: mix, countInBars, playbackOnly: preview, metronomeVolume: clickVolume, playbackRate: tempoRate }
-    : { countInBars, playbackOnly: preview, metronomeVolume: clickVolume, playbackRate: tempoRate })
-  const stableExercise = useMemo(() => exercise, [exercise])
+    ? { backingTracks: placedTracks, backingMix: playbackMix, countInBars, playbackOnly: preview, defaultAudioMetronome: !preview, metronomeVolume: clickVolume, playbackRate: tempoRate }
+    : { countInBars, playbackOnly: preview, defaultAudioMetronome: !preview, metronomeVolume: clickVolume, playbackRate: tempoRate })
+  const [readySeconds, setReadySeconds] = useState<number | null>(null)
+  const pendingStart = useRef(false)
+  const startSession = useRef(session.startExercise)
+  startSession.current = session.startExercise
+  useEffect(() => {
+    if (readySeconds === null) return
+    const timer = setTimeout(() => {
+      if (readySeconds > 1) setReadySeconds(readySeconds - 1)
+      else {
+        setReadySeconds(null)
+        pendingStart.current = false
+        void startSession.current()
+      }
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [readySeconds])
+  const cancelReady = () => { pendingStart.current = false; setReadySeconds(null) }
+  const start = () => {
+    if (pendingStart.current) return
+    primeMedia()
+    if (preview) { void session.startExercise(); return }
+    pendingStart.current = true
+    setReadySeconds(3)
+  }
+  // Progress saves can deliver a fresh RSC object for the same authored score.
+  // Only a content change should reset a take or dismiss its evaluation.
+  const exerciseSnapshot = JSON.stringify(exercise)
+  const stableExercise = useMemo<ExerciseDefinition>(() => JSON.parse(exerciseSnapshot), [exerciseSnapshot])
 
   // Where the video shows bar 1 and how it behaves around the count-in.
   const playMedia = useMemo<PlayMedia | null>(() => exerciseVideo && bar1 !== null ? {
@@ -399,8 +448,8 @@ function ScoreExerciseSession({
 
   // Persist the attempt when results are ready.
   useEffect(() => {
-    if (finishedExercise(session.sessionState, session.playheadProgress, preview)) completePerformance()
-  }, [session.sessionState, session.playheadProgress, preview, completePerformance])
+    if (finishedExercise(session.sessionState, session.playheadProgress, preview) && session.attemptStats && session.attemptStats.accuracy >= 75) completePerformance()
+  }, [session.sessionState, session.playheadProgress, session.attemptStats, preview, completePerformance])
 
   useEffect(() => {
     if (preview) return
@@ -465,8 +514,7 @@ function ScoreExerciseSession({
   }
   const playAgain = () => {
     session.retry()
-    primeMedia()
-    void session.startExercise()
+    start()
   }
 
   // The input hooks report in English; show the ones we know in the student's language.
@@ -486,37 +534,44 @@ function ScoreExerciseSession({
 
   // ── Ready check: input, mic and timing on one screen before the first take ──
   const [readyConfirmed, setReadyConfirmed] = useState(false)
+  const [hardwareTestOpen,setHardwareTestOpen] = useState(false)
+  const [calibrationAttempt, setCalibrationAttempt] = useState(0)
+  const recalibrate = () => {
+    cancelReady()
+    session.retry()
+    setCalibrationAttempt(value=>value+1)
+    setReadyConfirmed(false)
+    testedMode.current = null
+  }
+  const activeMicCompensation = sessionLatencyMs(session.getLiveAudioInput?.())
+  const calibrationControl = <><Button type="button" variant="outline" size="icon" aria-label={locale==='es'?'Recalibrar':'Recalibrate'} title={locale==='es'?'Recalibrar':'Recalibrate'} onClick={recalibrate}><Settings2 className="h-4 w-4" /></Button>{!preview && (session.audioMode==='headphones'||session.audioMode==='speaker-safe') && session.sessionState==='selecting' && <Button type="button" variant="outline" size="sm" onClick={async()=>{await session.testMic();setHardwareTestOpen(true)}}>{activeMicCompensation!==null ? `${locale==='es'?'Mic sincronizado':'Mic synced'} · ${activeMicCompensation.toFixed(1)} ms` : (locale==='es'?'Sincronizar micrófono':'Sync microphone')}</Button>}</>
   const showReady = !preview && !readyConfirmed && !!session.exercise &&
     (session.sessionState === 'selecting' || session.sessionState === 'calibrating')
   const micMode = session.audioMode === 'headphones' || session.audioMode === 'speaker-safe'
   const [micHeard, setMicHeard] = useState(false)
-  const [deviceLabel, setDeviceLabel] = useState<string | null>(null)
+  const micWaitForQuiet = useRef(false)
+
   const [ble, setBle] = useState<{ connecting: boolean; error: boolean }>({ connecting: false, error: false })
   const testedMode = useRef<string | null>(null)
   // The mic test opens by itself once a mic mode is chosen (and again after a switch).
   useEffect(() => {
-    if (!showReady || !micMode || session.sessionState !== 'selecting') return
+    if (!showReady || !micMode || session.micMuted || session.sessionState !== 'selecting') return
     if (session.isListening || testedMode.current === session.audioMode) return
     testedMode.current = session.audioMode
     session.testMic()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showReady, micMode, session.audioMode, session.isListening, session.sessionState])
+  }, [showReady, micMode, session.micMuted, session.audioMode, session.isListening, session.sessionState])
   useEffect(() => {
-    if (showReady && session.isListening && session.inputLevel > 0.08) setMicHeard(true)
+    if (!showReady || !session.isListening) return
+    if (micWaitForQuiet.current) {
+      if (session.inputLevel <= 0.04) micWaitForQuiet.current = false
+      return
+    }
+    if (session.inputLevel > 0.08) setMicHeard(true)
   }, [showReady, session.isListening, session.inputLevel])
   // A new input must prove itself again.
   const [heardMode, setHeardMode] = useState(session.audioMode)
   if (heardMode !== session.audioMode) { setHeardMode(session.audioMode); setMicHeard(false) }
-  useEffect(() => {
-    if (!showReady || !session.isListening || !navigator.mediaDevices?.enumerateDevices) return
-    let live = true
-    void navigator.mediaDevices.enumerateDevices().then(devices => {
-      const inputs = devices.filter(d => d.kind === 'audioinput')
-      const device = inputs.find(d => d.deviceId === 'default') ?? inputs[0]
-      if (live) setDeviceLabel(device?.label?.replace(/^Default - /, '') || null)
-    }).catch(() => {})
-    return () => { live = false }
-  }, [showReady, session.isListening])
   const connectBle = async () => {
     setBle({ connecting: true, error: false })
     try {
@@ -536,22 +591,47 @@ function ScoreExerciseSession({
     session.audioMode === 'playsense' &&
     !!session.exercise
 
+  useSpacePlayback(!!session.exercise && !showReady && !showAudioModePrompt && !showPlaysenseTest &&
+    (session.sessionState === 'selecting' || session.sessionState === 'playing' || session.sessionState === 'paused'), () => {
+      if (session.sessionState === 'playing') session.pauseExercise()
+      else if (session.sessionState === 'paused') { primeMedia(); session.resumeExercise() }
+      else if (!session.backingTrackLoading) start()
+    })
+
   if (showReady && session.exercise) {
     const ex = session.exercise
     return (
       <div className="ps-lesson-ready">
         <ReadyCheck
+          key={calibrationAttempt}
+          forceFresh={calibrationAttempt > 0}
+          onCancelSetup={calibrationAttempt > 0 ? () => { session.retry(); testedMode.current=null; setCalibrationAttempt(0) } : undefined}
+          onProfileRestored={()=>setReadyConfirmed(true)}
+          getTimingElapsed={session.getTimingElapsed}
+          timingHits={session.timingHits}
+          onCancelCalibration={session.cancelCalibration}
           instrument={ex.instrument}
           audioMode={session.audioMode}
           onMode={session.setAudioMode}
           inputLevel={session.inputLevel}
+          inputPeak={session.inputPeak}
           micOpen={session.isListening}
           micHeard={micHeard}
-          deviceLabel={deviceLabel}
+          deviceLabel={session.micDeviceLabel ?? null}
+          micSetup={session.selectMicDevice ? { getLiveAudioInput: session.getLiveAudioInput, devices: session.micDevices ?? [], selectedId: session.micDeviceId ?? '', muted: session.micMuted ?? false,
+            onSelect: async id => { setMicHeard(false); await session.selectMicDevice(id) },
+            onMute: session.toggleMicMute, onsets: session.micOnsets ?? [], onFloor: session.setMicDetectionFloor,
+            timingResult: session.calibrationData } : undefined}
           micError={session.isListening ? null : audioError}
-          onTestMic={() => { testedMode.current = session.audioMode; session.testMic() }}
+          onTestMic={() => {
+            setMicHeard(false)
+            micWaitForQuiet.current = session.inputLevel > 0.04
+            testedMode.current = session.audioMode
+            session.testMic()
+          }}
           calibrating={session.isCalibrating}
           calibrationBeat={session.calibrationBeat}
+          calibrationVisual={session.calibrationVisual}
           totalCalibrationBeats={session.totalCalibrationBeats}
           calibrationError={session.calibrationError}
           latencyMs={session.audioMode === 'midi' ? null : session.calibrationData?.latencyMs ?? null}
@@ -606,6 +686,7 @@ function ScoreExerciseSession({
     return (
       <div className="ps-lesson-results">
         <PartDone
+          onRecalibrate={preview ? undefined : recalibrate}
           stats={shown}
           bars={buildBarResults(session.exercise, session.eventResults, { reached })}
           previousBest={takeBaseline(savedBest, visitBaseline)}
@@ -625,7 +706,7 @@ function ScoreExerciseSession({
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-1.5">
                     <SlidersHorizontal className="h-3.5 w-3.5" />
-                    {t('dashboard.classViewer.exercise.playAlongWith')}
+                    <span className="sr-only">{t('dashboard.classViewer.exercise.playAlongWith')}</span>
                     <Badge variant={tracksOn === 0 ? 'outline' : 'secondary'} className="ml-0.5 tabular-nums">
                       {tracksOn}/{backingTracks.length}
                     </Badge>
@@ -645,6 +726,10 @@ function ScoreExerciseSession({
                     <button type="button" onClick={()=>setAllTracksMuted(true)} className="rounded border px-2 py-1 hover:bg-muted">{st('Mute all MP3s')}</button>
                     <button type="button" onClick={()=>setAllTracksMuted(false)} className="rounded border px-2 py-1 hover:bg-muted">{st('Enable all MP3s')}</button>
                   </div>
+                  <label className="flex flex-col gap-2 border-b border-border px-3 py-3 text-xs font-semibold">
+                    <span>{locale === 'es' ? 'Volumen maestro MP3' : 'MP3 master volume'} · <output className="tabular-nums">{Math.round(mp3Master * 100)}%</output></span>
+                    <input type="range" min={0} max={1} step={0.01} value={mp3Master} onChange={event => updateMp3Master(Number(event.target.value))} aria-label={locale === 'es' ? 'Volumen maestro MP3' : 'MP3 master volume'} className="w-full cursor-pointer accent-primary" />
+                  </label>
                   <ul className="flex max-h-[280px] flex-col overflow-y-auto py-1">
                     {backingTracks.map((track) => {
                       const entry = entryFor(track.id)
@@ -726,6 +811,13 @@ function ScoreExerciseSession({
             fill
           />
 
+          {readySeconds !== null && <div role="status" aria-live="polite" className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-black/45 text-white">
+            <span className="text-4xl font-bold">{locale === 'es' ? 'Listo' : 'Ready'}</span>
+            <strong className="text-6xl text-primary tabular-nums">{readySeconds}</strong>
+            <p>{locale === 'es' ? 'Prepárate; después escucharás la cuenta de entrada.' : 'Get ready; the count-in comes next.'}</p>
+            <Button variant="outline" onClick={cancelReady}>{locale === 'es' ? 'Cancelar' : 'Cancel'}</Button>
+          </div>}
+
           {(session.sessionState === 'playing' || session.sessionState === 'paused') && (
             <div className="ps-lesson-stage-title absolute left-5 top-[104px] z-20 flex flex-col gap-0.5 pointer-events-none">
               <span className="text-xs font-semibold text-white/60 tracking-wide drop-shadow-sm">
@@ -792,8 +884,44 @@ function ScoreExerciseSession({
     </>
   ) : null
 
+  const tempoLocked = session.sessionState === 'playing' || session.sessionState === 'countdown'
+  const metronomeSettings = <div className="space-y-3">
+    <div className="flex items-center gap-2">
+      <span className="flex-1 text-xs font-semibold">{st('Metronome')}</span>
+      <button type="button" aria-label={st('Reset original tempo')} title={st('Reset original tempo')}
+        disabled={tempoLocked} onClick={() => setTempoRate(1)}
+        className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary disabled:opacity-40">
+        <RotateCcw aria-hidden className="h-3.5 w-3.5" />
+      </button>
+      <button type="button" aria-label={locale === 'es' ? 'Activar metrónomo' : 'Enable metronome'}
+        aria-pressed={session.audioMetronome} onClick={() => session.setAudioMetronome(!session.audioMetronome)}
+        className={`grid h-7 w-7 place-items-center rounded-md border transition-colors ${session.audioMetronome ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-primary'}`}>
+        <Power aria-hidden className="h-3.5 w-3.5" />
+      </button>
+    </div>
+    <label className="block space-y-1.5">
+      <span className="flex items-baseline gap-2 text-xs"><span className="flex-1 text-muted-foreground">Tempo</span><output className="font-semibold tabular-nums text-primary">{Math.round(exercise.bpm)} <span className="text-[10px]">BPM</span></output></span>
+      <input className="block h-1.5 w-full cursor-pointer accent-primary disabled:cursor-default disabled:opacity-40"
+        aria-label="Tempo BPM" aria-valuetext={`${Math.round(exercise.bpm)} BPM`} type="range" min="0.5" max="1.5" step="0.01"
+        disabled={tempoLocked} value={tempoRate} onChange={event => setTempoRate(Number(event.target.value))} />
+      <span aria-hidden className="flex justify-between text-[10px] tabular-nums text-muted-foreground"><span>{Math.round(authoredExercise.bpm * .5)}</span><span>{Math.round(authoredExercise.bpm)}</span><span>{Math.round(authoredExercise.bpm * 1.5)}</span></span>
+    </label>
+    <label className="block space-y-1.5">
+      <span className="flex items-baseline gap-2 text-xs"><span className="flex-1 text-muted-foreground">{st('Volume')}</span><output className="tabular-nums">{Math.round(clickVolume * 100)}%</output></span>
+      <input className="block h-1.5 w-full cursor-pointer accent-primary" aria-label="Metronome volume" type="range" min="0" max="1" step="0.01" value={clickVolume} onChange={event => setClickVolume(Number(event.target.value))} />
+    </label>
+  </div>
+
+  const micCaptureStatus = !preview && micMode && session.sessionState === 'playing' && (
+        <p data-mic-capture-status className="px-3 text-xs text-muted-foreground">
+          {locale === 'es' ? 'Golpes recibidos' : 'Hits received'}: {session.detectedHitCount ?? 0}
+          {!session.isListening && <span className="ml-2 text-danger">{locale === 'es' ? 'Micrófono desconectado: detén la toma y vuelve a activarlo.' : 'Microphone disconnected: stop this take and enable it again.'}</span>}
+        </p>
+      )
+
   return (
     <div className="ps-lesson-game rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+      {hardwareTestOpen && <LoopbackLatency getLiveAudioInput={session.getLiveAudioInput} deviceLabel={session.micDeviceLabel ?? ''} onClose={()=>setHardwareTestOpen(false)} />}
       {isActive && inLesson && exerciseVideo && <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} hideMusicOption /></WorkspaceToolsPortal>}
       {isActive && !inLesson && (
         <div className="ps-lesson-game-heading flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5" data-has-tools={!!backingTracks?.length || !!exerciseVideo}>
@@ -853,7 +981,7 @@ function ScoreExerciseSession({
       )}
 
       {exerciseVideo && isActive && <div className="flex shrink-0 items-center gap-2 border-t border-border bg-card px-4 py-2">
-        <Button size="sm" variant="outline" aria-pressed={previewVideoAudible} onClick={() => setPreviewVideoAudible(v => !v)}>{previewVideoAudible ? <Volume2 className="h-4 w-4"/> : <VolumeX className="h-4 w-4"/>}{st('Video audio')}</Button>
+        <Button size="sm" variant="outline" aria-label={st('Video audio')} title={st('Video audio')} aria-pressed={previewVideoAudible} onClick={() => setPreviewVideoAudible(v => !v)}>{previewVideoAudible ? <Volume2 className="h-4 w-4"/> : <VolumeX className="h-4 w-4"/>}</Button>
         <input type="range" min="0" max="1" step="0.01" value={videoVolume} aria-label={st('Video volume')} className="w-28 accent-primary" onChange={e=>{setVideoVolume(Number(e.target.value));setPreviewVideoAudible(true);}}/>
         <output className="w-10 text-xs tabular-nums">{Math.round(videoVolume*100)}%</output>
       </div>}
@@ -868,22 +996,14 @@ function ScoreExerciseSession({
         }} />}
 
       {preview && isActive && <div role="toolbar" aria-label={st('Preview playback')} className="ps-lesson-preview-controls flex shrink-0 flex-wrap items-center gap-2 border-t border-border bg-card px-4 py-3">
-        <Button size="sm" disabled={session.backingTrackLoading || session.sessionState === 'playing' || session.sessionState === 'countdown'} onClick={() => { if (session.sessionState === 'paused') { primeMedia(); session.resumeExercise() } else start() }}>▶ {st('Play')}</Button>
-        <Button size="sm" variant="outline" disabled={session.sessionState !== 'playing'} onClick={session.pauseExercise}>Ⅱ {st('Pause')}</Button>
-        <Button size="sm" variant="outline" onClick={session.retry}>■ {st('Stop')}</Button>
+        <Button size="sm" disabled={session.backingTrackLoading || session.sessionState === 'playing' || session.sessionState === 'countdown'} onClick={() => { if (session.sessionState === 'paused') { primeMedia(); session.resumeExercise() } else start() }} aria-label={st('Play')} title={st('Play')}><Play aria-hidden className="h-4 w-4" fill="currentColor" /></Button>
+        <Button size="sm" variant="outline" disabled={session.sessionState !== 'playing'} onClick={session.pauseExercise} aria-label={st('Pause')} title={st('Pause')}><Pause aria-hidden className="h-4 w-4" fill="currentColor" /></Button>
+        <Button size="sm" variant="outline" onClick={() => { cancelReady(); session.retry() }} aria-label={st('Stop')} title={st('Stop')}><Square aria-hidden className="h-4 w-4" fill="currentColor" /></Button>
+        <Button type="button" size="sm" variant="outline" aria-label={st('Metronome')} title={st('Metronome')} aria-pressed={session.audioMetronome} onClick={() => session.setAudioMetronome(!session.audioMetronome)} className={session.audioMetronome ? 'border-primary/50 bg-primary/10 text-primary' : 'text-muted-foreground'}><Pendulum size="sm" swingStyle={{}} active={session.audioMetronome} /></Button>
         <Popover>
-          <PopoverTrigger asChild><Button size="sm" variant="outline" aria-label={st('Metronome')} title={st('Metronome')} className="text-primary"><Pendulum size="sm" swingStyle={{}} /></Button></PopoverTrigger>
-          <PopoverContent className="z-[220] w-56 space-y-3 p-3" align="start" side="top" sideOffset={8} aria-label={st('Metronome')}>
-            <div className="flex items-center justify-between text-xs font-semibold">{st('Metronome')}<Button size="sm" variant="outline" aria-pressed={session.audioMetronome} onClick={() => session.setAudioMetronome(!session.audioMetronome)} className="text-primary">{session.audioMetronome ? 'On' : 'Off'}</Button></div>
-            <label className="flex items-center justify-between text-xs">{st('Volume')}<output>{Math.round(clickVolume * 100)}%</output></label>
-            <input className="w-full accent-primary" aria-label="Metronome volume" type="range" min="0" max="1" step="0.01" value={clickVolume} onChange={e => setClickVolume(Number(e.target.value))}/>
-            <label className="block text-xs">{st('Tempo BPM')}</label>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" aria-label="Slower" className="text-primary" disabled={session.sessionState === 'playing' || session.sessionState === 'countdown'} onClick={() => setTempoRate(value => Math.max(.5, value - .05))}>−</Button>
-              <output className="flex-1 text-center text-sm tabular-nums">{Math.round(exercise.bpm)} BPM</output>
-              <Button size="sm" variant="outline" aria-label="Faster" className="text-primary" disabled={session.sessionState === 'playing' || session.sessionState === 'countdown'} onClick={() => setTempoRate(value => Math.min(1.5, value + .05))}>+</Button>
-            </div>
-            <Button size="sm" variant="ghost" className="w-full text-primary" disabled={session.sessionState === 'playing' || session.sessionState === 'countdown'} onClick={() => setTempoRate(1)}>{st('Reset original tempo')}</Button>
+          <PopoverTrigger asChild><Button size="sm" variant="outline" aria-label={locale === 'es' ? 'Ajustes del metrónomo' : 'Metronome settings'} title={locale === 'es' ? 'Ajustes del metrónomo' : 'Metronome settings'}><ChevronDown aria-hidden className="h-3.5 w-3.5" /></Button></PopoverTrigger>
+          <PopoverContent className="z-[220] w-56 rounded-xl p-3" align="start" side="top" sideOffset={8} aria-label={st('Metronome')}>
+            {metronomeSettings}
           </PopoverContent>
         </Popover>
         {inLesson && mixer}
@@ -892,9 +1012,12 @@ function ScoreExerciseSession({
 
       {!preview && inLesson && session.exercise && isActive && !showAudioModePrompt && !showPlaysenseTest && (
         <LessonAction>
+          {micCaptureStatus}
           <LessonTransport
             state={session.sessionState as 'selecting' | 'countdown' | 'playing' | 'paused'}
-            bpm={session.exercise.bpm}
+            bpm={exercise.bpm}
+            metronomeSettings={metronomeSettings}
+            calibrationControl={calibrationControl}
             countdownBeat={session.countdownBeat}
             click={session.audioMetronome}
             mix={mixer}
@@ -913,6 +1036,7 @@ function ScoreExerciseSession({
 
       {!preview && !inLesson && session.exercise && isActive && !showAudioModePrompt && !showPlaysenseTest && (
         <div className="ps-lesson-transport">
+        {calibrationControl}
         <NowPlayingBar
           exercise={session.exercise}
           sessionState={session.sessionState}
@@ -945,6 +1069,7 @@ function ScoreExerciseSession({
         </div>
       )}
 
+      {!inLesson && micCaptureStatus}
       {audioError && (
         <div className="m-4 p-3 rounded-xl border border-red-500/30 bg-destructive/10">
           <p className="text-sm text-muted-foreground">{audioError}</p>

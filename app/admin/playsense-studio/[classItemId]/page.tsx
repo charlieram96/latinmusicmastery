@@ -97,13 +97,14 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
   // (the student's Watch & Learn) and a separate graded score for the rhythm
   // highway. ExerciseStudio shells both workspaces behind a part toggle.
   if (mode === 'exerciseStudio') {
-    const sections = await getStudioScoreSectionsForClassItem(classItemId);
+    const [sections, scoreResult, mediaResult, drafts] = await Promise.all([
+      getStudioScoreSectionsForClassItem(classItemId),
+      classItem.score_document_id ? getScoreDocumentForClassItem(classItemId) : Promise.resolve(null),
+      getExerciseMedia(classItemId),
+      getStudioDrafts([{ kind: 'exercise', id: classItemId }]),
+    ]);
     if (sections.error) notFound();
-    const scoreResult = classItem.score_document_id
-      ? await getScoreDocumentForClassItem(classItemId)
-      : null;
-    const exerciseMedia = (await getExerciseMedia(classItemId)).data ?? DEFAULT_EXERCISE_MEDIA;
-    const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
+    const exerciseMedia = mediaResult.data ?? DEFAULT_EXERCISE_MEDIA;
     // A draft-load error must not open the Studio on live: the next edit would
     // autosave over the unseen draft, and Publish would push live-plus-edit.
     // Same handling as the sections path above.
@@ -151,10 +152,13 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
         <StudioSetup classItemId={classItemId} classItemTitle={classItem.title} backHref={backHref} />
       );
     }
-    const scoreResult = await getScoreDocumentForClassItem(classItemId);
+    const [scoreResult, mediaResult, drafts] = await Promise.all([
+      getScoreDocumentForClassItem(classItemId),
+      getExerciseMedia(classItemId),
+      getStudioDrafts([{ kind: 'exercise', id: classItemId }]),
+    ]);
     if (!scoreResult.data) notFound();
-    const exerciseMedia = (await getExerciseMedia(classItemId)).data ?? DEFAULT_EXERCISE_MEDIA;
-    const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
+    const exerciseMedia = mediaResult.data ?? DEFAULT_EXERCISE_MEDIA;
     // A draft-load error must not open the Studio on live: the next edit would
     // autosave over the unseen draft, and Publish would push live-plus-edit.
     // Same handling as the exerciseStudio branch above.
@@ -187,10 +191,11 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     );
   }
 
-  const result = await getScoreDocumentForClassItem(classItemId);
+  const [result, drafts] = await Promise.all([
+    getScoreDocumentForClassItem(classItemId),
+    getStudioDrafts([{ kind: 'exercise', id: classItemId }]),
+  ]);
   if (!result.data) notFound();
-
-  const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
   // A draft-load error must not open the Studio on live: the next edit would
   // autosave over the unseen draft, and Publish would push live-plus-edit.
   // Same handling as the sections path.

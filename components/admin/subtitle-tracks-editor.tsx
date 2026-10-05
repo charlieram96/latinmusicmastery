@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 // Up to MAX_SUBTITLE_TRACKS per-language subtitle rows for one lesson video.
 // Owns the row list locally and hands the parent the whole persisted array on
 // every change. A row added from the language picker is "pending" until a
@@ -95,8 +98,7 @@ export function SubtitleTracksEditor({ itemId, tracks, onChange }: SubtitleTrack
       ))}
 
       {atCap ? (
-        <p className="text-xs text-muted-foreground">
-          Maximum {MAX_SUBTITLE_TRACKS} subtitle tracks per video.
+        <p className="text-xs text-muted-foreground"> <AdminText text={"Maximum"} /> {MAX_SUBTITLE_TRACKS} subtitle tracks per video.
         </p>
       ) : available.length > 0 ? (
         // Keyed on the row set so the picker remounts empty after each add.
@@ -115,7 +117,7 @@ export function SubtitleTracksEditor({ itemId, tracks, onChange }: SubtitleTrack
           <SelectContent>
             {available.map((l) => (
               <SelectItem key={l.code} value={l.code}>
-                {l.label}
+                {<AdminText text={l.label} />}
                 <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">{l.code}</span>
               </SelectItem>
             ))}

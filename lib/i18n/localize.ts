@@ -1,3 +1,5 @@
+import { courseTitle } from './course-titles'
+import { stripLanguageLabels } from './content-labels'
 import type { Locale } from '@/lib/i18n'
 import { instrumentLabel } from '@/lib/i18n/instruments'
 
@@ -19,12 +21,13 @@ function hasValue(v: unknown): boolean {
 
 /** Pick the ES value when present & non-empty, else fall back to English. */
 export function pick<T>(locale: Locale, en: T, es: T): T {
-  return locale === 'es' && hasValue(es) ? es : en
+  const selected = locale === 'es' && hasValue(es) ? es : en
+  return typeof selected === 'string' ? courseTitle(selected, locale) as T : selected
 }
 
 /**
  * Localize a row IN PLACE: for each base field, overwrite it with `${field}_es`
- * when locale === 'es' and that variant is set. No-op for English. Returns the
+ * when locale === 'es' and that variant is set. Strip editorial language prefixes. Returns the
  * same row for convenience.
  */
 export function localizeRow<T extends Record<string, unknown>>(
@@ -32,14 +35,17 @@ export function localizeRow<T extends Record<string, unknown>>(
   locale: Locale,
   fields: readonly string[]
 ): T | null | undefined {
-  if (!row || locale !== 'es') return row
+  if (!row) return row
   const r = row as Record<string, unknown>
   for (const f of fields) {
     const es = r[`${f}_es`]
-    if (!hasValue(es)) continue
+    if (locale !== 'es' || !hasValue(es)) {
+      if (typeof r[f] === 'string') r[f] = f === 'title' ? courseTitle(stripLanguageLabels(r[f] as string), locale) : stripLanguageLabels(r[f] as string)
+      continue
+    }
     // Quiz `options` is structured JSON keyed by locale-invariant ids, so it is
     // merged onto the English value rather than swapped (see mergeLocalizedOptions).
-    r[f] = f === 'options' ? mergeLocalizedOptions(r[f], es) : es
+    r[f] = f === 'options' ? mergeLocalizedOptions(r[f], es) : typeof es === 'string' ? stripLanguageLabels(es) : es
   }
   return row
 }
@@ -109,7 +115,6 @@ export function localizeRows<T extends Record<string, unknown>>(
   fields: readonly string[]
 ): T[] {
   if (!rows) return []
-  if (locale !== 'es') return rows
   for (const row of rows) localizeRow(row, locale, fields)
   return rows
 }
@@ -168,7 +173,6 @@ export function localizeSectionTree<T extends Record<string, unknown>>(
   locale: Locale
 ): T[] {
   if (!sections) return []
-  if (locale !== 'es') return sections
   for (const section of sections) {
     localizeRow(section, locale, SECTION_FIELDS)
     const classes = section['classes'] as Record<string, unknown>[] | undefined
@@ -191,7 +195,7 @@ export function localizeCourse<T extends Record<string, unknown>>(
   course: T | null | undefined,
   locale: Locale
 ): T | null | undefined {
-  if (!course || locale !== 'es') return course
+  if (!course) return course
   localizeRow(course, locale, COURSE_FIELDS)
   const style = course['musical_style'] as Record<string, unknown> | undefined
   if (style) {

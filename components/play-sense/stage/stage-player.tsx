@@ -1,5 +1,6 @@
 'use client'
 
+import { useSpacePlayback } from '@/hooks/use-space-playback'
 import './stage.css'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -192,6 +193,8 @@ export function StagePlayer({ exercises, preview = false }: StagePlayerProps) {
       session.startExercise()
     }
   }
+
+  useSpacePlayback(!showAudioModePrompt && ['selecting', 'playing', 'paused'].includes(session.sessionState), onPlay)
 
   const rootCls = cn(
     'sv-root stage-page',

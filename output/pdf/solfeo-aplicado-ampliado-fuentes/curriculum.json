@@ -1,0 +1,1192 @@
+[
+  {
+    "module": "Módulo 1 · Elementos de la notación musical",
+    "lessons": [
+      {
+        "id": "nomenclatura",
+        "title": "1.1 · Origen y nombres de las notas",
+        "page": 15
+      },
+      {
+        "id": "pentagrama",
+        "title": "1.2 · Pentagrama, líneas y espacios",
+        "page": 16
+      },
+      {
+        "id": "sol",
+        "title": "1.3 · Clave de Sol y ubicación de las notas",
+        "page": 17
+      },
+      {
+        "id": "adicionales",
+        "title": "1.4 · Líneas adicionales y registros",
+        "page": 18
+      },
+      {
+        "id": "figuras",
+        "title": "1.5 · Figuras musicales y silencios",
+        "page": 19
+      },
+      {
+        "id": "relaciones",
+        "title": "1.6 · Relaciones de duración",
+        "page": 20
+      },
+      {
+        "id": "partes",
+        "title": "1.7 · Cabeza, plica, corchete y barra",
+        "page": 21
+      },
+      {
+        "id": "taller-1",
+        "title": "Taller · Identificación y escritura",
+        "page": 22
+      },
+      {
+        "id": "examen-m01",
+        "title": "Examen del módulo 1 · 10 preguntas",
+        "page": 23
+      }
+    ]
+  },
+  {
+    "module": "Módulo 2 · Pulso, compás y lectura inicial",
+    "lessons": [
+      {
+        "id": "pulso",
+        "title": "2.1 · Pulso, ritmo y tempo",
+        "page": 24
+      },
+      {
+        "id": "compas",
+        "title": "2.2 · Cifra de compás y líneas divisorias",
+        "page": 25
+      },
+      {
+        "id": "silencio-compas",
+        "title": "Silencio de compás completo",
+        "page": 26
+      },
+      {
+        "id": "unidades",
+        "title": "2.3 · Unidad de compás, tiempo y subdivisión",
+        "page": 27
+      },
+      {
+        "id": "unidades-cuadro",
+        "title": "Unidades métricas: cuadro comparativo",
+        "page": 28
+      },
+      {
+        "id": "compas-blanca-2",
+        "title": "Lectura en 2/4: la negra como pulso",
+        "page": 29
+      },
+      {
+        "id": "compas-blanca-3",
+        "title": "Lectura en 3/4: la negra como pulso",
+        "page": 30
+      },
+      {
+        "id": "compas-blanca-4",
+        "title": "Lectura en 4/4: la negra como pulso",
+        "page": 31
+      },
+      {
+        "id": "redondas",
+        "title": "2.4 · Lectura de redondas en 4/4",
+        "page": 32
+      },
+      {
+        "id": "combinaciones",
+        "title": "2.5 · Blancas, negras y silencios",
+        "page": 33
+      },
+      {
+        "id": "marcar-2",
+        "title": "2.6 · Marcación del compás de 2/4",
+        "page": 34
+      },
+      {
+        "id": "marcar-3",
+        "title": "2.7 · Marcación del compás de 3/4",
+        "page": 35
+      },
+      {
+        "id": "marcar-4",
+        "title": "2.8 · Marcación del compás de 4/4",
+        "page": 36
+      },
+      {
+        "id": "completar",
+        "title": "2.9 · Escritura y equivalencias métricas",
+        "page": 37
+      },
+      {
+        "id": "taller-2-a",
+        "title": "Taller A · Lectura rítmica y melódica",
+        "page": 38
+      },
+      {
+        "id": "taller-2-b",
+        "title": "Taller B · Entonación con preparación",
+        "page": 39
+      },
+      {
+        "id": "examen-m02",
+        "title": "Examen del módulo 2 · 10 preguntas",
+        "page": 40
+      }
+    ]
+  },
+  {
+    "module": "Módulo 3 · Alturas, tonos e intervalos",
+    "lessons": [
+      {
+        "id": "tonos",
+        "title": "3.1 · Tono y semitono",
+        "page": 41
+      },
+      {
+        "id": "alteraciones",
+        "title": "3.2 · Alteraciones y equivalencia enarmónica",
+        "page": 42
+      },
+      {
+        "id": "enarmonia-ejemplos",
+        "title": "Enarmonía y alteraciones dobles",
+        "page": 43
+      },
+      {
+        "id": "intervalo",
+        "title": "3.3 · Número y especie de los intervalos",
+        "page": 44
+      },
+      {
+        "id": "intervalos-0",
+        "title": "3.4 · Segundas",
+        "page": 45
+      },
+      {
+        "id": "intervalos-1",
+        "title": "3.5 · Terceras",
+        "page": 46
+      },
+      {
+        "id": "intervalos-2",
+        "title": "3.6 · Cuartas",
+        "page": 47
+      },
+      {
+        "id": "intervalos-3",
+        "title": "3.7 · Quintas",
+        "page": 48
+      },
+      {
+        "id": "intervalos-4",
+        "title": "3.8 · Sextas",
+        "page": 49
+      },
+      {
+        "id": "intervalos-5",
+        "title": "3.9 · Séptimas y octavas",
+        "page": 50
+      },
+      {
+        "id": "segundas-control-0",
+        "title": "Entonación de segundas mayores",
+        "page": 51
+      },
+      {
+        "id": "segundas-control-1",
+        "title": "Entonación de segundas menores",
+        "page": 52
+      },
+      {
+        "id": "terceras-control",
+        "title": "Entonación de terceras mayores y menores",
+        "page": 53
+      },
+      {
+        "id": "terceras-alteradas",
+        "title": "Terceras disminuidas y aumentadas",
+        "page": 54
+      },
+      {
+        "id": "intervalo-preparado-4",
+        "title": "Preparación de la cuarta justa",
+        "page": 55
+      },
+      {
+        "id": "intervalo-preparado-5",
+        "title": "Preparación de la quinta justa",
+        "page": 56
+      },
+      {
+        "id": "intervalo-preparado-6",
+        "title": "Preparación de la sexta mayor",
+        "page": 57
+      },
+      {
+        "id": "intervalo-preparado-7",
+        "title": "Preparación de la séptima mayor",
+        "page": 58
+      },
+      {
+        "id": "intervalo-preparado-8",
+        "title": "Preparación de la octava justa",
+        "page": 59
+      },
+      {
+        "id": "intervalos-simultaneos-0",
+        "title": "Intervalos armónicos",
+        "page": 60
+      },
+      {
+        "id": "intervalos-simultaneos-1",
+        "title": "Intervalos compuestos",
+        "page": 61
+      },
+      {
+        "id": "consonancia-contexto",
+        "title": "Consonancia, disonancia y contexto",
+        "page": 62
+      },
+      {
+        "id": "taller-3-a",
+        "title": "Taller A · Lectura rítmica y melódica",
+        "page": 63
+      },
+      {
+        "id": "taller-3-b",
+        "title": "Taller B · Entonación con preparación",
+        "page": 64
+      },
+      {
+        "id": "examen-m03",
+        "title": "Examen del módulo 3 · 10 preguntas",
+        "page": 65
+      }
+    ]
+  },
+  {
+    "module": "Módulo 4 · Subdivisión y organización rítmica",
+    "lessons": [
+      {
+        "id": "corcheas",
+        "title": "4.1 · Corcheas y semicorcheas",
+        "page": 66
+      },
+      {
+        "id": "semicorcheas-progresivas",
+        "title": "Semicorcheas: división y agrupación",
+        "page": 67
+      },
+      {
+        "id": "puntillos",
+        "title": "4.2 · Puntillo y ligadura de prolongación",
+        "page": 68
+      },
+      {
+        "id": "triple-puntillo",
+        "title": "Doble y triple puntillo: suma de duraciones",
+        "page": 69
+      },
+      {
+        "id": "sincopa",
+        "title": "4.3 · Síncopa, contratiempo y anacrusa",
+        "page": 70
+      },
+      {
+        "id": "sincopas-niveles",
+        "title": "Síncopa y contratiempo en distintos niveles",
+        "page": 71
+      },
+      {
+        "id": "compuestos",
+        "title": "4.4 · Compases simples y compuestos",
+        "page": 72
+      },
+      {
+        "id": "compuesto-practica-3-8",
+        "title": "Lectura en 3/8",
+        "page": 73
+      },
+      {
+        "id": "compuesto-practica-6-4",
+        "title": "Lectura en 6/4",
+        "page": 74
+      },
+      {
+        "id": "compuesto-practica-9-8",
+        "title": "Lectura en 9/8",
+        "page": 75
+      },
+      {
+        "id": "compuesto-practica-12-8",
+        "title": "Lectura en 12/8",
+        "page": 76
+      },
+      {
+        "id": "asimetricos",
+        "title": "4.5 · Compases de agrupación desigual",
+        "page": 77
+      },
+      {
+        "id": "irregulares-0",
+        "title": "4.6 · Dosillo, tresillo y cuatrosillo",
+        "page": 78
+      },
+      {
+        "id": "tresillos-variados-0",
+        "title": "Tresillos sobre la redonda",
+        "page": 79
+      },
+      {
+        "id": "tresillos-variados-1",
+        "title": "Tresillos sobre la blanca",
+        "page": 80
+      },
+      {
+        "id": "tresillos-variados-2",
+        "title": "Tresillos sobre la negra",
+        "page": 81
+      },
+      {
+        "id": "irregulares-1",
+        "title": "4.7 · Quintillo, seisillo y septillo",
+        "page": 82
+      },
+      {
+        "id": "seisillos-aplicados",
+        "title": "Tresillos y seisillos en la lectura melódica",
+        "page": 83
+      },
+      {
+        "id": "seisillo-agrupacion",
+        "title": "Seisillo y doble tresillo: agrupación interna",
+        "page": 84
+      },
+      {
+        "id": "irregulares-2",
+        "title": "4.8 · Octosillo y novesillo",
+        "page": 85
+      },
+      {
+        "id": "taller-4-a",
+        "title": "Taller A · Lectura rítmica y melódica",
+        "page": 86
+      },
+      {
+        "id": "taller-4-b",
+        "title": "Taller B · Entonación con preparación",
+        "page": 87
+      },
+      {
+        "id": "dictado-procedimiento",
+        "title": "Dictado rítmico y melódico",
+        "page": 88
+      },
+      {
+        "id": "examen-m04",
+        "title": "Examen del módulo 4 · 10 preguntas",
+        "page": 89
+      }
+    ]
+  },
+  {
+    "module": "Módulo 5 · Escalas, tonalidad y arpegios",
+    "lessons": [
+      {
+        "id": "escala",
+        "title": "5.1 · Escala mayor y grados tonales",
+        "page": 90
+      },
+      {
+        "id": "armaduras",
+        "title": "5.2 · Armaduras de clave",
+        "page": 91
+      },
+      {
+        "id": "orden-sostenidos",
+        "title": "5.3 · Orden de los sostenidos",
+        "page": 92
+      },
+      {
+        "id": "orden-bemoles",
+        "title": "5.4 · Orden de los bemoles",
+        "page": 93
+      },
+      {
+        "id": "menor",
+        "title": "5.5 · Relativa menor: tres formas",
+        "page": 94
+      },
+      {
+        "id": "menor-natural-lectura",
+        "title": "Lectura en Mi menor natural",
+        "page": 95
+      },
+      {
+        "id": "acordes",
+        "title": "5.6 · Tríadas y arpegios de dominante",
+        "page": 96
+      },
+      {
+        "id": "taller-5-a",
+        "title": "Taller A · Lectura rítmica y melódica",
+        "page": 97
+      },
+      {
+        "id": "taller-5-b",
+        "title": "Taller B · Entonación con preparación",
+        "page": 98
+      },
+      {
+        "id": "examen-m05",
+        "title": "Examen del módulo 5 · 10 preguntas",
+        "page": 99
+      }
+    ]
+  },
+  {
+    "module": "Módulo 6 · Lectura tonal progresiva",
+    "lessons": [
+      {
+        "id": "estudio-tonal",
+        "title": "6.1 · Procedimiento de lectura tonal",
+        "page": 100
+      },
+      {
+        "id": "tonal-0-mayor",
+        "title": "6.2 · Do mayor",
+        "page": 101
+      },
+      {
+        "id": "tonal-0-menor",
+        "title": "6.3 · La menor",
+        "page": 102
+      },
+      {
+        "id": "tonal-0-desc",
+        "title": "La menor: forma melódica y arpegios",
+        "page": 103
+      },
+      {
+        "id": "tonal-1-mayor",
+        "title": "6.4 · Sol mayor",
+        "page": 104
+      },
+      {
+        "id": "tonal-1-menor",
+        "title": "6.5 · Mi menor",
+        "page": 105
+      },
+      {
+        "id": "tonal-1-desc",
+        "title": "Mi menor: forma melódica y arpegios",
+        "page": 106
+      },
+      {
+        "id": "tonal-2-mayor",
+        "title": "6.6 · Fa mayor",
+        "page": 107
+      },
+      {
+        "id": "tonal-2-menor",
+        "title": "6.7 · Re menor",
+        "page": 108
+      },
+      {
+        "id": "tonal-2-desc",
+        "title": "Re menor: forma melódica y arpegios",
+        "page": 109
+      },
+      {
+        "id": "tonal-3-mayor",
+        "title": "6.8 · Re mayor",
+        "page": 110
+      },
+      {
+        "id": "tonal-3-menor",
+        "title": "6.9 · Si menor",
+        "page": 111
+      },
+      {
+        "id": "tonal-3-desc",
+        "title": "Si menor: forma melódica y arpegios",
+        "page": 112
+      },
+      {
+        "id": "tonal-4-mayor",
+        "title": "6.10 · Si bemol mayor",
+        "page": 113
+      },
+      {
+        "id": "tonal-4-menor",
+        "title": "6.11 · Sol menor",
+        "page": 114
+      },
+      {
+        "id": "tonal-4-desc",
+        "title": "Sol menor: forma melódica y arpegios",
+        "page": 115
+      },
+      {
+        "id": "tonal-5-mayor",
+        "title": "6.12 · La mayor",
+        "page": 116
+      },
+      {
+        "id": "tonal-5-menor",
+        "title": "6.13 · Fa sostenido menor",
+        "page": 117
+      },
+      {
+        "id": "tonal-5-desc",
+        "title": "Fa sostenido menor: forma melódica y arpegios",
+        "page": 118
+      },
+      {
+        "id": "tonal-6-mayor",
+        "title": "6.14 · Mi bemol mayor",
+        "page": 119
+      },
+      {
+        "id": "tonal-6-menor",
+        "title": "6.15 · Do menor",
+        "page": 120
+      },
+      {
+        "id": "tonal-6-desc",
+        "title": "Do menor: forma melódica y arpegios",
+        "page": 121
+      },
+      {
+        "id": "tonal-7-mayor",
+        "title": "6.16 · Mi mayor",
+        "page": 122
+      },
+      {
+        "id": "tonal-7-menor",
+        "title": "6.17 · Do sostenido menor",
+        "page": 123
+      },
+      {
+        "id": "tonal-7-desc",
+        "title": "Do sostenido menor: forma melódica y arpegios",
+        "page": 124
+      },
+      {
+        "id": "tonal-8-mayor",
+        "title": "6.18 · La bemol mayor",
+        "page": 125
+      },
+      {
+        "id": "tonal-8-menor",
+        "title": "6.19 · Fa menor",
+        "page": 126
+      },
+      {
+        "id": "tonal-8-desc",
+        "title": "Fa menor: forma melódica y arpegios",
+        "page": 127
+      },
+      {
+        "id": "tonal-9-mayor",
+        "title": "6.20 · Si mayor",
+        "page": 128
+      },
+      {
+        "id": "tonal-9-menor",
+        "title": "6.21 · Sol sostenido menor",
+        "page": 129
+      },
+      {
+        "id": "tonal-9-desc",
+        "title": "Sol sostenido menor: forma melódica y arpegios",
+        "page": 130
+      },
+      {
+        "id": "tonal-10-mayor",
+        "title": "6.22 · Re bemol mayor",
+        "page": 131
+      },
+      {
+        "id": "tonal-10-menor",
+        "title": "6.23 · Si bemol menor",
+        "page": 132
+      },
+      {
+        "id": "tonal-10-desc",
+        "title": "Si bemol menor: forma melódica y arpegios",
+        "page": 133
+      },
+      {
+        "id": "tonal-11-mayor",
+        "title": "6.24 · Fa sostenido mayor",
+        "page": 134
+      },
+      {
+        "id": "tonal-11-menor",
+        "title": "6.25 · Re sostenido menor",
+        "page": 135
+      },
+      {
+        "id": "tonal-11-desc",
+        "title": "Re sostenido menor: forma melódica y arpegios",
+        "page": 136
+      },
+      {
+        "id": "tonal-12-mayor",
+        "title": "6.26 · Sol bemol mayor",
+        "page": 137
+      },
+      {
+        "id": "tonal-12-menor",
+        "title": "6.27 · Mi bemol menor",
+        "page": 138
+      },
+      {
+        "id": "tonal-12-desc",
+        "title": "Mi bemol menor: forma melódica y arpegios",
+        "page": 139
+      },
+      {
+        "id": "tonal-13-mayor",
+        "title": "6.28 · Do sostenido mayor",
+        "page": 140
+      },
+      {
+        "id": "tonal-13-menor",
+        "title": "6.29 · La sostenido menor",
+        "page": 141
+      },
+      {
+        "id": "tonal-13-desc",
+        "title": "La sostenido menor: forma melódica y arpegios",
+        "page": 142
+      },
+      {
+        "id": "tonal-14-mayor",
+        "title": "6.30 · Do bemol mayor",
+        "page": 143
+      },
+      {
+        "id": "tonal-14-menor",
+        "title": "6.31 · La bemol menor",
+        "page": 144
+      },
+      {
+        "id": "tonal-14-desc",
+        "title": "La bemol menor: forma melódica y arpegios",
+        "page": 145
+      },
+      {
+        "id": "examen-m06",
+        "title": "Examen del módulo 6 · 10 preguntas",
+        "page": 146
+      }
+    ]
+  },
+  {
+    "module": "Módulo 7 · Cromatismo y consolidación",
+    "lessons": [
+      {
+        "id": "cromatica",
+        "title": "7.1 · Escala cromática",
+        "page": 147
+      },
+      {
+        "id": "consolidacion",
+        "title": "7.2 · Lectura y escritura integradas",
+        "page": 148
+      },
+      {
+        "id": "taller-7-a",
+        "title": "Taller A · Lectura rítmica y melódica",
+        "page": 149
+      },
+      {
+        "id": "taller-7-b",
+        "title": "Taller B · Entonación con preparación",
+        "page": 150
+      },
+      {
+        "id": "alteraciones-entonadas-0",
+        "title": "Entonación de alteraciones accidentales",
+        "page": 151
+      },
+      {
+        "id": "alteraciones-entonadas-1",
+        "title": "Entonación de alteraciones accidentales",
+        "page": 152
+      },
+      {
+        "id": "alteraciones-entonadas-2",
+        "title": "Entonación de alteraciones accidentales",
+        "page": 153
+      },
+      {
+        "id": "centros-tonales",
+        "title": "Referencias tonales y cambio de centro",
+        "page": 154
+      },
+      {
+        "id": "examen-m07",
+        "title": "Examen del módulo 7 · 10 preguntas",
+        "page": 155
+      }
+    ]
+  },
+  {
+    "module": "Módulo 8 · Expresión y articulación",
+    "lessons": [
+      {
+        "id": "dinamica",
+        "title": "8.1 · Dinámica y matices",
+        "page": 156
+      },
+      {
+        "id": "acentos",
+        "title": "8.2 · Acentos e intensidad puntual",
+        "page": 157
+      },
+      {
+        "id": "agogica",
+        "title": "8.3 · Tempo y agógica",
+        "page": 158
+      },
+      {
+        "id": "articulacion",
+        "title": "8.4 · Legato, staccato y portato",
+        "page": 159
+      },
+      {
+        "id": "fraseo",
+        "title": "8.5 · Fraseo, respiración y suspensión",
+        "page": 160
+      },
+      {
+        "id": "adornos",
+        "title": "8.6 · Ornamentos",
+        "page": 161
+      },
+      {
+        "id": "octavas",
+        "title": "Desplazamiento de octava: 8va y 8va bassa",
+        "page": 162
+      },
+      {
+        "id": "glissando",
+        "title": "Glissando y portamento",
+        "page": 163
+      },
+      {
+        "id": "apoyaturas",
+        "title": "Apoyaturas y notas de adorno",
+        "page": 164
+      },
+      {
+        "id": "adornos-realizados",
+        "title": "Adornos: signo y realización elegida",
+        "page": 165
+      },
+      {
+        "id": "taller-8-a",
+        "title": "Taller A · Lectura rítmica y melódica",
+        "page": 166
+      },
+      {
+        "id": "taller-8-b",
+        "title": "Taller B · Entonación con preparación",
+        "page": 167
+      },
+      {
+        "id": "examen-m08",
+        "title": "Examen del módulo 8 · 10 preguntas",
+        "page": 168
+      }
+    ]
+  },
+  {
+    "module": "Módulo 9 · Repetición, recorrido y abreviaturas",
+    "lessons": [
+      {
+        "id": "barras",
+        "title": "9.1 · Barras y signos de repetición",
+        "page": 169
+      },
+      {
+        "id": "casillas-tres",
+        "title": "Casillas de primera, segunda y tercera vez",
+        "page": 170
+      },
+      {
+        "id": "saltos",
+        "title": "9.2 · Da capo, dal segno, Fine y Coda",
+        "page": 171
+      },
+      {
+        "id": "saltos-2",
+        "title": "9.3 · Recorridos con Fine y Coda",
+        "page": 172
+      },
+      {
+        "id": "tremolo",
+        "title": "9.4 · Repetición abreviada y trémolo",
+        "page": 173
+      },
+      {
+        "id": "redoble",
+        "title": "9.5 · Redoble y duración escrita",
+        "page": 174
+      },
+      {
+        "id": "taller-9-a",
+        "title": "Taller A · Lectura rítmica y melódica",
+        "page": 175
+      },
+      {
+        "id": "taller-9-b",
+        "title": "Taller B · Entonación con preparación",
+        "page": 176
+      },
+      {
+        "id": "examen-m09",
+        "title": "Examen del módulo 9 · 10 preguntas",
+        "page": 177
+      }
+    ]
+  },
+  {
+    "module": "Módulo 10 · Claves y lectura en dos pentagramas",
+    "lessons": [
+      {
+        "id": "fa",
+        "title": "10.1 · Clave de Fa en cuarta línea",
+        "page": 178
+      },
+      {
+        "id": "fa-mapa-ampliado",
+        "title": "Clave de Fa: registro y líneas adicionales",
+        "page": 179
+      },
+      {
+        "id": "fa-estudio-1",
+        "title": "Lectura conjunta y terceras en clave de Fa",
+        "page": 180
+      },
+      {
+        "id": "fa-estudio-2",
+        "title": "Tresillos y alteraciones en clave de Fa",
+        "page": 181
+      },
+      {
+        "id": "fa-estudio-3",
+        "title": "Lectura con finales alternativos en clave de Fa",
+        "page": 182
+      },
+      {
+        "id": "do",
+        "title": "10.2 · Claves de Do",
+        "page": 183
+      },
+      {
+        "id": "do-primera",
+        "title": "Clave de Do en primera línea",
+        "page": 184
+      },
+      {
+        "id": "teclado",
+        "title": "10.3 · Registro y do central",
+        "page": 185
+      },
+      {
+        "id": "sistema",
+        "title": "10.4 · Sistema de dos pentagramas",
+        "page": 186
+      },
+      {
+        "id": "dos-voces",
+        "title": "10.5 · Lectura simultánea y ejercicio final",
+        "page": 187
+      },
+      {
+        "id": "independencia-0",
+        "title": "Coordinación de dos ritmos",
+        "page": 188
+      },
+      {
+        "id": "independencia-1",
+        "title": "Tres contra dos: subdivisiones simultáneas",
+        "page": 189
+      },
+      {
+        "id": "lectura-conjunto-indicaciones",
+        "title": "Lectura de conjunto: unísono y división de voces",
+        "page": 190
+      },
+      {
+        "id": "danza-conjunto-1",
+        "title": "Danza de cierre: acentuación cruzada · 1/4",
+        "page": 191
+      },
+      {
+        "id": "danza-conjunto-2",
+        "title": "Danza de cierre: acentuación cruzada · 2/4",
+        "page": 192
+      },
+      {
+        "id": "danza-conjunto-3",
+        "title": "Danza de cierre: acentuación cruzada · 3/4",
+        "page": 193
+      },
+      {
+        "id": "danza-conjunto-4",
+        "title": "Danza de cierre: acentuación cruzada · 4/4",
+        "page": 194
+      },
+      {
+        "id": "lectura-conjunta-retornos-1",
+        "title": "Lectura conjunta y signos de retorno · 1/3",
+        "page": 195
+      },
+      {
+        "id": "lectura-conjunta-retornos-2",
+        "title": "Lectura conjunta y signos de retorno · 2/3",
+        "page": 196
+      },
+      {
+        "id": "lectura-conjunta-retornos-3",
+        "title": "Lectura conjunta y signos de retorno · 3/3",
+        "page": 197
+      },
+      {
+        "id": "taller-10-a",
+        "title": "Taller A · Lectura rítmica y melódica",
+        "page": 198
+      },
+      {
+        "id": "taller-10-b",
+        "title": "Taller B · Entonación con preparación",
+        "page": 199
+      },
+      {
+        "id": "examen-m10",
+        "title": "Examen del módulo 10 · 10 preguntas",
+        "page": 200
+      }
+    ]
+  },
+  {
+    "module": "Repertorio progresivo de solfeo y entonación",
+    "lessons": [
+      {
+        "id": "repertorio-intro",
+        "title": "Repertorio progresivo de solfeo y entonación",
+        "page": 201
+      },
+      {
+        "id": "repertorio-01",
+        "title": "Lección 01 · Lectura conjunta en Do",
+        "page": 202
+      },
+      {
+        "id": "repertorio-01-2",
+        "title": "Lección 01 · Lectura conjunta en Do · continuación",
+        "page": 203
+      },
+      {
+        "id": "repertorio-02",
+        "title": "Lección 02 · Blancas y dirección melódica",
+        "page": 204
+      },
+      {
+        "id": "repertorio-02-2",
+        "title": "Lección 02 · Blancas y dirección melódica · continuación",
+        "page": 205
+      },
+      {
+        "id": "repertorio-03",
+        "title": "Lección 03 · Organización ternaria",
+        "page": 206
+      },
+      {
+        "id": "repertorio-03-2",
+        "title": "Lección 03 · Organización ternaria · continuación",
+        "page": 207
+      },
+      {
+        "id": "repertorio-04",
+        "title": "Lección 04 · Silencios y continuidad",
+        "page": 208
+      },
+      {
+        "id": "repertorio-04-2",
+        "title": "Lección 04 · Silencios y continuidad · continuación",
+        "page": 209
+      },
+      {
+        "id": "repertorio-05",
+        "title": "Lección 05 · Terceras preparadas",
+        "page": 210
+      },
+      {
+        "id": "repertorio-05-2",
+        "title": "Lección 05 · Terceras preparadas · continuación",
+        "page": 211
+      },
+      {
+        "id": "repertorio-06",
+        "title": "Lección 06 · Subdivisión binaria",
+        "page": 212
+      },
+      {
+        "id": "repertorio-06-2",
+        "title": "Lección 06 · Subdivisión binaria · continuación",
+        "page": 213
+      },
+      {
+        "id": "repertorio-07",
+        "title": "Lección 07 · Puntillo y compensación rítmica",
+        "page": 214
+      },
+      {
+        "id": "repertorio-07-2",
+        "title": "Lección 07 · Puntillo y compensación rítmica · continuación",
+        "page": 215
+      },
+      {
+        "id": "repertorio-08",
+        "title": "Lección 08 · Síncopa y apoyo métrico",
+        "page": 216
+      },
+      {
+        "id": "repertorio-08-2",
+        "title": "Lección 08 · Síncopa y apoyo métrico · continuación",
+        "page": 217
+      },
+      {
+        "id": "repertorio-09",
+        "title": "Lección 09 · Entonación en Sol mayor",
+        "page": 218
+      },
+      {
+        "id": "repertorio-09-2",
+        "title": "Lección 09 · Entonación en Sol mayor · continuación",
+        "page": 219
+      },
+      {
+        "id": "repertorio-10",
+        "title": "Lección 10 · Entonación en Fa mayor",
+        "page": 220
+      },
+      {
+        "id": "repertorio-10-2",
+        "title": "Lección 10 · Entonación en Fa mayor · continuación",
+        "page": 221
+      },
+      {
+        "id": "repertorio-11",
+        "title": "Lección 11 · La menor y sensible",
+        "page": 222
+      },
+      {
+        "id": "repertorio-11-2",
+        "title": "Lección 11 · La menor y sensible · continuación",
+        "page": 223
+      },
+      {
+        "id": "repertorio-12",
+        "title": "Lección 12 · Re menor y fraseo",
+        "page": 224
+      },
+      {
+        "id": "repertorio-12-2",
+        "title": "Lección 12 · Re menor y fraseo · continuación",
+        "page": 225
+      },
+      {
+        "id": "repertorio-13",
+        "title": "Lección 13 · Re mayor y dominante",
+        "page": 226
+      },
+      {
+        "id": "repertorio-13-2",
+        "title": "Lección 13 · Re mayor y dominante · continuación",
+        "page": 227
+      },
+      {
+        "id": "repertorio-14",
+        "title": "Lección 14 · Si bemol mayor y matices",
+        "page": 228
+      },
+      {
+        "id": "repertorio-14-2",
+        "title": "Lección 14 · Si bemol mayor y matices · continuación",
+        "page": 229
+      },
+      {
+        "id": "repertorio-15",
+        "title": "Lección 15 · Subdivisión ternaria en Sol",
+        "page": 230
+      },
+      {
+        "id": "repertorio-15-2",
+        "title": "Lección 15 · Subdivisión ternaria en Sol · continuación",
+        "page": 231
+      },
+      {
+        "id": "repertorio-16",
+        "title": "Lección 16 · Mi menor y contraste agógico",
+        "page": 232
+      },
+      {
+        "id": "repertorio-16-2",
+        "title": "Lección 16 · Mi menor y contraste agógico · continuación",
+        "page": 233
+      },
+      {
+        "id": "repertorio-17",
+        "title": "Lección 17 · Cromatismo y becuadro",
+        "page": 234
+      },
+      {
+        "id": "repertorio-17-2",
+        "title": "Lección 17 · Cromatismo y becuadro · continuación",
+        "page": 235
+      },
+      {
+        "id": "repertorio-18",
+        "title": "Lección 18 · Tresillos y quintillos",
+        "page": 236
+      },
+      {
+        "id": "repertorio-18-2",
+        "title": "Lección 18 · Tresillos y quintillos · continuación",
+        "page": 237
+      },
+      {
+        "id": "repertorio-19",
+        "title": "Lección 19 · Repeticiones y finales alternativos",
+        "page": 238
+      },
+      {
+        "id": "repertorio-19-2",
+        "title": "Lección 19 · Repeticiones y finales alternativos · continuación",
+        "page": 239
+      },
+      {
+        "id": "repertorio-20",
+        "title": "Lección 20 · Estudio de integración en Do",
+        "page": 240
+      },
+      {
+        "id": "repertorio-20-2",
+        "title": "Lección 20 · Estudio de integración en Do · continuación",
+        "page": 241
+      }
+    ]
+  }
+]

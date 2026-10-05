@@ -1,3 +1,6 @@
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRow, localizeRows, COURSE_FIELDS, STYLE_FIELDS, COUNTRY_FIELDS } from '@/lib/i18n/localize'
+import { AdminText } from '@/components/admin/admin-text'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -6,21 +9,28 @@ import { Plus, Music, BookOpen, Globe } from 'lucide-react'
 import { DeleteStyleButton } from '@/components/admin/delete-style-button'
 
 export default async function StylesPage() {
+  const locale = await getServerLocale()
   const supabase = await createClient()
 
   const { data: styles } = await supabase
     .from('musical_styles')
     .select(`
       *,
-      country:countries(name, slug),
-      courses(id, title)
+      country:countries(name, name_es, slug),
+      courses(id, title, title_es)
     `)
     .order('name')
+
+  for (const style of styles ?? []) {
+    localizeRow(style, locale, STYLE_FIELDS)
+    localizeRow(style.country, locale, COUNTRY_FIELDS)
+    localizeRows(style.courses, locale, COURSE_FIELDS)
+  }
 
   // Group by country for display
   const byCountry = new Map<string, any[]>()
   styles?.forEach((style: any) => {
-    const country = style.country?.name || 'Unknown'
+    const country = style.country?.name || (locale === 'es' ? 'Sin país' : 'Unknown')
     if (!byCountry.has(country)) byCountry.set(country, [])
     byCountry.get(country)!.push(style)
   })
@@ -30,14 +40,12 @@ export default async function StylesPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-1">Musical Styles</h1>
-          <p className="text-muted-foreground">Manage musical styles by country</p>
+          <h1 className="text-4xl font-bold tracking-tight mb-1"><AdminText text={"Musical Styles"} /></h1>
+          <p className="text-muted-foreground"><AdminText text={"Manage musical styles by country"} /></p>
         </div>
         <Button asChild>
           <Link href="/admin/styles/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Style
-          </Link>
+            <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Style"} /> </Link>
         </Button>
       </div>
 
@@ -48,14 +56,14 @@ export default async function StylesPage() {
             <Music className="w-4 h-4 text-purple-500" />
           </div>
           <div className="text-3xl font-bold">{styles?.length || 0}</div>
-          <div className="text-sm text-muted-foreground">Musical Styles</div>
+          <div className="text-sm text-muted-foreground"><AdminText text={"Musical Styles"} /></div>
         </div>
         <div className="rounded-xl border bg-card p-5 inline-flex flex-col">
           <div className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-blue-500/10 mb-2">
             <Globe className="w-4 h-4 text-blue-500" />
           </div>
           <div className="text-3xl font-bold">{byCountry.size}</div>
-          <div className="text-sm text-muted-foreground">Countries</div>
+          <div className="text-sm text-muted-foreground"><AdminText text={"Countries"} /></div>
         </div>
       </div>
 
@@ -103,8 +111,7 @@ export default async function StylesPage() {
                               href={`/admin/courses?style=${style.id}`}
                               className="inline-flex rounded-md border bg-secondary/40 px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                             >
-                              +{courseCount - 3} more
-                            </Link>
+                              +{courseCount - 3} <AdminText text={"more"} /> </Link>
                           )}
                         </div>
                       )}
@@ -112,7 +119,7 @@ export default async function StylesPage() {
                         <span className="text-xs text-muted-foreground/60 font-mono">/{style.slug}</span>
                         <div className="flex items-center gap-1">
                           <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
-                            <Link href={`/admin/styles/${style.id}`}>Edit</Link>
+                            <Link href={`/admin/styles/${style.id}`}><AdminText text={"Edit"} /></Link>
                           </Button>
                           <DeleteStyleButton
                             styleId={style.id}
@@ -122,13 +129,11 @@ export default async function StylesPage() {
                         </div>
                       </div>
                       {courseCount > 0 && (
-                        <p className="mt-2 text-[11px] text-muted-foreground">
-                          To delete, first{' '}
+                        <p className="mt-2 text-[11px] text-muted-foreground"> <AdminText text={"To delete, first"} />{' '}
                           <Link
                             href={`/admin/courses?style=${style.id}`}
                             className="underline underline-offset-2 hover:text-foreground"
-                          >
-                            reassign or delete the {courseCount} course{courseCount === 1 ? '' : 's'}
+                          > <AdminText text={"reassign or delete the"} /> {courseCount} <AdminText text={"course"} />{courseCount === 1 ? '' : 's'}
                           </Link>
                           .
                         </p>
@@ -143,9 +148,9 @@ export default async function StylesPage() {
       ) : (
         <div className="rounded-xl border bg-card p-12 text-center">
           <Music className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-muted-foreground text-sm mb-4">No styles yet. Add musical styles to organize your courses.</p>
+          <p className="text-muted-foreground text-sm mb-4"><AdminText text={"No styles yet. Add musical styles to organize your courses."} /></p>
           <Button asChild>
-            <Link href="/admin/styles/new">Add Style</Link>
+            <Link href="/admin/styles/new"><AdminText text={"Add Style"} /></Link>
           </Button>
         </div>
       )}

@@ -1,3 +1,5 @@
+import { EffectsPlayer } from '@/components/playsense-studio/studio/video-effects-preview'
+import { SOBAO_EFFECTS_ITEM_ID, SOBAO_EFFECTS_TITLE } from '@/lib/playsense-studio/video-preview-cues'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { Badge } from '@/components/ui/badge'
@@ -96,21 +98,14 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
     item.score_document_id &&
     (playsenseStudioMediaUrl || item.item_type === 'EXERCISE' || item.item_type === 'JAM_SESSION')
 
-  const playsenseStudioData =
-    playsenseStudioEnabled && needsScore
-      ? (await getScoreDocumentForClassItem(item.id)).data ?? null
-      : null
-
-  // VIDEO lessons carry MULTIPLE scored sections, each active over a video
-  // time-range. EXERCISE items reuse the same model for their WATCH part (the
-  // demo video synced to notation). Fetch them and keep the ones that are
-  // placed + published.
-  const videoSections =
-    (item.item_type === 'VIDEO' || item.item_type === 'EXERCISE') &&
-    playsenseStudioEnabled &&
-    !!item.video_url
-      ? (await getScoreSectionsForClassItem(item.id)).data ?? []
-      : []
+  // Both lookups are independent: do not make a tab wait for two serial requests.
+  const [scoreResult, sectionsResult] = await Promise.all([
+    playsenseStudioEnabled && needsScore ? getScoreDocumentForClassItem(item.id) : Promise.resolve(null),
+    (item.item_type === 'VIDEO' || item.item_type === 'EXERCISE') && playsenseStudioEnabled && !!item.video_url
+      ? getScoreSectionsForClassItem(item.id) : Promise.resolve(null),
+  ])
+  const playsenseStudioData = scoreResult?.data ?? null
+  const videoSections = sectionsResult?.data ?? []
   const playerSections = videoSections
     .filter((s) => s.videoStartSeconds != null && s.activeTimeMap != null)
     .map((s) => ({
@@ -328,6 +323,19 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
               play={exerciseMedia?.play ?? null}
               teacherName={teacherName}
             />
+          ) : item.id === SOBAO_EFFECTS_ITEM_ID && (item.video_url || exerciseVideo?.url) ? (
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+              <EffectsPlayer
+                key={item.id}
+                videoUrl={(item.video_url || exerciseVideo?.url)!}
+                es={locale === 'es'}
+                showSobao
+                title={SOBAO_EFFECTS_TITLE}
+                bpm={item.bpm ?? 120}
+                anchorSeconds={item.metronome_anchor_seconds ?? 0}
+                preview={false}
+              />
+            </div>
           ) : item.video_url ? (
             <LessonVideoPlayer
             metronome={{bpm:item.bpm??120,anchorSeconds:item.metronome_anchor_seconds??null}}

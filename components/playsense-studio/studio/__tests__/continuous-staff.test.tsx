@@ -184,7 +184,7 @@ describe('ContinuousStaff', () => {
 });
 
 describe('Sync rhythmic alignment', () => {
-  it('keeps bar timing and later attacks exact while giving downbeats reading space after the separator', async () => {
+  it('centers downbeats and later attacks on their exact waveform times at different zoom and flex settings', async () => {
     const centers:number[]=[];
     const original=StaveNote.prototype.draw;
     const spy=vi.spyOn(StaveNote.prototype,'draw').mockImplementation(function(this:StaveNote) {
@@ -199,7 +199,7 @@ describe('Sync rhythmic alignment', () => {
       act(()=>root.render(show(qn=>qn/2)));
       // Render window starts at -800, hence local SVG coordinates include 800.
       expect(centers).toHaveLength(4);
-      centers.forEach((x,i)=>expect(x-800).toBeCloseTo([17,150,317,450][i],5));
+      centers.forEach((x,i)=>expect(x-800).toBeCloseTo([0,150,300,450][i],5));
       centers.length=0;
       const stretched=items.map((item,i)=>({...item,
         startVideoTimeSeconds:i===0?0:3,endVideoTimeSeconds:i===0?3:5}));
@@ -207,13 +207,13 @@ describe('Sync rhythmic alignment', () => {
       act(()=>root.render(show(qn=>qn<=4?qn*0.75:3+(qn-4)/2,stretched)));
       await act(async()=>{ await new Promise(r=>setTimeout(r,40)); });
       expect(centers).toHaveLength(4);
-      centers.forEach((x,i)=>expect(x-800).toBeCloseTo([17,225,467,600][i],5));
+      centers.forEach((x,i)=>expect(x-800).toBeCloseTo([0,225,450,600][i],5));
       centers.length=0;
       // A beat adjustment without changing bar boundaries must also redraw.
       act(()=>root.render(show(qn=>({0:0,2:1.6,4:3,6:4.2}[qn]??0),stretched,200)));
       await act(async()=>{ await new Promise(r=>setTimeout(r,40)); });
       expect(centers).toHaveLength(4);
-      centers.forEach((x,i)=>expect(x-800).toBeCloseTo([17,320,617,840][i],5));
+      centers.forEach((x,i)=>expect(x-800).toBeCloseTo([0,320,600,840][i],5));
     } finally { spy.mockRestore(); }
   });
 });

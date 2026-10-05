@@ -25,6 +25,7 @@
 // usable as soon as a score document is attached, with sync polish coming
 // from M7's authoring tools.
 
+import { useSpacePlayback } from '@/hooks/use-space-playback'
 import {lessonMetronomeGrid,type LessonMetronome} from '@/lib/playsense-studio/lesson-metronome';
 import {ScoreHeading} from '../shared/score-heading';
 import {scorePlaybackRate} from '@/lib/playsense-studio/playback-tempo';
@@ -639,6 +640,8 @@ export function PlaysenseStudioPlayer({
     clampSeek(firstBeatMedia);
     void countIn.start({bpm:score.initialTempo*displayedRate,denominator:score.initialTimeSignature[1],beats:score.initialTimeSignature[0],bars:countInBars,volume:clickVolume||.2},()=>{void videoRef.current?.play().catch(()=>{});});
   };
+
+  useSpacePlayback(true, toggleCountedPlayback);
 
   const transportEl = (
     <TransportBar

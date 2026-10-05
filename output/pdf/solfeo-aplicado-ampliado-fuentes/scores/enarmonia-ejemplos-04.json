@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "2.0",
+  "id": "enarmonia-ejemplos-04",
+  "title": {
+    "es": "Si doble bemol y La natural · misma altura"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "enarmonia-ejemplos-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Bbb4",
+      "dur": 1
+    },
+    {
+      "id": "enarmonia-ejemplos-04.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Si doble bemol y La natural · misma altura",
+    "events": [
+      {
+        "pitch": "Bbb4",
+        "dur": 1
+      },
+      {
+        "pitch": "A4",
+        "dur": 1
+      }
+    ]
+  }
+}

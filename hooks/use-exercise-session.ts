@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { TIMING_TEST_ITEM } from '@/lib/playsense-studio/local-exercise-timing-reset'
+import { readTimingCompensation } from '@/lib/audio/timing-compensation'
 import type {
   ExerciseDefinition,
+  OnsetEvent,
   SessionState,
   EventResult,
   AttemptStats,
@@ -19,6 +22,11 @@ import type { BackingMix } from '@/lib/play-sense/backing-mix'
 import { useBackingTrack, type PlacedBackingTrack } from './use-backing-track'
 import { usePlaysenseOnsets } from './use-playsense-onsets'
 import { useMidiOnsets } from './use-midi-onsets'
+import { sessionLatencyMs } from '@/lib/audio/session-latency'
+import { applyRhythmGrade } from '@/lib/play-sense/rhythm-grade'
+import { evaluateRhythm } from '@/lib/play-sense/rhythm-evaluation'
+import { audibleTime } from '@/lib/audio/audible-clock'
+import { microphoneTiming, MIC_PRACTICE_ALLOWANCE_MS } from '@/lib/play-sense/microphone-timing'
 import { consumeOnsets } from '@/lib/play-sense/input-events'
 
 import { availableInputModes, type AudioMode } from '@/lib/play-sense/input-modes'
@@ -68,12 +76,26 @@ interface UseExerciseSessionResult {
   hasPermission: boolean | null
   audioError: string | null
   inputLevel: number
+  inputPeak: number
+  getLiveAudioInput: () => import('@/lib/audio/live-audio-input').LiveAudioInput | null
+  micDevices: MediaDeviceInfo[]
+  micDeviceId: string
+  micDeviceLabel: string | null
+  micMuted: boolean
+  selectMicDevice: (id: string) => Promise<void>
+  toggleMicMute: () => void
+  micOnsets: OnsetEvent[]
+  setMicDetectionFloor: (value: number | null, sampling?: boolean) => void
   noisyRoomMode: boolean
 
   // Calibration
   calibrationData: ReturnType<typeof useCalibration>['calibrationData']
   isCalibrating: boolean
   calibrationBeat: number
+  calibrationVisual: ReturnType<typeof useCalibration>['calibrationVisual']
+  getTimingElapsed: ReturnType<typeof useCalibration>['getTimingElapsed']
+  timingHits: ReturnType<typeof useCalibration>['timingHits']
+  cancelCalibration: () => void
   totalCalibrationBeats: number
   calibrationError: string | null
 
@@ -95,6 +117,7 @@ interface UseExerciseSessionResult {
   currentScore: number
   currentCombo: number
   currentAccuracy: number
+  detectedHitCount: number
   tempoDrift: number
   lastHitGrade: string | null
   detectedMidiNote: number | null
@@ -122,6 +145,8 @@ interface UseExerciseSessionResult {
 }
 
 export interface UseExerciseSessionOptions {
+  /** Initial click state when entering a new exercise. */
+  defaultAudioMetronome?: boolean
   metronomeVolume?: number
   playbackRate?: number
   /**
@@ -162,7 +187,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const [attemptStats, setAttemptStats] = useState<AttemptStats | null>(null)
   const [countdownBeat, setCountdownBeat] = useState(0)
   const [noisyRoomMode, setNoisyRoomMode] = useState(false)
-  const [audioMetronome, setAudioMetronome] = useState(false)
+  const [audioMetronome, setAudioMetronome] = useState(options.defaultAudioMetronome ?? false)
   const [playheadProgress, setPlayheadProgress] = useState(0)
   const [currentScore, setCurrentScore] = useState(0)
   const [currentCombo, setCurrentCombo] = useState(0)
@@ -176,6 +201,10 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const expectedEventsRef = useRef<ExpectedEvent[]>([])
   const matchedIndicesRef = useRef<Set<number>>(new Set())
   const extraHitsRef = useRef(0)
+  const micLatencyRef = useRef(0)
+  const manualMicTimingTestRef = useRef(false)
+  const presetMicTimingRef = useRef(false)
+  const observedTimesRef = useRef<number[]>([])
   const exerciseStartTimeRef = useRef(0)
   const exerciseDurationRef = useRef(0)
   const singleLoopDurationRef = useRef(0)
@@ -200,6 +229,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   // Deferred pitch grading: pending timeouts for pitched onsets where pitch was null at onset time
   const pendingPitchTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
 
+  const [micMuted, setMicMuted] = useState(false)
   const micAudioMode = (audioMode === 'headphones' || audioMode === 'speaker-safe') ? audioMode : undefined
   const micOnsets = useOnsetDetection({ noisyRoomMode, instrument: exercise?.instrument, audioMode: micAudioMode })
   const bleOnsets = usePlaysenseOnsets(exercise?.instrument ?? null)
@@ -287,17 +317,19 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   }, [])
 
   const setAudioMode = useCallback((mode: AudioMode) => {
+    if (mode === audioMode) return
     if (sessionStateRef.current === 'playing' || sessionStateRef.current === 'countdown') return
     stopMicListening(); stopBleListening(); stopMidiListening()
     audioCtxRef.current = null
     setAudioModeState(mode)
     try { localStorage.setItem(AUDIO_MODE_STORAGE_KEY, mode) } catch { /* optional preference */ }
-  }, [stopMicListening, stopBleListening, stopMidiListening])
+  }, [stopMicListening, stopBleListening, stopMidiListening, audioMode])
 
   // Mic testing — opens the mic so user can see level meter without starting an exercise
   const [isMicTesting, setIsMicTesting] = useState(false)
 
   const testMic = useCallback(async () => {
+    setMicMuted(false)
     let audioCtx: AudioContext | null = null
     try {
       if (options.playbackOnly) {
@@ -319,6 +351,16 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     }
   }, [startListening])
 
+  // The mic wizard remains on Ready check after Timing, ready for instrument hits.
+  const wasCalibrating = useRef(false)
+  useEffect(() => {
+    if (wasCalibrating.current && audioMode !== 'playsense' && audioMode !== 'midi' && sessionState === 'calibrating' && !calibration.isCalibrating) {
+      sessionStateRef.current = 'selecting'
+      setSessionState('selecting')
+    }
+    wasCalibrating.current = calibration.isCalibrating
+  }, [audioMode, sessionState, calibration.isCalibrating])
+
   const stopTestMic = useCallback(() => {
     stopListening()
     setIsMicTesting(false)
@@ -329,7 +371,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
 
   // Keep refs in sync for rAF callback access
   useEffect(() => {
-    calibrationDataRef.current = audioMode === 'midi' ? null : calibration.calibrationData
+    calibrationDataRef.current = audioMode === 'playsense' ? calibration.calibrationData : null
   }, [calibration.calibrationData, audioMode])
 
   useEffect(() => {
@@ -348,12 +390,13 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   useEffect(() => {
     if (sessionState !== 'playing' || !exercise) return
 
-    const calibOffset = isMidiMode ? 0 : (calibration.calibrationData?.latencyMs || 0) / 1000
-    const widenMs = !isMidiMode && calibration.calibrationData && calibration.calibrationData.iqrMs > 30 ? 15 : 0
+    const calibOffset = isPlaysenseMode ? (calibration.calibrationData?.latencyMs || 0) / 1000 : !isMidiMode ? micLatencyRef.current / 1000 : 0
+    const widenMs = isPlaysenseMode ? (calibration.calibrationData && calibration.calibrationData.iqrMs > 30 ? 15 : 0) : !isMidiMode && getInstrumentCategory(exercise.instrument) === 'percussion' ? MIC_PRACTICE_ALLOWANCE_MS : 0
 
     const earliestOnset = exerciseStartTimeRef.current + calibOffset - (TOLERANCE_BY_DIFFICULTY[exercise.difficulty].ok + widenMs) / 1000
     const newOnsets = consumeOnsets(recentOnsets, seenOnsetsRef.current, earliestOnset)
     if (newOnsets.length === 0) return
+    observedTimesRef.current.push(...newOnsets.map(onset => onset.timestamp - exerciseStartTimeRef.current - calibOffset))
     const category = getInstrumentCategory(exercise.instrument)
     const publishResults = (grade: string) => {
       eventResultsRef.current = orderSessionResults(eventResultsRef.current, expectedEventsRef.current)
@@ -361,7 +404,8 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
       setEventResults(eventResultsRef.current)
       setLastHitGrade(grade)
       setCurrentCombo(liveComboRef.current)
-      const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
+      const rawStats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
+      const stats = !isMidiMode && !isPlaysenseMode && instrumentCategoryRef.current === 'percussion' ? applyRhythmGrade(rawStats) : rawStats
       setCurrentScore(stats.score)
       setCurrentAccuracy(stats.accuracy)
       setTempoDrift(stats.tempoDriftMs)
@@ -526,7 +570,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
         extraHitsRef.current++
       }
     }
-  }, [recentOnsets, sessionState, exercise, calibration.calibrationData, isMidiMode, chromaByOnsetRef, getFrequency])
+  }, [recentOnsets, sessionState, exercise, calibration.calibrationData, isMidiMode, isPlaysenseMode, chromaByOnsetRef, getFrequency])
 
   // Playhead animation and exercise end detection
   const updatePlayhead = useCallback(() => {
@@ -570,7 +614,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     // Detect missed events in real-time: any unmatched event whose ok window has passed
     // Use missDetectedIndicesRef (not matchedIndicesRef) so gradeSingleOnset can still
     // match late onsets that arrive after the miss window
-    const calibOffset = (calibrationDataRef.current?.latencyMs || 0) / 1000
+    const calibOffset = (isPlaysenseMode ? calibrationDataRef.current?.latencyMs || 0 : !isMidiMode ? micLatencyRef.current : 0) / 1000
     const difficulty = exerciseDifficultyRef.current
     const okWindowSec = (TOLERANCE_BY_DIFFICULTY[difficulty].ok + 200) / 1000 // generous buffer for late hits
     const correctedTime = elapsed - calibOffset
@@ -606,7 +650,8 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
       setEventResults(eventResultsRef.current)
       setCurrentCombo(liveComboRef.current)
       setLastHitGrade('miss')
-      const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
+      const rawStats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
+      const stats = !isMidiMode && !isPlaysenseMode && instrumentCategoryRef.current === 'percussion' ? applyRhythmGrade(rawStats) : rawStats
       setCurrentScore(stats.score)
       setCurrentAccuracy(stats.accuracy)
     }
@@ -618,7 +663,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     }
 
     rafRef.current = requestAnimationFrame(updatePlayhead)
-  }, [getFrequency])
+  }, [getFrequency, isMidiMode, isPlaysenseMode])
 
   const finishExercise = useCallback(() => {
     if (sessionStateRef.current === 'results') return
@@ -676,17 +721,28 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
       ? audioCtxRef.current.currentTime - exerciseStartTimeRef.current
       : exerciseDurationRef.current
 
-    const stats = computeStats(allResults, extraHitsRef.current, duration)
+    let stats = computeStats(allResults, extraHitsRef.current, duration)
+    if (!isMidiMode && !isPlaysenseMode && instrumentCategoryRef.current === 'percussion') {
+      const rhythm = evaluateRhythm(expectedEventsRef.current.map(event => event.timestamp), observedTimesRef.current, microphoneTiming(exerciseDifficultyRef.current).good)
+      stats.micLatencyMs = micLatencyRef.current
+      stats.manualMicTimingTest = manualMicTimingTestRef.current
+      stats.presetMicTiming = presetMicTimingRef.current
+      stats.rhythm = rhythm
+      stats = applyRhythmGrade(stats)
+    }
 
     setEventResults(allResults)
     setAttemptStats(stats)
     setSessionState('results')
-    stopListening()
-  }, [metronome, stopListening, backingTrack])
+    // A validated loopback belongs to this exact stream/context. Keep it alive
+    // for another take; stopping here silently discarded compensation on retry.
+    const keepCalibratedMic = !isMidiMode && !isPlaysenseMode && sessionLatencyMs(micOnsets.getLiveAudioInput?.()) !== null
+    if (!keepCalibratedMic) stopListening()
+  }, [metronome, stopListening, backingTrack, isMidiMode, isPlaysenseMode, micOnsets.getLiveAudioInput])
 
   useEffect(() => { finishExerciseRef.current = finishExercise }, [finishExercise])
 
-  const cancelSession = useCallback(() => {
+  const cancelSession = useCallback((keepCalibratedInput = false) => {
     sessionGenerationRef.current++
     startingRef.current = false
     sessionStateRef.current = 'idle'
@@ -699,14 +755,18 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     pendingPitchTimersRef.current.clear()
     metronome.stopMetronome()
     backingTrack.stopPlayback()
-    stopListening()
-    audioCtxRef.current = null
-  }, [metronome, backingTrack, stopListening, calibration])
+    const keepInput = keepCalibratedInput && !isMidiMode && !isPlaysenseMode && sessionLatencyMs(micOnsets.getLiveAudioInput?.()) !== null
+    if (!keepInput) {
+      stopListening()
+      audioCtxRef.current = null
+    }
+  }, [metronome, backingTrack, stopListening, calibration, isMidiMode, isPlaysenseMode, micOnsets.getLiveAudioInput])
 
   const selectExercise = useCallback((ex: ExerciseDefinition) => {
     cancelSession()
     seekPositionRef.current = null
     setExercise(ex)
+    if (options.defaultAudioMetronome !== undefined) setAudioMetronome(options.defaultAudioMetronome)
     setSessionState('selecting')
     setEventResults([])
     setAttemptStats(null)
@@ -714,10 +774,11 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     sessionStateRef.current = 'selecting'
     // Saved input choice must support the newly selected instrument.
     if (audioMode && !availableInputModes(ex.instrument).includes(audioMode)) clearAudioMode()
-  }, [cancelSession, audioMode, clearAudioMode])
+  }, [cancelSession, audioMode, clearAudioMode, options.defaultAudioMetronome])
 
   const startCalibrationFlow = useCallback(async () => {
     if (audioMode === 'midi') return
+    const generation = ++sessionGenerationRef.current
     setSessionState('calibrating')
 
     if (audioMode === 'playsense') {
@@ -750,6 +811,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
       setPreviewError(error instanceof Error ? error.message : 'Audio playback could not start.')
       return
     }
+      if (generation !== sessionGenerationRef.current) return
       if (audioCtx) {
         audioCtxRef.current = audioCtx
         calibration.startCalibration(audioCtx, {
@@ -781,6 +843,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     matchedIndicesRef.current = new Set()
     missDetectedIndicesRef.current = new Set()
     extraHitsRef.current = 0
+    observedTimesRef.current = []
     seenOnsetsRef.current = new WeakSet()
     lastUiUpdateRef.current = 0
     liveComboRef.current = 0
@@ -812,6 +875,14 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     if (!audioCtx) return
     audioCtxRef.current = audioCtx
 
+    // Explicit, reversible local experiment requested by the owner. Replace,
+    // never add to, the hardware correction; do not record it as calibration.
+    const presetMs = !isMidiMode && !isPlaysenseMode && !options.playbackOnly ? readTimingCompensation(micOnsets.getLiveAudioInput?.(), audioMode) : null
+    presetMicTimingRef.current = presetMs !== null
+    manualMicTimingTestRef.current = presetMs === null && process.env.NODE_ENV === 'development' && exercise.id === TIMING_TEST_ITEM && !isMidiMode && !isPlaysenseMode && !options.playbackOnly
+    micLatencyRef.current = presetMs ?? (manualMicTimingTestRef.current ? 125
+      : !isMidiMode && !isPlaysenseMode ? sessionLatencyMs(micOnsets.getLiveAudioInput?.()) ?? 0 : 0
+    )
     // Generate expected events
     expectedEventsRef.current = generateExpectedTimestamps(exercise)
     exerciseDurationRef.current = getExerciseDuration(exercise)
@@ -871,7 +942,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
         rafRef.current = requestAnimationFrame(updatePlayhead)
       }
     }, 25)
-  }, [exercise, startListening, clearOnsets, metronome, updatePlayhead, backingTrack, countInBars, options.playbackOnly])
+  }, [exercise, startListening, clearOnsets, metronome, updatePlayhead, backingTrack, countInBars, options.playbackOnly, isMidiMode, isPlaysenseMode, micOnsets.getLiveAudioInput, audioMode])
 
   const stopExercise = useCallback(() => {
     finishExercise()
@@ -954,7 +1025,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
 
   const retry = useCallback(() => {
     seekPositionRef.current = null
-    cancelSession()
+    cancelSession(true)
     sessionStateRef.current = 'selecting'
     setSessionState('selecting')
     setEventResults([])
@@ -987,8 +1058,33 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   useEffect(() => () => { cancelSessionRef.current() }, [])
 
   const getElapsedSeconds = useCallback(() => {
-    return (sessionStateRef.current === 'selecting' || !audioCtxRef.current) ? seekPositionRef.current ?? 0 : audioCtxRef.current.currentTime - exerciseStartTimeRef.current
-  }, [])
+    const ctx = audioCtxRef.current
+    if (sessionStateRef.current === 'selecting' || !ctx) return seekPositionRef.current ?? 0
+    return (!isMidiMode && !isPlaysenseMode ? audibleTime(ctx) : ctx.currentTime) - exerciseStartTimeRef.current
+  }, [isMidiMode, isPlaysenseMode])
+
+  const selectMicDevice = async (id: string) => {
+    if (isPlaysenseMode || isMidiMode) return
+    calibration.cancelCalibration()
+    calibration.clearCalibration('mic')
+    setMicMuted(false)
+    setSessionState('selecting')
+    await micOnsets.selectDevice(id)
+  }
+  const toggleMicMute = () => {
+    if (isPlaysenseMode || isMidiMode) return
+    if (!micMuted) {
+      if (sessionState === 'playing') pauseExercise()
+      calibration.cancelCalibration()
+      micOnsets.stopListening()
+      setIsMicTesting(false)
+      if (sessionState === 'calibrating') setSessionState('selecting')
+      setMicMuted(true)
+    } else {
+      setMicMuted(false)
+      void testMic()
+    }
+  }
 
   return {
     sessionState,
@@ -1003,10 +1099,22 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     hasPermission,
     audioError: previewError ?? backingTrack.error ?? audioError,
     inputLevel,
+    inputPeak: micOnsets.inputPeak ?? 0,
+    getLiveAudioInput: micOnsets.getLiveAudioInput,
+    micDevices: micOnsets.devices ?? [],
+    micDeviceId: micOnsets.selectedDeviceId ?? '',
+    micDeviceLabel: micOnsets.deviceLabel ?? null,
+    micMuted, selectMicDevice, toggleMicMute,
+    micOnsets: micOnsets.calibrationOnsets ?? micOnsets.recentOnsets,
+    setMicDetectionFloor: micOnsets.setDetectionFloor,
     noisyRoomMode,
     calibrationData: calibration.calibrationData,
     isCalibrating: calibration.isCalibrating,
     calibrationBeat: calibration.calibrationBeat,
+    calibrationVisual: calibration.calibrationVisual,
+    getTimingElapsed: calibration.getTimingElapsed,
+    timingHits: calibration.timingHits,
+    cancelCalibration: () => { sessionGenerationRef.current++; calibration.cancelCalibration(); setSessionState('selecting'); sessionStateRef.current='selecting' },
     totalCalibrationBeats: calibration.totalCalibrationBeats,
     calibrationError: calibration.calibrationError,
     metronomeBeat: metronome.currentBeat,
@@ -1020,6 +1128,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     currentScore,
     currentCombo,
     currentAccuracy,
+    detectedHitCount: observedTimesRef.current.length,
     tempoDrift,
     lastHitGrade,
     detectedMidiNote,

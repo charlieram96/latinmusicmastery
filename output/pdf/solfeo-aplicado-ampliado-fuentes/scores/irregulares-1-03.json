@@ -1,0 +1,201 @@
+{
+  "schemaVersion": "2.0",
+  "id": "irregulares-1-03",
+  "title": {
+    "es": "Septillo: 7 corcheas en el tiempo de 4"
+  },
+  "meter": "2/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "irregulares-1-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        7,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-03.n2",
+      "onsetBeats": "2/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        7,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-03.n3",
+      "onsetBeats": "4/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        7,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-03.n4",
+      "onsetBeats": "6/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        7,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-03.n5",
+      "onsetBeats": "8/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        7,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-03.n6",
+      "onsetBeats": "10/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        7,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-03.n7",
+      "onsetBeats": "12/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        7,
+        4
+      ]
+    }
+  ],
+  "notation": {
+    "title": "Septillo: 7 corcheas en el tiempo de 4",
+    "beams": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    ],
+    "tupletGroups": [
+      {
+        "indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "ratio": [
+          7,
+          4
+        ]
+      }
+    ],
+    "bars": [
+      [
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            7,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            7,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            7,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            7,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            7,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            7,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            7,
+            4
+          ]
+        }
+      ]
+    ],
+    "meter": "2/4",
+    "barStyles": {
+      "0": "final"
+    }
+  }
+}

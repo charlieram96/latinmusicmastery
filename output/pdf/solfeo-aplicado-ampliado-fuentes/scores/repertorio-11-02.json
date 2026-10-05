@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "2.0",
+  "id": "repertorio-11-02",
+  "title": {
+    "es": "Compases 3-4"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "repertorio-11-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 2,
+      "dynamic": "p"
+    },
+    {
+      "id": "repertorio-11-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-11-02.n3",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-11-02.n4",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 1,
+      "dynamic": "mf"
+    }
+  ],
+  "notation": {
+    "title": "Compases 3-4",
+    "meter": "4/4",
+    "key": 0,
+    "bars": [
+      [
+        {
+          "pitch": "B3",
+          "dur": 2,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "C4",
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "B3",
+          "dur": 1,
+          "dynamic": "mf"
+        }
+      ]
+    ],
+    "hairpin": "cresc",
+    "hairpinFrom": 0,
+    "hairpinTo": 3
+  }
+}

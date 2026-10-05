@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { Maximize2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -19,7 +22,7 @@ export function PiecePlacementSummary(props: BuilderProps) {
   const missingImages = pieces.filter((p) => !p.imageUrl).length
   return (
     <div className="grid gap-2">
-      <Label>Stage &amp; pieces</Label>
+      <Label><AdminText text={"Stage &amp; pieces"} /></Label>
       <div className="grid grid-cols-[120px_1fr] items-center gap-3.5 rounded-xl border border-border bg-raised p-3">
         <div className="relative overflow-hidden rounded-lg border border-border" style={{ aspectRatio: aspect }}>
           <CompositionBackground background={background} />
@@ -34,11 +37,10 @@ export function PiecePlacementSummary(props: BuilderProps) {
         <div className="grid gap-1.5 text-xs text-muted-foreground">
           <span>
             <b className="text-foreground">{pieces.length}</b> {pieces.length === 1 ? 'piece' : 'pieces'} · <b className="text-foreground">{background.layers.length}</b> {background.layers.length === 1 ? 'image layer' : 'image layers'}
-            {missingImages > 0 && <span className="text-terracotta"> · {missingImages} without an image</span>}
+            {missingImages > 0 && <span className="text-terracotta"> · {missingImages} <AdminText text={"without an image"} /></span>}
           </span>
           <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => setOpen(true)}>
-            <Maximize2 className="h-3.5 w-3.5" /> Open builder
-          </Button>
+            <Maximize2 className="h-3.5 w-3.5" /> <AdminText text={"Open builder"} /> </Button>
         </div>
       </div>
       <PiecePlacementBuilderDialog open={open} onOpenChange={setOpen} {...props} />

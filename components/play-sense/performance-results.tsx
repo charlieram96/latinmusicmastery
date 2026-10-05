@@ -110,7 +110,7 @@ export function PerformanceResults({ stats, exerciseTitle, onRetry, onNext, next
     </details>
     <footer className="ps-review-actions">
       {onWatchDemo && <Button type="button" variant="ghost" size="sm" className="ps-review-watch" onClick={onWatchDemo}><Eye size={16} />{t('dashboard.classViewer.exercise.watchTeacherAgain')}</Button>}
-      <div><Button type="button" variant={retryPrimary ? 'default' : 'outline'} onClick={onRetry}><RotateCcw size={16} />Play again</Button>
+      <div><Button type="button" variant={retryPrimary ? 'default' : 'outline'} aria-label="Play again" title="Play again" onClick={onRetry}><RotateCcw size={16} /></Button>
         {onNext && <Button type="button" variant={retryPrimary ? 'outline' : 'default'} onClick={onNext}>{nextLabel}<ArrowRight size={16} /></Button>}</div>
     </footer>
   </motion.section>

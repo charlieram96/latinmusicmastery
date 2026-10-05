@@ -1,0 +1,38 @@
+{
+  "id": "saxofones-01",
+  "title": {
+    "es": "Saxofón alto · escrito"
+  },
+  "schemaVersion": "1.0",
+  "timeUnit": "quarter-note",
+  "meter": null,
+  "clef": "G",
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "saxofones-01.N001",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "C4"
+    },
+    {
+      "id": "saxofones-01.N002",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "D4"
+    },
+    {
+      "id": "saxofones-01.N003",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "E4"
+    }
+  ]
+}

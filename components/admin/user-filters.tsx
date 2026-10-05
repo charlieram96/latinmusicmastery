@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -43,20 +46,20 @@ export function UserFilters() {
         defaultValue={searchParams.get('status') || 'all'}
         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
       >
-        <option value="all">All Users</option>
-        <option value="subscribed">Subscribed</option>
-        <option value="free">Free</option>
+        <option value="all"><AdminText text={"All Users"} /></option>
+        <option value="subscribed"><AdminText text={"Subscribed"} /></option>
+        <option value="free"><AdminText text={"Free"} /></option>
       </select>
       <select
         name="plan"
         defaultValue={searchParams.get('plan') || 'all'}
         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
       >
-        <option value="all">All Cadences</option>
-        <option value="month">Monthly</option>
-        <option value="year">Annual</option>
+        <option value="all"><AdminText text={"All Cadences"} /></option>
+        <option value="month"><AdminText text={"Monthly"} /></option>
+        <option value="year"><AdminText text={"Annual"} /></option>
       </select>
-      <Button type="submit">Search</Button>
+      <Button type="submit"><AdminText text={"Search"} /></Button>
     </form>
   )
 }

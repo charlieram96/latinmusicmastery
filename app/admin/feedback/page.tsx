@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -15,11 +16,11 @@ export default async function AdminFeedbackPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 hover:bg-yellow-500/10"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>
+        return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 hover:bg-yellow-500/10"><Clock className="w-3 h-3 mr-1" /> <AdminText text={"Pending"} /></Badge>
       case 'in_review':
-        return <Badge variant="default"><Eye className="w-3 h-3 mr-1" /> In Review</Badge>
+        return <Badge variant="default"><Eye className="w-3 h-3 mr-1" /> <AdminText text={"In Review"} /></Badge>
       case 'completed':
-        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/10"><CheckCircle className="w-3 h-3 mr-1" /> Completed</Badge>
+        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/10"><CheckCircle className="w-3 h-3 mr-1" /> <AdminText text={"Completed"} /></Badge>
       default:
         return <Badge variant="secondary">{status}</Badge>
     }
@@ -30,7 +31,7 @@ export default async function AdminFeedbackPage() {
       return (
         <div className="text-center py-16 text-muted-foreground">
           <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No feedback requests in this category</p>
+          <p className="text-sm"><AdminText text={"No feedback requests in this category"} /></p>
         </div>
       )
     }
@@ -68,7 +69,7 @@ export default async function AdminFeedbackPage() {
             </div>
             {request.profiles && (
               <Button asChild size="sm" variant="outline" className="ml-4 flex-shrink-0">
-                <Link href={`/admin/users/${request.profiles.id}`}>View User</Link>
+                <Link href={`/admin/users/${request.profiles.id}`}><AdminText text={"View User"} /></Link>
               </Button>
             )}
           </div>
@@ -81,8 +82,8 @@ export default async function AdminFeedbackPage() {
     <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight mb-1">Feedback</h1>
-        <p className="text-muted-foreground">Overview of all student feedback requests</p>
+        <h1 className="text-4xl font-bold tracking-tight mb-1"><AdminText text={"Feedback"} /></h1>
+        <p className="text-muted-foreground"><AdminText text={"Overview of all student feedback requests"} /></p>
       </div>
 
       {/* Stat Cards */}
@@ -104,20 +105,20 @@ export default async function AdminFeedbackPage() {
       <div className="rounded-xl border bg-card overflow-hidden">
         <div className="px-6 py-4 border-b flex items-center gap-2">
           <MessageSquare className="w-4 h-4" />
-          <h2 className="font-bold">All Feedback Requests</h2>
+          <h2 className="font-bold"><AdminText text={"All Feedback Requests"} /></h2>
         </div>
         <Tabs defaultValue="all" className="w-full">
           <div className="px-6 pt-4">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="all">All ({allRequests.length})</TabsTrigger>
               <TabsTrigger value="pending" className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />Pending ({pendingRequests.length})
+                <Clock className="w-3.5 h-3.5" /><AdminText text={"Pending ("} />{pendingRequests.length})
               </TabsTrigger>
               <TabsTrigger value="in_review" className="flex items-center gap-1.5">
-                <Eye className="w-3.5 h-3.5" />In Review ({inReviewRequests.length})
+                <Eye className="w-3.5 h-3.5" /><AdminText text={"In Review ("} />{inReviewRequests.length})
               </TabsTrigger>
               <TabsTrigger value="completed" className="flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5" />Done ({completedRequests.length})
+                <CheckCircle className="w-3.5 h-3.5" /><AdminText text={"Done ("} />{completedRequests.length})
               </TabsTrigger>
             </TabsList>
           </div>

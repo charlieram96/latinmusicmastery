@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
@@ -44,9 +45,7 @@ export default async function StyleFormPage({ params }: PageProps) {
           href="/admin/styles"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Styles
-        </Link>
+          <ArrowLeft className="w-4 h-4 mr-1" /> <AdminText text={"Back to Styles"} /> </Link>
         <h1 className="text-3xl font-bold">
           {isNew ? 'Add Musical Style' : 'Edit Musical Style'}
         </h1>
@@ -54,12 +53,12 @@ export default async function StyleFormPage({ params }: PageProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Style Details</CardTitle>
+          <CardTitle><AdminText text={"Style Details"} /></CardTitle>
         </CardHeader>
         <CardContent>
           <form action={action} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="country_id">Country *</Label>
+              <Label htmlFor="country_id"><AdminText text={"Country *"} /></Label>
               <select
                 id="country_id"
                 name="country_id"
@@ -67,9 +66,7 @@ export default async function StyleFormPage({ params }: PageProps) {
                 defaultValue={style?.country_id ?? ''}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="" disabled>
-                  Select a country...
-                </option>
+                <option value="" disabled> <AdminText text={"Select a country..."} /> </option>
                 {countries.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -79,7 +76,7 @@ export default async function StyleFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name"><AdminText text={"Name *"} /></Label>
               <Input
                 id="name"
                 name="name"
@@ -90,7 +87,7 @@ export default async function StyleFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name_es" className="text-muted-foreground">Name (Español)</Label>
+              <Label htmlFor="name_es" className="text-muted-foreground"><AdminText text={"Name (Español)"} /></Label>
               <Input
                 id="name_es"
                 name="name_es"
@@ -114,7 +111,7 @@ export default async function StyleFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description"><AdminText text={"Description"} /></Label>
               <Textarea
                 id="description"
                 name="description"
@@ -125,7 +122,7 @@ export default async function StyleFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description_es" className="text-muted-foreground">Description (Español)</Label>
+              <Label htmlFor="description_es" className="text-muted-foreground"><AdminText text={"Description (Español)"} /></Label>
               <Textarea
                 id="description_es"
                 name="description_es"
@@ -140,7 +137,7 @@ export default async function StyleFormPage({ params }: PageProps) {
                 {isNew ? 'Create Style' : 'Update Style'}
               </Button>
               <Button type="button" variant="outline" asChild>
-                <Link href="/admin/styles">Cancel</Link>
+                <Link href="/admin/styles"><AdminText text={"Cancel"} /></Link>
               </Button>
             </div>
           </form>

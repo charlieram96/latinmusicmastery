@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "2.0",
+  "id": "irregulares-0-03",
+  "title": {
+    "es": "Cuatrosillo: 4 corcheas en el tiempo de 3"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "irregulares-0-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "3/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "irregulares-0-03.n2",
+      "onsetBeats": "3/8",
+      "durationBeats": "3/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "irregulares-0-03.n3",
+      "onsetBeats": "3/4",
+      "durationBeats": "3/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "irregulares-0-03.n4",
+      "onsetBeats": "9/8",
+      "durationBeats": "3/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    }
+  ],
+  "notation": {
+    "title": "Cuatrosillo: 4 corcheas en el tiempo de 3",
+    "events": [
+      {
+        "pitch": "G4",
+        "dur": 8
+      },
+      {
+        "pitch": "G4",
+        "dur": 8
+      },
+      {
+        "pitch": "G4",
+        "dur": 8
+      },
+      {
+        "pitch": "G4",
+        "dur": 8
+      }
+    ],
+    "tuplet": "4:3",
+    "beams": [
+      [
+        0,
+        1,
+        2,
+        3
+      ]
+    ]
+  }
+}

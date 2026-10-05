@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useCallback, useMemo, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import type { ExerciseEvent, Instrument, Technique, Hand } from '@/lib/play-sense/types'
@@ -254,11 +257,11 @@ export function PercussionSequencer({
 
       {/* Legend */}
       <div className="flex items-center gap-3 mt-3 text-[11px] text-slate-500">
-        <span>Click to add</span>
-        <span>Click note to edit</span>
-        <span>Right-click to toggle L/R</span>
-        <span>Shift+click for accent</span>
-        <span>Drag to paint</span>
+        <span><AdminText text={"Click to add"} /></span>
+        <span><AdminText text={"Click note to edit"} /></span>
+        <span><AdminText text={"Right-click to toggle L/R"} /></span>
+        <span><AdminText text={"Shift+click for accent"} /></span>
+        <span><AdminText text={"Drag to paint"} /></span>
       </div>
     </div>
   )

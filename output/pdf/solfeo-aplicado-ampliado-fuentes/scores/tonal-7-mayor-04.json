@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "2.0",
+  "id": "tonal-7-mayor-04",
+  "title": {
+    "es": "Arpegio de séptima de dominante · V7 · ascenso y descenso"
+  },
+  "meter": null,
+  "keyFifths": 4,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "tonal-7-mayor-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-7-mayor-04.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D#5",
+      "dur": 1
+    },
+    {
+      "id": "tonal-7-mayor-04.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F#5",
+      "dur": 1
+    },
+    {
+      "id": "tonal-7-mayor-04.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A5",
+      "dur": 1
+    },
+    {
+      "id": "tonal-7-mayor-04.n5",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F#5",
+      "dur": 1
+    },
+    {
+      "id": "tonal-7-mayor-04.n6",
+      "onsetBeats": "20",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D#5",
+      "dur": 1
+    },
+    {
+      "id": "tonal-7-mayor-04.n7",
+      "onsetBeats": "24",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Arpegio de séptima de dominante · V7 · ascenso y descenso",
+    "events": [
+      {
+        "pitch": "B4",
+        "dur": 1
+      },
+      {
+        "pitch": "D#5",
+        "dur": 1
+      },
+      {
+        "pitch": "F#5",
+        "dur": 1
+      },
+      {
+        "pitch": "A5",
+        "dur": 1
+      },
+      {
+        "pitch": "F#5",
+        "dur": 1
+      },
+      {
+        "pitch": "D#5",
+        "dur": 1
+      },
+      {
+        "pitch": "B4",
+        "dur": 1
+      }
+    ],
+    "key": 4
+  }
+}

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { Settings } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { LanguageToggle } from '@/components/language-toggle'
@@ -108,6 +109,7 @@ export function DashboardSidebar({
       <div className="mt-2 flex flex-col gap-0.5 border-t border-sidebar-border pt-2">
         <LanguageToggle variant="rail" />
         <ThemeToggle variant="rail" />
+        <RailItem item={{ href: '/dashboard/settings', icon: Settings, labelKey: 'settings' }} active={pathname.startsWith('/dashboard/settings')} label={t('dashboard.nav.settings')} />
         <Link
           href="/dashboard/settings"
           aria-label={t('dashboard.nav.settings')}

@@ -59,7 +59,7 @@ export function CourseTracklist({
         </div>
       </div>
 
-      <Accordion type="multiple" defaultValue={sections.map((s: any) => s.id)} className="w-full space-y-2">
+      <Accordion type="multiple" defaultValue={sections.filter((s: any) => s.classes?.some((c: any) => c.completedItems > 0 && c.completedItems < c.totalItems)).map((s: any) => s.id)} className="w-full space-y-2">
         {sections.map((section: any, sectionIndex: number) => {
           const sectionProgress = section.totalItems > 0
             ? Math.round((section.completedItems / section.totalItems) * 100)

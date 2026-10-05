@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "2.0",
+  "id": "consonancia-contexto-01",
+  "title": {
+    "es": "Consonancia, disonancia y contexto"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "consonancia-contexto-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 2
+    },
+    {
+      "id": "consonancia-contexto-01.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 2
+    },
+    {
+      "id": "consonancia-contexto-01.lower0-0",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "C4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Séptima mayor que resuelve en octava",
+    "clef": "G",
+    "meter": "4/4",
+    "alignBeats": true,
+    "bars": [
+      [
+        {
+          "pitch": "B4",
+          "dur": 2
+        },
+        {
+          "pitch": "C5",
+          "dur": 2
+        }
+      ]
+    ],
+    "staffClefs": [
+      "G",
+      "F"
+    ]
+  }
+}

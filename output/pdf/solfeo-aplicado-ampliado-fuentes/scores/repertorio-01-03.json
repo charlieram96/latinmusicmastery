@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "2.0",
+  "id": "repertorio-01-03",
+  "title": {
+    "es": "Compases 5-6"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "repertorio-01-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "repertorio-01-03.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    },
+    {
+      "id": "repertorio-01-03.n3",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Compases 5-6",
+    "meter": "4/4",
+    "key": 0,
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 2
+        },
+        {
+          "pitch": "D4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 1
+        }
+      ]
+    ],
+    "slurs": [
+      [
+        0,
+        2
+      ]
+    ]
+  }
+}

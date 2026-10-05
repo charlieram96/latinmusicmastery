@@ -1,4 +1,5 @@
 'use client'
+import type { LiveAudioInput } from '@/lib/audio/live-audio-input'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { MutableRefObject } from 'react'
@@ -19,12 +20,20 @@ interface UseOnsetDetectionResult {
   hasPermission: boolean | null
   error: string | null
   inputLevel: number
+  inputPeak: number
+  devices: MediaDeviceInfo[]
+  selectedDeviceId: string
+  deviceLabel: string | null
+  selectDevice: (id: string) => Promise<void>
+  setDetectionFloor: (value: number | null, sampling?: boolean) => void
+  calibrationOnsets: OnsetEvent[]
   recentOnsets: OnsetEvent[]
   audioContext: AudioContext | null
   workletNode: AudioWorkletNode | null
   /** Chord chroma vectors keyed by rounded onset timestamp (ms). Read by the grader for chord events. */
   chromaByOnsetRef: MutableRefObject<Map<number, number[]>>
   getFrequency: () => number | null
+  getLiveAudioInput: () => LiveAudioInput | null
   getWorkletNode: () => AudioWorkletNode | null
   startListening: () => Promise<AudioContext | null>
   stopListening: () => void
@@ -36,10 +45,23 @@ export function useOnsetDetection(
 ): UseOnsetDetectionResult {
   const { noisyRoomMode = false, instrument = null, audioMode } = options
 
+  const [calibrationOnsets, setCalibrationOnsets] = useState<OnsetEvent[]>([])
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState('')
+  const selectedIdRef = useRef('')
+  const [deviceLabel, setDeviceLabel] = useState<string | null>(null)
+  const detectionFloorRef = useRef<number | null>(null)
+  const refreshDevices = useCallback(async () => {
+    if (!navigator.mediaDevices?.enumerateDevices) return
+    const list = await navigator.mediaDevices.enumerateDevices()
+    setDevices(list.filter(device => device.kind === 'audioinput'))
+  }, [])
   const [isListening, setIsListening] = useState(false)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [inputLevel, setInputLevel] = useState(0)
+  const [inputPeak, setInputPeak] = useState(0)
+  const peakHoldRef = useRef({ value: 0, until: 0 })
   const [recentOnsets, setRecentOnsets] = useState<OnsetEvent[]>([])
 
   const [resources, setResources] = useState<{ audioContext: AudioContext | null; workletNode: AudioWorkletNode | null }>({ audioContext: null, workletNode: null })
@@ -48,6 +70,7 @@ export function useOnsetDetection(
   const silentSinkRef = useRef<GainNode | null>(null)
   const pitchRef = useRef<{ frequency: number | null; at: number }>({ frequency: null, at: 0 })
   const audioContextRef = useRef<AudioContext | null>(null)
+  const inputSourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const workletNodeRef = useRef<AudioWorkletNode | null>(null)
   const levelUpdateRef = useRef<number>(0)
@@ -55,6 +78,7 @@ export function useOnsetDetection(
 
   const stopListening = useCallback(() => {
     generationRef.current++
+    inputSourceRef.current = null
     pitchWorkletRef.current?.disconnect()
     pitchWorkletRef.current = null
     silentSinkRef.current?.disconnect()
@@ -75,10 +99,13 @@ export function useOnsetDetection(
     }
     setIsListening(false)
     setInputLevel(0)
+    setInputPeak(0)
+    peakHoldRef.current = { value: 0, until: 0 }
   }, [])
 
   const clearOnsets = useCallback(() => {
     setRecentOnsets([])
+    setCalibrationOnsets([])
     chromaByOnsetRef.current.clear()
   }, [])
 
@@ -105,6 +132,7 @@ export function useOnsetDetection(
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
+          ...(selectedIdRef.current ? { deviceId: { exact: selectedIdRef.current } } : {}),
           echoCancellation: useSpeakerSafe,
           noiseSuppression: useSpeakerSafe,
           autoGainControl: false,
@@ -112,6 +140,18 @@ export function useOnsetDetection(
       })
       if (generation !== generationRef.current) { stream.getTracks().forEach(track => track.stop()); return null }
       mediaStreamRef.current = stream
+      const track = stream.getAudioTracks()[0]
+      const actualId = track?.getSettings().deviceId ?? ''
+      selectedIdRef.current = actualId
+      setSelectedDeviceId(actualId)
+      setDeviceLabel(track?.label || null)
+      try { if (actualId) localStorage.setItem('lmm.microphone.device', actualId) } catch { /* Optional device preference. */ }
+      void refreshDevices().catch(() => {})
+      track?.addEventListener('ended', () => {
+        if (mediaStreamRef.current !== stream) return
+        stopListening()
+        setError('Microphone disconnected. Select an input to continue.')
+      })
       setHasPermission(true)
 
       // Reuse existing AudioContext if still open, otherwise create new
@@ -125,19 +165,25 @@ export function useOnsetDetection(
       }
 
       // Load AudioWorklet
-      await audioContext.audioWorklet.addModule('/audio-worklets/onset-detector-processor.js')
+      await audioContext.audioWorklet.addModule('/audio-worklets/onset-detector-processor.js?v=clap-attack-3')
       if (generation !== generationRef.current) return null
 
       const source = audioContext.createMediaStreamSource(stream)
+      inputSourceRef.current = source
       const workletNode = new AudioWorkletNode(audioContext, 'onset-detector-processor')
       workletNodeRef.current = workletNode
+      workletNode.onprocessorerror = () => {
+        if (workletNodeRef.current !== workletNode) return
+        stopListening()
+        setError('Microphone audio processor stopped. Enable the microphone again before retrying.')
+      }
 
       // Send config — use instrument-specific profile when available
       const speakerSafe = audioMode === 'speaker-safe'
       const config: OnsetConfig = instrument
         ? getInstrumentConfig(instrument, noisyRoomMode, speakerSafe)
         : getInstrumentConfig('conga', noisyRoomMode, speakerSafe)
-      workletNode.port.postMessage({ type: 'config', config })
+      workletNode.port.postMessage({ type: 'config', config: { ...config, ...(detectionFloorRef.current != null ? { minOnsetEnergy: detectionFloorRef.current, adaptiveThresholdOffset: Math.min(config.adaptiveThresholdOffset, detectionFloorRef.current * .25) } : {}) } })
 
       // Listen for messages from worklet
       workletNode.port.onmessage = (e) => {
@@ -147,11 +193,14 @@ export function useOnsetDetection(
             energy: e.data.energy,
             frequency: e.data.frequency ?? null,
           }
+          setCalibrationOnsets(prev => [...prev, onset].slice(-500))
           setRecentOnsets((prev) => {
             const next = [...prev, onset]
             // Cap at 500 to prevent unbounded growth
             return next.length > 500 ? next.slice(-500) : next
           })
+        } else if (e.data.type === 'onset-level') {
+          setCalibrationOnsets(previous => previous.map(hit => hit.timestamp === e.data.timestamp ? { ...hit, peak: e.data.peak, rms: e.data.rms } : hit))
         } else if (e.data.type === 'chord') {
           // Post-strum chroma for chord scoring — key by rounded onset timestamp (ms).
           const key = Math.round(e.data.onsetTimestamp * 1000)
@@ -165,9 +214,15 @@ export function useOnsetDetection(
         } else if (e.data.type === 'level') {
           // Throttle level updates to ~30fps
           const now = performance.now()
+          // Inspect every audio block before throttling so brief claps are not lost.
+          const peak = e.data.peak ?? 0
+          if (peak >= peakHoldRef.current.value || now >= peakHoldRef.current.until) {
+            peakHoldRef.current = { value: peak, until: now + 800 }
+          }
           if (now - levelUpdateRef.current > 33) {
             levelUpdateRef.current = now
             setInputLevel(e.data.level)
+            setInputPeak(peakHoldRef.current.value)
           }
         }
       }
@@ -194,6 +249,7 @@ export function useOnsetDetection(
 
       setIsListening(true)
       setRecentOnsets([])
+    setCalibrationOnsets([])
       return audioContext
     } catch (err: unknown) {
       if (generation !== generationRef.current) return null
@@ -213,7 +269,39 @@ export function useOnsetDetection(
       stopListening()
       return null
     }
-  }, [noisyRoomMode, instrument, audioMode, stopListening])
+  }, [noisyRoomMode, instrument, audioMode, stopListening, refreshDevices])
+
+  const setDetectionFloor = useCallback((value: number | null, sampling = false) => {
+    detectionFloorRef.current = value
+    const base = getInstrumentConfig(instrument ?? 'conga', noisyRoomMode, audioMode === 'speaker-safe')
+    workletNodeRef.current?.port.postMessage({ type: 'config', config: { minOnsetEnergy: sampling ? .0001 : value ?? base.minOnsetEnergy, adaptiveThresholdOffset: sampling ? .0001 : value != null ? Math.min(base.adaptiveThresholdOffset, value * .25) : base.adaptiveThresholdOffset, refractoryPeriodMs: sampling ? 300 : base.refractoryPeriodMs } })
+  }, [instrument, noisyRoomMode, audioMode])
+
+  const selectDevice = useCallback(async (id: string) => {
+    stopListening()
+    selectedIdRef.current = id
+    setSelectedDeviceId(id)
+    detectionFloorRef.current = null
+    await startListening()
+  }, [stopListening, startListening])
+
+  useEffect(() => {
+    const media = navigator.mediaDevices
+    if (!media?.enumerateDevices) return
+    let live = true
+    void media.enumerateDevices().then(list => {
+      if (!live) return
+      setDevices(list.filter(d => d.kind === 'audioinput'))
+      const saved = localStorage.getItem('lmm.microphone.device')
+      if (!mediaStreamRef.current && saved && list.some(d => d.deviceId === saved)) {
+        selectedIdRef.current = saved
+        setSelectedDeviceId(saved)
+      }
+    }).catch(() => {})
+    const changed = () => { void refreshDevices().catch(() => {}) }
+    media.addEventListener?.('devicechange', changed)
+    return () => { live = false; media.removeEventListener?.('devicechange', changed) }
+  }, [refreshDevices])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -236,6 +324,10 @@ export function useOnsetDetection(
   }, [])
 
   const getFrequency = useCallback(() => performance.now() - pitchRef.current.at <= 150 ? pitchRef.current.frequency : null, [])
+  const getLiveAudioInput = useCallback(() => {
+    const context = audioContextRef.current, stream = mediaStreamRef.current
+    return context && context.state !== 'closed' && stream?.active && inputSourceRef.current ? { context, stream, source: inputSourceRef.current } : null
+  }, [])
   const getWorkletNode = useCallback(() => workletNodeRef.current, [])
 
   return {
@@ -243,11 +335,14 @@ export function useOnsetDetection(
     hasPermission,
     error,
     inputLevel,
-    recentOnsets,
+    inputPeak,
+    devices, selectedDeviceId, deviceLabel, selectDevice, setDetectionFloor,
+    recentOnsets, calibrationOnsets,
     audioContext: resources.audioContext,
     workletNode: resources.workletNode,
     getFrequency,
     getWorkletNode,
+    getLiveAudioInput,
     chromaByOnsetRef,
     startListening,
     stopListening,

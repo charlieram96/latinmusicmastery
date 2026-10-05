@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "2.0",
+  "id": "tresillos-variados-0-04",
+  "title": {
+    "es": "Silencio dentro del grupo"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "tresillos-variados-0-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 1
+    },
+    {
+      "id": "tresillos-variados-0-04.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4/3",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2,
+      "tuplet": [
+        3,
+        2
+      ]
+    },
+    {
+      "id": "tresillos-variados-0-04.n3",
+      "onsetBeats": "16/3",
+      "durationBeats": "4/3",
+      "measure": 2,
+      "staff": 1,
+      "rest": true,
+      "dur": 2,
+      "tuplet": [
+        3,
+        2
+      ]
+    },
+    {
+      "id": "tresillos-variados-0-04.n4",
+      "onsetBeats": "20/3",
+      "durationBeats": "4/3",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2,
+      "tuplet": [
+        3,
+        2
+      ]
+    }
+  ],
+  "notation": {
+    "title": "Silencio dentro del grupo",
+    "meter": "4/4",
+    "bars": [
+      [
+        {
+          "pitch": "E4",
+          "dur": 1
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 2,
+          "tuplet": [
+            3,
+            2
+          ]
+        },
+        {
+          "rest": true,
+          "dur": 2,
+          "tuplet": [
+            3,
+            2
+          ]
+        },
+        {
+          "pitch": "F4",
+          "dur": 2,
+          "tuplet": [
+            3,
+            2
+          ]
+        }
+      ]
+    ],
+    "tupletGroups": [
+      {
+        "indices": [
+          1,
+          2,
+          3
+        ],
+        "ratio": [
+          3,
+          2
+        ]
+      }
+    ]
+  }
+}

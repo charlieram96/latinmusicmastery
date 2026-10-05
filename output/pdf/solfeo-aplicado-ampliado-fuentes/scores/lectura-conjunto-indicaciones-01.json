@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "2.0",
+  "id": "lectura-conjunto-indicaciones-01",
+  "title": {
+    "es": "Lectura de conjunto: unísono y división de voces"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "lectura-conjunto-indicaciones-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2,
+      "mark": "unis."
+    },
+    {
+      "id": "lectura-conjunto-indicaciones-01.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2,
+      "mark": "div."
+    },
+    {
+      "id": "lectura-conjunto-indicaciones-01.lower0-0",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "lectura-conjunto-indicaciones-01.lower0-1",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "lectura-conjunto-indicaciones-01.n3",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 2
+    },
+    {
+      "id": "lectura-conjunto-indicaciones-01.n4",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2,
+      "mark": "unis."
+    },
+    {
+      "id": "lectura-conjunto-indicaciones-01.lower1-0",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 2,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "lectura-conjunto-indicaciones-01.lower1-1",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 2,
+      "pitch": "C4",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "Unísono inicial, división y regreso",
+    "clef": "G",
+    "meter": "4/4",
+    "alignBeats": true,
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 2,
+          "mark": "unis."
+        },
+        {
+          "pitch": "E4",
+          "dur": 2,
+          "mark": "div."
+        }
+      ],
+      [
+        {
+          "pitch": "G4",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 2,
+          "mark": "unis."
+        }
+      ]
+    ],
+    "staffClefs": [
+      "G",
+      "F"
+    ]
+  }
+}

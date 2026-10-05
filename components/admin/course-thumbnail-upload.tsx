@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -163,7 +166,7 @@ export function CourseThumbnailUpload({
               disabled={uploading}
             >
               <Upload className="mr-1.5 h-3 w-3" />
-              {previewUrl ? 'Replace' : 'Upload'}
+              {previewUrl ? <AdminText text={"Replace"} /> : 'Upload'}
             </Button>
             {previewUrl && (
               <Button
@@ -174,9 +177,7 @@ export function CourseThumbnailUpload({
                 onClick={handleRemoveImage}
                 disabled={uploading}
               >
-                <X className="mr-1.5 h-3 w-3" />
-                Remove
-              </Button>
+                <X className="mr-1.5 h-3 w-3" /> <AdminText text={"Remove"} /> </Button>
             )}
           </div>
         </div>
@@ -221,9 +222,7 @@ export function CourseThumbnailUpload({
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Replace
-                </>
+                  <Upload className="w-4 h-4 mr-2" /> <AdminText text={"Replace"} /> </>
               )}
             </Button>
             <Button
@@ -233,9 +232,7 @@ export function CourseThumbnailUpload({
               onClick={handleRemoveImage}
               disabled={uploading}
             >
-              <X className="w-4 h-4 mr-2" />
-              Remove
-            </Button>
+              <X className="w-4 h-4 mr-2" /> <AdminText text={"Remove"} /> </Button>
           </div>
         </div>
       ) : (
@@ -258,7 +255,7 @@ export function CourseThumbnailUpload({
           {uploading ? (
             <>
               <Loader2 className="w-10 h-10 text-primary animate-spin" />
-              <p className="text-sm text-muted-foreground">Uploading...</p>
+              <p className="text-sm text-muted-foreground"><AdminText text={"Uploading..."} /></p>
             </>
           ) : (
             <>
@@ -266,9 +263,7 @@ export function CourseThumbnailUpload({
                 <ImageIcon className="w-8 h-8 text-muted-foreground" />
               </div>
               <div className="text-center">
-                <p className="font-medium text-foreground">
-                  Drop an image here or click to upload
-                </p>
+                <p className="font-medium text-foreground"> <AdminText text={"Drop an image here or click to upload"} /> </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   JPEG, PNG, WebP, or GIF • Max 10MB
                 </p>

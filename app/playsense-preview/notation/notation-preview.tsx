@@ -50,7 +50,7 @@ export function NotationPreview({ score }: { score: ScoreDocument }) {
             {transport.playing ? <Pause className="mr-2 h-3.5 w-3.5" /> : <Play className="mr-2 h-3.5 w-3.5" />}
             {transport.playing ? 'Pause preview' : 'Play preview'}
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => seek(-80000)}><RotateCcw className="mr-2 h-3.5 w-3.5" />Restart</Button>
+          <Button size="sm" variant="ghost" aria-label="Restart" title="Restart" onClick={() => seek(-80000)}><RotateCcw className="h-3.5 w-3.5" /></Button>
           <Button size="sm" variant="outline" onClick={() => seek(-40000)}>Intro midpoint</Button>
           <Button size="sm" variant="outline" onClick={() => seek(0)}>Music</Button>
           <Button size="sm" variant="outline" onClick={() => seek(scoreEnd + 178500)}>Video midpoint</Button>

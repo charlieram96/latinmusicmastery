@@ -1,4 +1,6 @@
 'use client'
+import { useTranslation } from '@/components/language-provider'
+import { pick } from '@/lib/i18n/localize'
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -14,6 +16,7 @@ interface OutlineClassRowProps {
 }
 
 export function OutlineClassRow({ cls, index, selected, onSelect }: OutlineClassRowProps) {
+  const { locale } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: cls.id,
   })
@@ -46,7 +49,7 @@ export function OutlineClassRow({ cls, index, selected, onSelect }: OutlineClass
           {index + 1}
         </span>
         <span className={cn('min-w-0 flex-1 truncate text-[13px]', selected && 'font-medium')}>
-          {cls.title}
+          {pick(locale, cls.title, cls.title_es ?? '')}
         </span>
         {cls.is_free && (
           <Unlock className="h-3 w-3 flex-shrink-0 text-gold" aria-label="Free preview" />

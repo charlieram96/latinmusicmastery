@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -165,16 +166,12 @@ export default async function PlaysenseStudioAuditPage() {
                             Score attached · drop URL
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">
-                            No PlaySense Studio score
-                          </span>
+                          <span className="text-xs text-muted-foreground"> <AdminText text={"No PlaySense Studio score"} /> </span>
                         )}
                         <Link
                           href={`/admin/courses/${it.course_id}`}
                           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                        >
-                          Open
-                          <ExternalLink className="w-3 h-3" />
+                        > <AdminText text={"Open"} /> <ExternalLink className="w-3 h-3" />
                         </Link>
                       </li>
                     ))}
@@ -190,8 +187,7 @@ export default async function PlaysenseStudioAuditPage() {
             <strong className="text-foreground">Cutover playbook:</strong> see{' '}
             <code>docs/playsense-studio-migration.md</code> for the per-item recipe.
           </p>
-          <p>
-            Set <code>PLAYSENSE_STUDIO_ENABLED=false</code> in env to force the legacy iframe path even when
+          <p> <AdminText text={"Set"} /> <code>PLAYSENSE_STUDIO_ENABLED=false</code> in env to force the legacy iframe path even when
             scores are attached — useful if the PlaySense Studio player needs to be rolled back in production.
           </p>
         </section>

@@ -1,6 +1,11 @@
 'use client'
+import { useTranslation } from '@/components/language-provider'
+import { pick } from '@/lib/i18n/localize'
 
-import { useState } from 'react'
+import { AdminText } from '@/components/admin/admin-text'
+
+
+import { useEffect, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -43,7 +48,12 @@ export function OutlineModule({
   onAddClass,
   onReorderClasses,
 }: OutlineModuleProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const { locale } = useTranslation()
+  const containsSelection = section.classes.some((c) => c.id === selectedClassId)
+  const [collapsed, setCollapsed] = useState(!containsSelection)
+  useEffect(() => {
+    if (containsSelection) setCollapsed(false)
+  }, [containsSelection])
   const [addingClass, setAddingClass] = useState(false)
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -60,7 +70,6 @@ export function OutlineModule({
     onReorderClasses(arrayMove(section.classes, oldIndex, newIndex))
   }
 
-  const containsSelection = section.classes.some((c) => c.id === selectedClassId)
   const isSelected = selectedModuleId === section.id
 
   return (
@@ -98,9 +107,9 @@ export function OutlineModule({
                 ? 'text-foreground'
                 : 'text-foreground/60'
           )}
-          title={section.title}
+          title={pick(locale, section.title, section.title_es ?? '')}
         >
-          {section.title}
+          {pick(locale, section.title, section.title_es ?? '')}
         </button>
 
         <span className="flex-shrink-0 text-[10px] tabular-nums text-muted-foreground/50">
@@ -168,9 +177,7 @@ export function OutlineModule({
               onClick={() => setAddingClass(true)}
               className="flex w-full items-center gap-2 rounded-lg py-1.5 pl-[26px] pr-2 text-left text-[12.5px] text-muted-foreground/50 transition-colors hover:bg-foreground/[0.035] hover:text-muted-foreground"
             >
-              <Plus className="h-3 w-3" />
-              Add class
-            </button>
+              <Plus className="h-3 w-3" /> <AdminText text={"Add class"} /> </button>
           )}
         </div>
       )}

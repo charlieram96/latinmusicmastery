@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import {
   DndContext,
   closestCenter,
@@ -55,11 +58,11 @@ export function ClassCanvas({
             )}
           </span>
           <h2 className="mb-1.5 font-heading text-base font-semibold text-foreground">
-            {hasModules ? 'No class selected' : 'Start with a module'}
+            {hasModules ? <AdminText text={"No class selected"} /> : 'Start with a module'}
           </h2>
           <p className="text-sm leading-relaxed text-muted-foreground">
             {hasModules
-              ? 'Pick a class from the outline, or add one inside a module to begin building.'
+              ? <AdminText text={"Pick a class from the outline, or add one inside a module to begin building."} />
               : 'Create your first module in the outline, add a class inside it, and the builder opens right here.'}
           </p>
         </div>
@@ -82,10 +85,8 @@ export function ClassCanvas({
       <div className="mt-6 space-y-2">
         {cls.items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-warm-surface/50 px-6 py-8 text-center">
-            <p className="text-sm font-medium text-foreground/80">This class is empty</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              Add a video lesson, a quiz, an exercise, or a jam session below.
-            </p>
+            <p className="text-sm font-medium text-foreground/80"><AdminText text={"This class is empty"} /></p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground"> <AdminText text={"Add a video lesson, a quiz, an exercise, or a jam session below."} /> </p>
           </div>
         ) : (
           <DndContext
@@ -135,14 +136,11 @@ function ClassHeader({ cls, moduleIndex, classIndex }: ClassHeaderProps) {
   return (
     <header className={styles.rise}>
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gold">
-          Module {moduleIndex + 1} · Class {classIndex + 1}
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gold"> <AdminText text={"Module"} /> {moduleIndex + 1} <AdminText text={"· Class"} /> {classIndex + 1}
         </span>
         {cls.is_free && (
           <span className="flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-medium text-gold">
-            <Unlock className="h-2.5 w-2.5" />
-            Free preview
-          </span>
+            <Unlock className="h-2.5 w-2.5" /> <AdminText text={"Free preview"} /> </span>
         )}
       </div>
 

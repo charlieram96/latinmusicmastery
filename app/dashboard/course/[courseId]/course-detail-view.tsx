@@ -444,7 +444,8 @@ export function CourseDetailView({
               const sDone = list.some((c) => c.totalItems > 0) && list.every((c) => c.totalItems === 0 || classDone(c))
               const sCurrent = list.some((c) => c.id === nextClassId)
               const status = sDone ? t(`${base}.syllabus.completed`) : sCurrent ? t(`${base}.syllabus.inProgress`) : t(`${base}.syllabus.notStarted`)
-              const win = syllabusWindow(list.map((c) => c.id), nextClassId)
+              const resumeClassId = list.find((c) => c.completedItems > 0 && c.completedItems < c.totalItems)?.id ?? null
+              const win = syllabusWindow(list.map((c) => c.id), resumeClassId)
               const open = !!expanded[section.id]
               const rows = open ? list : list.filter((c) => win.visible.includes(c.id))
               return (

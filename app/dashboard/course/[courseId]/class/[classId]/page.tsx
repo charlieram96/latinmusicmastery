@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { toSidebarSections } from '@/lib/courses/structure'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -108,18 +109,16 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   )
   const activeItem = items[activeIndex] || null
 
-  // Check access via subscription
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
+  // Access and outline are independent; do not serialize their network requests.
+  const [{ data: profile }, structureResult, { data: completionRows }] = await Promise.all([
+    supabase.from('profiles').select('is_admin').eq('id', user.id).single(),
+    getCourseStructureForStudent(course.id),
+    supabase.from('class_item_progress').select('completed_at, class_item_id')
+      .eq('user_id', user.id).eq('completed', true).not('completed_at', 'is', null),
+  ])
   const isStudent = await canAccessCourse(supabase, user.id, course, profile?.is_admin ?? false)
   const locked = !classData.is_free && !isStudent
 
-  // Get course structure for sidebar
-  const structureResult = await getCourseStructureForStudent(course.id)
   const structure = structureResult.data
 
   const teacherName = (course.teacher as { name?: string } | null)?.name ?? null
@@ -135,12 +134,6 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const nextNode = currentNode === -1 ? undefined : pathNodes.slice(currentNode + 1).find((n) => n.kind === 'lesson')
 
   // Streak and weekly goal: the dashboard's source (completed parts, local day keys).
-  const { data: completionRows } = await supabase
-    .from('class_item_progress')
-    .select('completed_at, class_item_id')
-    .eq('user_id', user.id)
-    .eq('completed', true)
-    .not('completed_at', 'is', null)
   const today = todayKey()
   const lessonItemIds = new Set(items.map((item: { id: string }) => item.id))
   const dateKeys = (completionRows ?? []).map((r) => dateKeyFor(r.completed_at as string))
@@ -231,8 +224,15 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const durationLabel = formatDuration(activeItem?.video_duration_seconds ?? null)
 
   const body = activeItem ? (
-    <div data-lesson-item>
-      <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" teacherName={teacherName} previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} previewLesson={process.env.NODE_ENV === 'development' && preview === 'lesson'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
+    <div key={activeItem.id} data-lesson-item={activeItem.id}>
+      <Suspense key={activeItem.id} fallback={
+        <div role="status" className="grid min-h-64 place-content-center gap-3 text-center text-muted-foreground">
+          <span aria-hidden className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p>{locale === 'es' ? 'Abriendo' : 'Opening'} {activeItem.title}…</p>
+        </div>
+      }>
+        <ClassItemRenderer key={activeItem.id} item={activeItem} userId={user.id} playerLayout="split" teacherName={teacherName} previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} previewLesson={process.env.NODE_ENV === 'development' && preview === 'lesson'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
+      </Suspense>
       {activeIndex===0 && lessonDescription && lessonDescription!==activeItem.description && <section data-lesson-summary className="mx-auto mb-6 w-full max-w-[78ch] rounded-xl border border-border bg-card px-5 py-4"><h2 className="mb-2 font-heading text-base font-semibold">{t('dashboard.pages.modules.aboutLesson')}</h2><p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{lessonDescription}</p></section>}
     </div>
   ) : (

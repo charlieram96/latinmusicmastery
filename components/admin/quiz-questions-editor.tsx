@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -134,8 +137,7 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
-        <Loader2 className="w-4 h-4 animate-spin" /> Loading questions…
-      </div>
+        <Loader2 className="w-4 h-4 animate-spin" /> <AdminText text={"Loading questions…"} /> </div>
     )
   }
 
@@ -143,7 +145,7 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="font-medium">
-          {kind} Questions{' '}
+          {kind} <AdminText text={"Questions"} />{' '}
           <span className="text-muted-foreground font-normal">({questions.length})</span>
         </h4>
       </div>
@@ -175,9 +177,7 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
       </DndContext>
 
       <Button type="button" variant="outline" onClick={addQuestion} disabled={busy}>
-        {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-        Add Question
-      </Button>
+        {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />} <AdminText text={"Add Question"} /> </Button>
     </div>
   )
 }

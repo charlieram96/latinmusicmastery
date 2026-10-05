@@ -10,7 +10,7 @@ vi.mock('@/app/actions/progress', () => ({ markClassItemComplete: vi.fn(async ()
 vi.mock('@/components/language-provider', () => ({
   useTranslation: () => ({ locale: 'en', t: (key: string, params?: Record<string, string | number>) => getTranslation('en', key, params) }),
 }))
-vi.mock('next/link', () => ({ default: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props}>{children}</a> }))
+vi.mock('next/link', () => ({ useLinkStatus: () => ({ pending: false }), default: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props}>{children}</a> }))
 vi.mock('next/image', () => ({ default: () => <span data-logo /> }))
 vi.mock('@/components/theme-toggle', () => ({ ThemeToggle: () => null }))
 vi.mock('@/components/language-toggle', () => ({ LanguageToggle: () => null }))

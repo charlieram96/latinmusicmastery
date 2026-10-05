@@ -9,6 +9,10 @@ import type { Locale } from '@/lib/i18n'
  * to get the localized display string. Keys are lower-cased English tokens.
  */
 const INSTRUMENT_NAMES_ES: Record<string, string> = {
+  various: 'Varios',
+  theoretical: 'Teórico',
+  demonstrative: 'Demostrativo',
+  practical: 'Práctico',
   accordion: 'Acordeón',
   acordeon: 'Acordeón',
   bass: 'Bajo',

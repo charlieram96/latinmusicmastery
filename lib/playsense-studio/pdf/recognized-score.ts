@@ -49,9 +49,12 @@ const eventSchema = z.object({
   notes: z.array(z.object(pitchShape)).nullable().optional(),
 });
 
+// Homogeneous arrays avoid tuple prefixItems unsupported by the SDK schema transformer.
+const timeSignatureSchema = z.array(z.number()).length(2);
+
 const measureSchema = z.object({
   /** Only when the meter changes at this bar. */
-  timeSignature: z.tuple([z.number(), z.number()]).nullable(),
+  timeSignature: timeSignatureSchema.nullable(),
   voices: z.array(z.object({ events: z.array(eventSchema) })),
 });
 
@@ -68,7 +71,7 @@ export const recognitionOutputSchema = z.object({
     title: z.string(),
     /** Printed tempo, or a sensible default when none is printed. */
     initialTempo: z.number(),
-    timeSignature: z.tuple([z.number(), z.number()]),
+    timeSignature: timeSignatureSchema,
     /** Key signature as fifths: negative = flats, positive = sharps. */
     keyFifths: z.number(),
     tracks: z.array(trackSchema),

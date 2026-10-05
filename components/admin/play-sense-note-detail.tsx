@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,8 +29,7 @@ export function PlaySenseNoteDetail({ event, onUpdate, onDelete, onClose }: Note
   return (
     <Card className="p-4 space-y-3 bg-slate-900 border-slate-700">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium">
-          Note: {event.technique} (M{event.measure} B{event.beat})
+        <h4 className="text-sm font-medium"> <AdminText text={"Note:"} /> {event.technique} (M{event.measure} B{event.beat})
         </h4>
         <Button variant="ghost" size="sm" onClick={onClose} className="h-6 w-6 p-0">
           <X className="w-4 h-4" />
@@ -36,7 +38,7 @@ export function PlaySenseNoteDetail({ event, onUpdate, onDelete, onClose }: Note
 
       <div className="grid gap-3 sm:grid-cols-4">
         <div className="space-y-1">
-          <Label className="text-xs">Hand</Label>
+          <Label className="text-xs"><AdminText text={"Hand"} /></Label>
           <Select
             value={event.hand}
             onValueChange={(v) => onUpdate({ hand: v as Hand })}
@@ -45,14 +47,14 @@ export function PlaySenseNoteDetail({ event, onUpdate, onDelete, onClose }: Note
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="R">Right (R)</SelectItem>
-              <SelectItem value="L">Left (L)</SelectItem>
+              <SelectItem value="R"><AdminText text={"Right (R)"} /></SelectItem>
+              <SelectItem value="L"><AdminText text={"Left (L)"} /></SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Duration (beats)</Label>
+          <Label className="text-xs"><AdminText text={"Duration (beats)"} /></Label>
           <Select
             value={String(event.duration)}
             onValueChange={(v) => onUpdate({ duration: Number(v) })}
@@ -65,7 +67,7 @@ export function PlaySenseNoteDetail({ event, onUpdate, onDelete, onClose }: Note
               <SelectItem value="0.5">1/8</SelectItem>
               <SelectItem value="1">1/4</SelectItem>
               <SelectItem value="2">1/2</SelectItem>
-              <SelectItem value="4">Whole</SelectItem>
+              <SelectItem value="4"><AdminText text={"Whole"} /></SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -81,7 +83,7 @@ export function PlaySenseNoteDetail({ event, onUpdate, onDelete, onClose }: Note
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Accent</Label>
+          <Label className="text-xs"><AdminText text={"Accent"} /></Label>
           <div className="flex items-center gap-2 h-8">
             <Switch
               checked={event.accent}
@@ -94,9 +96,7 @@ export function PlaySenseNoteDetail({ event, onUpdate, onDelete, onClose }: Note
 
       <div className="flex justify-end">
         <Button variant="destructive" size="sm" onClick={onDelete}>
-          <Trash2 className="w-3 h-3 mr-1" />
-          Delete Note
-        </Button>
+          <Trash2 className="w-3 h-3 mr-1" /> <AdminText text={"Delete Note"} /> </Button>
       </div>
     </Card>
   )

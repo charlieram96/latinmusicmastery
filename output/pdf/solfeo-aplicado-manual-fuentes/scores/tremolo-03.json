@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "2.0",
+  "id": "tremolo-03",
+  "title": {
+    "es": "Tres trazos / ocho fusas"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "tremolo-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "slashes": 3
+    },
+    {
+      "id": "tremolo-03.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 32
+    },
+    {
+      "id": "tremolo-03.n3",
+      "onsetBeats": "9/8",
+      "durationBeats": "1/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 32
+    },
+    {
+      "id": "tremolo-03.n4",
+      "onsetBeats": "5/4",
+      "durationBeats": "1/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 32
+    },
+    {
+      "id": "tremolo-03.n5",
+      "onsetBeats": "11/8",
+      "durationBeats": "1/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 32
+    },
+    {
+      "id": "tremolo-03.n6",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 32
+    },
+    {
+      "id": "tremolo-03.n7",
+      "onsetBeats": "13/8",
+      "durationBeats": "1/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 32
+    },
+    {
+      "id": "tremolo-03.n8",
+      "onsetBeats": "7/4",
+      "durationBeats": "1/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 32
+    },
+    {
+      "id": "tremolo-03.n9",
+      "onsetBeats": "15/8",
+      "durationBeats": "1/8",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 32
+    }
+  ],
+  "notation": {
+    "title": "Tres trazos / ocho fusas",
+    "events": [
+      {
+        "pitch": "G4",
+        "dur": 4,
+        "slashes": 3
+      },
+      {
+        "pitch": "G4",
+        "dur": 32
+      },
+      {
+        "pitch": "G4",
+        "dur": 32
+      },
+      {
+        "pitch": "G4",
+        "dur": 32
+      },
+      {
+        "pitch": "G4",
+        "dur": 32
+      },
+      {
+        "pitch": "G4",
+        "dur": 32
+      },
+      {
+        "pitch": "G4",
+        "dur": 32
+      },
+      {
+        "pitch": "G4",
+        "dur": 32
+      },
+      {
+        "pitch": "G4",
+        "dur": 32
+      }
+    ]
+  }
+}

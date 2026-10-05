@@ -1,5 +1,6 @@
 'use client'
 
+import { useSpacePlayback } from '@/hooks/use-space-playback'
 import { Pendulum } from '@/components/playsense-studio/player/transport/chronometer-control'
 import { useEffect, useRef } from 'react'
 import { motion, useSpring, useTransform, AnimatePresence } from 'framer-motion'
@@ -166,6 +167,12 @@ export function NowPlayingBar({
   // The attempt is under way: the playhead is meaningful and can be paused,
   // resumed or restarted.
   const inProgress = sessionState === 'playing' || sessionState === 'paused'
+
+  useSpacePlayback(['selecting', 'playing', 'paused'].includes(sessionState), () => {
+    if (sessionState === 'playing') onPause?.()
+    else if (sessionState === 'paused') onResume?.()
+    else if (!backingTrackLoading) onStart()
+  })
 
   // Space pauses/resumes, R restarts — see sessionShortcut for what is ignored.
   useEffect(() => {

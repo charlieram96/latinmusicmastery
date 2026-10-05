@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { ExerciseEvent, Instrument, Hand, PitchedInstrument } from '@/lib/play-sense/types'
@@ -307,9 +310,9 @@ export function PianoRollSequencer({
 
       {/* Legend */}
       <div className="flex items-center gap-3 mt-3 text-[11px] text-slate-500">
-        <span>Click + drag to place notes</span>
-        <span>Click note to edit</span>
-        <span>Pitch auto-populates from row</span>
+        <span><AdminText text={"Click + drag to place notes"} /></span>
+        <span><AdminText text={"Click note to edit"} /></span>
+        <span><AdminText text={"Pitch auto-populates from row"} /></span>
       </div>
     </div>
   )

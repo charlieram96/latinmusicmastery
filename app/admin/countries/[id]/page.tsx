@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import { randomUUID } from 'crypto'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -49,22 +50,20 @@ export default async function CountryFormPage({ params }: PageProps) {
           href="/admin/countries"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Countries
-        </Link>
+          <ArrowLeft className="w-4 h-4 mr-1" /> <AdminText text={"Back to Countries"} /> </Link>
         <h1 className="text-3xl font-bold">
-          {isNew ? 'Add Country' : 'Edit Country'}
+          {isNew ? <AdminText text={"Add Country"} /> : 'Edit Country'}
         </h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Country Details</CardTitle>
+          <CardTitle><AdminText text={"Country Details"} /></CardTitle>
         </CardHeader>
         <CardContent>
           <form action={action} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name"><AdminText text={"Name *"} /></Label>
               <Input
                 id="name"
                 name="name"
@@ -75,7 +74,7 @@ export default async function CountryFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name_es" className="text-muted-foreground">Name (Español)</Label>
+              <Label htmlFor="name_es" className="text-muted-foreground"><AdminText text={"Name (Español)"} /></Label>
               <Input
                 id="name_es"
                 name="name_es"
@@ -99,7 +98,7 @@ export default async function CountryFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description"><AdminText text={"Description"} /></Label>
               <Textarea
                 id="description"
                 name="description"
@@ -110,7 +109,7 @@ export default async function CountryFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description_es" className="text-muted-foreground">Description (Español)</Label>
+              <Label htmlFor="description_es" className="text-muted-foreground"><AdminText text={"Description (Español)"} /></Label>
               <Textarea
                 id="description_es"
                 name="description_es"
@@ -121,7 +120,7 @@ export default async function CountryFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Image</Label>
+              <Label><AdminText text={"Image"} /></Label>
               <CountryImageUpload
                 countryId={uploadId}
                 currentImageUrl={country?.image_url ?? null}
@@ -133,7 +132,7 @@ export default async function CountryFormPage({ params }: PageProps) {
                 {isNew ? 'Create Country' : 'Update Country'}
               </Button>
               <Button type="button" variant="outline" asChild>
-                <Link href="/admin/countries">Cancel</Link>
+                <Link href="/admin/countries"><AdminText text={"Cancel"} /></Link>
               </Button>
             </div>
           </form>

@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { FeedbackBanner } from '@/components/class-viewer/lesson-viewer/quiz/feedback-banner'
@@ -49,7 +52,7 @@ export function QuestionPreview({ question }: { question: QuizQuestion }) {
   return (
     <div className={cn(quizStyles.root, 'grid gap-3 rounded-xl border border-dashed border-foreground/25 bg-sunken p-3.5')}>
       <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
-        <span>Student preview</span>
+        <span><AdminText text={"Student preview"} /></span>
         <span className="inline-flex gap-0.5 rounded-md border border-border p-0.5">
           {(['en', 'es'] as const).map((l) => (
             <button key={l} type="button" aria-pressed={lang === l} onClick={() => { setLang(l); reset() }} className={cn('rounded px-2 py-0.5 text-[10.5px] font-bold uppercase', lang === l ? 'bg-raised text-foreground' : 'text-muted-foreground')}>
@@ -64,8 +67,8 @@ export function QuestionPreview({ question }: { question: QuizQuestion }) {
         <QuestionInput question={shown} answer={answer} isGraded={graded} onChange={setAnswer} />
         {graded && <FeedbackBanner score={gradeQuestionScore(shown, answer)} explanation={shown.explanation} correctAnswer={bannerCorrect(shown)} />}
         <div className="flex justify-between">
-          <Button type="button" variant="ghost" size="sm" onClick={reset}>Reset</Button>
-          <Button type="button" size="sm" disabled={graded || !hasAnswer(shown, answer)} onClick={() => setGraded(true)}>Check answer</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={reset}><AdminText text={"Reset"} /></Button>
+          <Button type="button" size="sm" disabled={graded || !hasAnswer(shown, answer)} onClick={() => setGraded(true)}><AdminText text={"Check answer"} /></Button>
         </div>
       </div>
     </div>

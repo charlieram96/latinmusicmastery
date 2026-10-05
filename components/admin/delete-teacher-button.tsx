@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
@@ -48,7 +51,7 @@ export function DeleteTeacherButton({ teacherId, teacherName, courseCount }: Del
       className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
     >
       <Trash2 className="w-3.5 h-3.5" />
-      <span className="sr-only">Delete {teacherName}</span>
+      <span className="sr-only"><AdminText text={"Delete"} /> {teacherName}</span>
     </Button>
   )
 }

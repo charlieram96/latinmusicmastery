@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -120,7 +123,7 @@ export function VideoUpload({
               <Video className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="font-medium">Click to upload video</p>
+              <p className="font-medium"><AdminText text={"Click to upload video"} /></p>
               <p className="text-sm text-muted-foreground">
                 MP4, WebM, or MOV (max 1GB)
               </p>
@@ -142,7 +145,7 @@ export function VideoUpload({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Uploading video...</span>
+            <span className="text-sm"><AdminText text={"Uploading video..."} /></span>
           </div>
           <Progress value={progress} />
         </div>
@@ -155,9 +158,7 @@ export function VideoUpload({
           onClick={() => fileInputRef.current?.click()}
           className="w-full"
         >
-          <Upload className="w-4 h-4 mr-2" />
-          Select Video File
-        </Button>
+          <Upload className="w-4 h-4 mr-2" /> <AdminText text={"Select Video File"} /> </Button>
       )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}

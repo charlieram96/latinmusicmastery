@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "2.0",
+  "id": "tonal-14-desc-01",
+  "title": {
+    "es": "Melódica ascendente · VI y VII elevados"
+  },
+  "meter": null,
+  "keyFifths": -7,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "tonal-14-desc-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Ab3",
+      "dur": 1
+    },
+    {
+      "id": "tonal-14-desc-01.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Bb3",
+      "dur": 1
+    },
+    {
+      "id": "tonal-14-desc-01.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Cb4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-14-desc-01.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Db4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-14-desc-01.n5",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Eb4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-14-desc-01.n6",
+      "onsetBeats": "20",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-14-desc-01.n7",
+      "onsetBeats": "24",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-14-desc-01.n8",
+      "onsetBeats": "28",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Ab4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Melódica ascendente · VI y VII elevados",
+    "events": [
+      {
+        "pitch": "Ab3",
+        "dur": 1
+      },
+      {
+        "pitch": "Bb3",
+        "dur": 1
+      },
+      {
+        "pitch": "Cb4",
+        "dur": 1
+      },
+      {
+        "pitch": "Db4",
+        "dur": 1
+      },
+      {
+        "pitch": "Eb4",
+        "dur": 1
+      },
+      {
+        "pitch": "F4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "Ab4",
+        "dur": 1
+      }
+    ],
+    "key": -7,
+    "intervals": [
+      "T",
+      "S",
+      "T",
+      "T",
+      "T",
+      "T",
+      "S"
+    ]
+  }
+}

@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 // Compact per-language subtitle uploader for lesson videos. Accepts .srt or
 // .vtt, converts SRT → WebVTT client-side, and stores the file in the
 // dedicated `lesson-subtitles` bucket (MIME allowlist = text/vtt only, so the
@@ -105,9 +108,7 @@ export function SubtitleUpload({
               className="h-7 px-2 text-xs"
               disabled={uploading || disabled}
               onClick={() => fileInputRef.current?.click()}
-            >
-              Replace
-            </Button>
+            > <AdminText text={"Replace"} /> </Button>
             <Button
               type="button"
               variant="ghost"

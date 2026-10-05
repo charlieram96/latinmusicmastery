@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { localizedRichContent, withRichContentTranslation } from '@/lib/i18n/rich-content'
 import type { Locale } from '@/lib/i18n'
 import { useEffect, useState } from 'react'
@@ -134,9 +137,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
       {/* Basics */}
       <div className="space-y-4">
         <div className="grid gap-1.5">
-          <Label htmlFor="item-title" className="text-xs">
-            Title
-          </Label>
+          <Label htmlFor="item-title" className="text-xs"> <AdminText text={"Title"} /> </Label>
           <Input
             id="item-title"
             value={title}
@@ -145,9 +146,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="item-title-es" className="text-xs text-muted-foreground">
-            Title (Español)
-          </Label>
+          <Label htmlFor="item-title-es" className="text-xs text-muted-foreground"> <AdminText text={"Title (Español)"} /> </Label>
           <Input
             id="item-title-es"
             value={titleEs}
@@ -156,9 +155,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="item-description" className="text-xs">
-            Description
-          </Label>
+          <Label htmlFor="item-description" className="text-xs"> <AdminText text={"Description"} /> </Label>
           <Textarea
             id="item-description"
             value={description}
@@ -168,9 +165,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="item-description-es" className="text-xs text-muted-foreground">
-            Description (Español)
-          </Label>
+          <Label htmlFor="item-description-es" className="text-xs text-muted-foreground"> <AdminText text={"Description (Español)"} /> </Label>
           <Textarea
             id="item-description-es"
             value={descriptionEs}
@@ -192,7 +187,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
           />
           {item.video_url && (
             <div className="space-y-2">
-              <SectionLabel>Subtitles</SectionLabel>
+              <SectionLabel><AdminText text={"Subtitles"} /></SectionLabel>
               <SubtitleTracksEditor
                 itemId={item.id}
                 tracks={item.subtitles ?? []}
@@ -231,9 +226,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
       {item.item_type === 'QUIZ' && (
         <div className="space-y-5 border-t border-border pt-5">
           <details className="group" open={!!item.video_url}>
-            <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/60 transition hover:text-foreground">
-              Intro video &amp; notation (optional)
-            </summary>
+            <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/60 transition hover:text-foreground"> <AdminText text={"Intro video &amp; notation (optional)"} /> </summary>
             <div className="mt-3 space-y-5">
               <VideoUpload
                 moduleId={item.id}
@@ -242,7 +235,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
               />
               {item.video_url && (
                 <div className="space-y-2">
-                  <SectionLabel>Subtitles</SectionLabel>
+                  <SectionLabel><AdminText text={"Subtitles"} /></SectionLabel>
                   <SubtitleTracksEditor
                     itemId={item.id}
                     tracks={item.subtitles ?? []}
@@ -258,7 +251,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
           </details>
 
           <div className="grid gap-1.5">
-            <SectionLabel>Quiz layout</SectionLabel>
+            <SectionLabel><AdminText text={"Quiz layout"} /></SectionLabel>
             <Select
               value={readQuizSettings(item.quiz_settings).mode}
               onValueChange={(v) => {
@@ -279,7 +272,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
           </div>
 
           <div className="space-y-3">
-            <SectionLabel>Questions</SectionLabel>
+            <SectionLabel><AdminText text={"Questions"} /></SectionLabel>
             <QuizQuestionsEditor classItemId={item.id} kind="Quiz" />
           </div>
         </div>
@@ -287,7 +280,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
 
       {item.item_type === 'EXERCISE' && (
         <div className="space-y-5 border-t border-border pt-5">
-          <SectionLabel>Exercise video &amp; score</SectionLabel>
+          <SectionLabel><AdminText text={"Exercise video &amp; score"} /></SectionLabel>
           <VideoUpload
             moduleId={item.id}
             currentVideoUrl={item.video_url}
@@ -298,9 +291,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
             currentScoreDocumentId={scoreDocumentId}
           />
           <details className="group border-t border-border pt-5">
-            <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/60 transition hover:text-foreground">
-              Questions (optional)
-            </summary>
+            <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/60 transition hover:text-foreground"> <AdminText text={"Questions (optional)"} /> </summary>
             <div className="mt-3">
               <QuizQuestionsEditor classItemId={item.id} kind="Exercise" />
             </div>
@@ -310,7 +301,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
 
       {item.item_type === 'JAM_SESSION' && (
         <div className="space-y-5 border-t border-border pt-5">
-          <SectionLabel>Jam session</SectionLabel>
+          <SectionLabel><AdminText text={"Jam session"} /></SectionLabel>
           <JamSessionEditor
             itemId={item.id}
             audioUrl={item.audio_url}
@@ -327,10 +318,8 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
 
       {/* Rich content */}
       <div className="space-y-3 border-t border-border pt-5">
-        <SectionLabel>Notes &amp; rich content</SectionLabel>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          Instructions and supporting material rendered below the player on the lesson page.
-        </p>
+        <SectionLabel><AdminText text={"Notes &amp; rich content"} /></SectionLabel>
+        <p className="text-xs leading-relaxed text-muted-foreground"> <AdminText text={"Instructions and supporting material rendered below the player on the lesson page."} /> </p>
         <div className="flex gap-2" role="group" aria-label="Notes language">
           {(['en', 'es'] as const).map(lang => <button key={lang} type="button" aria-pressed={notesLocale === lang} onClick={() => setNotesLocale(lang)} className={`rounded-md border px-3 py-1.5 text-sm ${notesLocale === lang ? 'border-primary bg-primary/15 text-primary' : 'border-border'}`}>{lang === 'es' ? 'Español' : 'English'}</button>)}
         </div>

@@ -1,0 +1,1859 @@
+{
+  "schemaVersion": "2.0",
+  "id": "estudio-completo-15",
+  "title": {
+    "es": "Subdivisión ternaria en Sol"
+  },
+  "meter": "6/8",
+  "keyFifths": 1,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "estudio-completo-15.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 8,
+      "dynamic": "p"
+    },
+    {
+      "id": "estudio-completo-15.n2",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n3",
+      "onsetBeats": "1",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n4",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n5",
+      "onsetBeats": "2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n6",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n7",
+      "onsetBeats": "3",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n8",
+      "onsetBeats": "7/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n9",
+      "onsetBeats": "4",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n10",
+      "onsetBeats": "9/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n11",
+      "onsetBeats": "5",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n12",
+      "onsetBeats": "11/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n13",
+      "onsetBeats": "6",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8,
+      "dynamic": "p"
+    },
+    {
+      "id": "estudio-completo-15.n14",
+      "onsetBeats": "13/2",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n15",
+      "onsetBeats": "7",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n16",
+      "onsetBeats": "15/2",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n17",
+      "onsetBeats": "8",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n18",
+      "onsetBeats": "17/2",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n19",
+      "onsetBeats": "9",
+      "durationBeats": "3/2",
+      "measure": 4,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "estudio-completo-15.n20",
+      "onsetBeats": "21/2",
+      "durationBeats": "3/2",
+      "measure": 4,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4,
+      "dot": true,
+      "dynamic": "mf"
+    },
+    {
+      "id": "estudio-completo-15.n21",
+      "onsetBeats": "12",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n22",
+      "onsetBeats": "25/2",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n23",
+      "onsetBeats": "13",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n24",
+      "onsetBeats": "27/2",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n25",
+      "onsetBeats": "14",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n26",
+      "onsetBeats": "29/2",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n27",
+      "onsetBeats": "15",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n28",
+      "onsetBeats": "31/2",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n29",
+      "onsetBeats": "16",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n30",
+      "onsetBeats": "33/2",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n31",
+      "onsetBeats": "17",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n32",
+      "onsetBeats": "35/2",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n33",
+      "onsetBeats": "18",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n34",
+      "onsetBeats": "37/2",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n35",
+      "onsetBeats": "19",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n36",
+      "onsetBeats": "39/2",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n37",
+      "onsetBeats": "20",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n38",
+      "onsetBeats": "41/2",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n39",
+      "onsetBeats": "21",
+      "durationBeats": "3/2",
+      "measure": 8,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "estudio-completo-15.n40",
+      "onsetBeats": "45/2",
+      "durationBeats": "3/2",
+      "measure": 8,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "estudio-completo-15.n41",
+      "onsetBeats": "24",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n42",
+      "onsetBeats": "49/2",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n43",
+      "onsetBeats": "25",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n44",
+      "onsetBeats": "51/2",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n45",
+      "onsetBeats": "26",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n46",
+      "onsetBeats": "53/2",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n47",
+      "onsetBeats": "27",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n48",
+      "onsetBeats": "55/2",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "F#4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n49",
+      "onsetBeats": "28",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n50",
+      "onsetBeats": "57/2",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n51",
+      "onsetBeats": "29",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "F#4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n52",
+      "onsetBeats": "59/2",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n53",
+      "onsetBeats": "30",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n54",
+      "onsetBeats": "61/2",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n55",
+      "onsetBeats": "31",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n56",
+      "onsetBeats": "63/2",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n57",
+      "onsetBeats": "32",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n58",
+      "onsetBeats": "65/2",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n59",
+      "onsetBeats": "33",
+      "durationBeats": "3/2",
+      "measure": 12,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "estudio-completo-15.n60",
+      "onsetBeats": "69/2",
+      "durationBeats": "3/2",
+      "measure": 12,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "estudio-completo-15.n61",
+      "onsetBeats": "36",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n62",
+      "onsetBeats": "73/2",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n63",
+      "onsetBeats": "37",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n64",
+      "onsetBeats": "75/2",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n65",
+      "onsetBeats": "38",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n66",
+      "onsetBeats": "77/2",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n67",
+      "onsetBeats": "39",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n68",
+      "onsetBeats": "79/2",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n69",
+      "onsetBeats": "40",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n70",
+      "onsetBeats": "81/2",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n71",
+      "onsetBeats": "41",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n72",
+      "onsetBeats": "83/2",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n73",
+      "onsetBeats": "42",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "F#4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n74",
+      "onsetBeats": "85/2",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n75",
+      "onsetBeats": "43",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "F#4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n76",
+      "onsetBeats": "87/2",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n77",
+      "onsetBeats": "44",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "F#4",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n78",
+      "onsetBeats": "89/2",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 8
+    },
+    {
+      "id": "estudio-completo-15.n79",
+      "onsetBeats": "45",
+      "durationBeats": "3/2",
+      "measure": 16,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "estudio-completo-15.n80",
+      "onsetBeats": "93/2",
+      "durationBeats": "3/2",
+      "measure": 16,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 4,
+      "dot": true
+    }
+  ],
+  "notation": {
+    "meter": "6/8",
+    "key": 1,
+    "clef": "G",
+    "bars": [
+      [
+        {
+          "pitch": "G3",
+          "dur": 8,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        },
+        {
+          "pitch": "G3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "A3",
+          "dur": 8,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "A3",
+          "dur": 4,
+          "dot": true
+        },
+        {
+          "pitch": "D4",
+          "dur": 4,
+          "dot": true,
+          "dynamic": "mf"
+        }
+      ],
+      [
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        },
+        {
+          "pitch": "G3",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 4,
+          "dot": true
+        },
+        {
+          "pitch": "D4",
+          "dur": 4,
+          "dot": true
+        }
+      ],
+      [
+        {
+          "pitch": "G3",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "F#4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "F#4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "B3",
+          "dur": 4,
+          "dot": true
+        },
+        {
+          "pitch": "B3",
+          "dur": 4,
+          "dot": true
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        },
+        {
+          "pitch": "G3",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "B3",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        },
+        {
+          "pitch": "G3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "F#4",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        },
+        {
+          "pitch": "F#4",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        },
+        {
+          "pitch": "F#4",
+          "dur": 8
+        },
+        {
+          "pitch": "A3",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "G3",
+          "dur": 4,
+          "dot": true
+        },
+        {
+          "pitch": "G3",
+          "dur": 4,
+          "dot": true
+        }
+      ]
+    ],
+    "beams": [
+      [
+        0,
+        1,
+        2
+      ],
+      [
+        3,
+        4,
+        5
+      ],
+      [
+        6,
+        7,
+        8
+      ],
+      [
+        9,
+        10,
+        11
+      ],
+      [
+        12,
+        13,
+        14
+      ],
+      [
+        15,
+        16,
+        17
+      ],
+      [
+        20,
+        21,
+        22
+      ],
+      [
+        23,
+        24,
+        25
+      ],
+      [
+        26,
+        27,
+        28
+      ],
+      [
+        29,
+        30,
+        31
+      ],
+      [
+        32,
+        33,
+        34
+      ],
+      [
+        35,
+        36,
+        37
+      ],
+      [
+        40,
+        41,
+        42
+      ],
+      [
+        43,
+        44,
+        45
+      ],
+      [
+        46,
+        47,
+        48
+      ],
+      [
+        49,
+        50,
+        51
+      ],
+      [
+        52,
+        53,
+        54
+      ],
+      [
+        55,
+        56,
+        57
+      ],
+      [
+        60,
+        61,
+        62
+      ],
+      [
+        63,
+        64,
+        65
+      ],
+      [
+        66,
+        67,
+        68
+      ],
+      [
+        69,
+        70,
+        71
+      ],
+      [
+        72,
+        73,
+        74
+      ],
+      [
+        75,
+        76,
+        77
+      ]
+    ],
+    "tupletGroups": [],
+    "slurs": [
+      [
+        0,
+        11
+      ],
+      [
+        20,
+        31
+      ],
+      [
+        40,
+        51
+      ],
+      [
+        60,
+        71
+      ]
+    ],
+    "ties": [],
+    "spans": [],
+    "gliss": [],
+    "endings": [],
+    "barStyles": {
+      "15": "final"
+    },
+    "wedges": [
+      {
+        "from": 12,
+        "to": 19,
+        "type": "crescendo"
+      }
+    ],
+    "systems": [
+      {
+        "title": "Compases 1-2",
+        "meter": "6/8",
+        "key": 1,
+        "bars": [
+          [
+            {
+              "pitch": "G3",
+              "dur": 8,
+              "dynamic": "p"
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            },
+            {
+              "pitch": "G3",
+              "dur": 8
+            }
+          ],
+          [
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ],
+          [
+            6,
+            7,
+            8
+          ],
+          [
+            9,
+            10,
+            11
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            11
+          ]
+        ],
+        "tempo": "Andantino · negra con puntillo = 48"
+      },
+      {
+        "title": "Compases 3-4",
+        "meter": "6/8",
+        "key": 1,
+        "bars": [
+          [
+            {
+              "pitch": "A3",
+              "dur": 8,
+              "dynamic": "p"
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            }
+          ],
+          [
+            {
+              "pitch": "A3",
+              "dur": 4,
+              "dot": true
+            },
+            {
+              "pitch": "D4",
+              "dur": 4,
+              "dot": true,
+              "dynamic": "mf"
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ],
+        "hairpin": "cresc",
+        "hairpinFrom": 0,
+        "hairpinTo": 7
+      },
+      {
+        "title": "Compases 5-6",
+        "meter": "6/8",
+        "key": 1,
+        "bars": [
+          [
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "E4",
+              "dur": 8
+            },
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            }
+          ],
+          [
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "E4",
+              "dur": 8
+            },
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ],
+          [
+            6,
+            7,
+            8
+          ],
+          [
+            9,
+            10,
+            11
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            11
+          ]
+        ]
+      },
+      {
+        "title": "Compases 7-8",
+        "meter": "6/8",
+        "key": 1,
+        "bars": [
+          [
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            },
+            {
+              "pitch": "G3",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            }
+          ],
+          [
+            {
+              "pitch": "D4",
+              "dur": 4,
+              "dot": true
+            },
+            {
+              "pitch": "D4",
+              "dur": 4,
+              "dot": true
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ]
+      },
+      {
+        "title": "Compases 9-10",
+        "meter": "6/8",
+        "key": 1,
+        "bars": [
+          [
+            {
+              "pitch": "G3",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "E4",
+              "dur": 8
+            },
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            }
+          ],
+          [
+            {
+              "pitch": "E4",
+              "dur": 8
+            },
+            {
+              "pitch": "F#4",
+              "dur": 8
+            },
+            {
+              "pitch": "G4",
+              "dur": 8
+            },
+            {
+              "pitch": "G4",
+              "dur": 8
+            },
+            {
+              "pitch": "F#4",
+              "dur": 8
+            },
+            {
+              "pitch": "E4",
+              "dur": 8
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ],
+          [
+            6,
+            7,
+            8
+          ],
+          [
+            9,
+            10,
+            11
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            11
+          ]
+        ]
+      },
+      {
+        "title": "Compases 11-12",
+        "meter": "6/8",
+        "key": 1,
+        "bars": [
+          [
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "E4",
+              "dur": 8
+            },
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            }
+          ],
+          [
+            {
+              "pitch": "B3",
+              "dur": 4,
+              "dot": true
+            },
+            {
+              "pitch": "B3",
+              "dur": 4,
+              "dot": true
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ]
+      },
+      {
+        "title": "Compases 13-14",
+        "meter": "6/8",
+        "key": 1,
+        "bars": [
+          [
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            },
+            {
+              "pitch": "G3",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            }
+          ],
+          [
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "D4",
+              "dur": 8
+            },
+            {
+              "pitch": "C4",
+              "dur": 8
+            },
+            {
+              "pitch": "B3",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            },
+            {
+              "pitch": "G3",
+              "dur": 8
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ],
+          [
+            6,
+            7,
+            8
+          ],
+          [
+            9,
+            10,
+            11
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            11
+          ]
+        ]
+      },
+      {
+        "title": "Compases 15-16",
+        "meter": "6/8",
+        "key": 1,
+        "bars": [
+          [
+            {
+              "pitch": "F#4",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            },
+            {
+              "pitch": "F#4",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            },
+            {
+              "pitch": "F#4",
+              "dur": 8
+            },
+            {
+              "pitch": "A3",
+              "dur": 8
+            }
+          ],
+          [
+            {
+              "pitch": "G3",
+              "dur": 4,
+              "dot": true
+            },
+            {
+              "pitch": "G3",
+              "dur": 4,
+              "dot": true
+            }
+          ]
+        ],
+        "beams": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ],
+        "barStyles": {
+          "1": "final"
+        }
+      }
+    ]
+  }
+}

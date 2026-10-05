@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "2.0",
+  "id": "intervalos-0-01",
+  "title": {
+    "es": "Segundas · menor · 1 semitono · ascenso y descenso"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "intervalos-0-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "intervalos-0-01.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Db4",
+      "dur": 1
+    },
+    {
+      "id": "intervalos-0-01.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Segundas · menor · 1 semitono · ascenso y descenso",
+    "events": [
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "Db4",
+        "dur": 1
+      },
+      {
+        "pitch": "C4",
+        "dur": 1
+      }
+    ]
+  }
+}

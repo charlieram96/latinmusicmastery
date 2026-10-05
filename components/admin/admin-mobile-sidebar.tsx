@@ -1,5 +1,10 @@
 'use client'
 
+import { useTranslation } from '@/components/language-provider'
+import { adminLabel } from '@/lib/i18n/admin-labels'
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -24,6 +29,7 @@ const navItems = [
 
 export function AdminMobileSidebar() {
   const [open, setOpen] = useState(false)
+  const { locale } = useTranslation()
   const pathname = usePathname()
 
   return (
@@ -36,12 +42,12 @@ export function AdminMobileSidebar() {
         type="button"
       >
         <Menu className="h-5 w-5" />
-        <span className="sr-only">Toggle menu</span>
+        <span className="sr-only"><AdminText text={"Toggle menu"} /></span>
       </Button>
       <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent side="left" className="lmm-admin-navigation w-[280px] p-0 flex flex-col">
         <SheetHeader className="p-6 border-b">
-          <SheetTitle>Admin Panel</SheetTitle>
+          <SheetTitle><AdminText text={"Admin Panel"} /></SheetTitle>
         </SheetHeader>
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
@@ -65,7 +71,7 @@ export function AdminMobileSidebar() {
                 `}
               >
                 <Icon className="w-[18px] h-[18px]" />
-                {item.label}
+                {<AdminText text={item.label} />}
               </Link>
             )
           })}
@@ -76,8 +82,7 @@ export function AdminMobileSidebar() {
             onClick={() => setOpen(false)}
             className="lmm-nav-return flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-foreground"
           >
-            <ArrowLeft className="h-5 w-5"/> Back to Dashboard
-          </Link>
+            <ArrowLeft className="h-5 w-5"/> <AdminText text={"Back to Dashboard"} /> </Link>
         </div>
       </SheetContent>
       </Sheet>

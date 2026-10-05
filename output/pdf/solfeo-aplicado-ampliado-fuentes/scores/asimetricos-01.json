@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "2.0",
+  "id": "asimetricos-01",
+  "title": {
+    "es": "5/4 agrupado 3 + 2"
+  },
+  "meter": "5/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "asimetricos-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": "accent",
+      "label": "1"
+    },
+    {
+      "id": "asimetricos-01.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": null,
+      "label": "2"
+    },
+    {
+      "id": "asimetricos-01.n3",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": null,
+      "label": "3"
+    },
+    {
+      "id": "asimetricos-01.n4",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": "accent",
+      "label": "4"
+    },
+    {
+      "id": "asimetricos-01.n5",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": null,
+      "label": "5"
+    }
+  ],
+  "notation": {
+    "title": "5/4 agrupado 3 + 2",
+    "meter": "5/4",
+    "bars": [
+      [
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": "accent",
+          "label": "1"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": null,
+          "label": "2"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": null,
+          "label": "3"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": "accent",
+          "label": "4"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": null,
+          "label": "5"
+        }
+      ]
+    ]
+  }
+}

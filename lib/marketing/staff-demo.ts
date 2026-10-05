@@ -15,7 +15,7 @@ export const NOTE_STEPS = [0, 2, 3, 4, 6, 8, 10, 11, 12, 14]
 export const ONSETS = [3, 6, 11, 14]
 /** Simulated student offsets in ms, cycled. */
 const OFFSETS = [4, -7, 12, 3, -2, 26, 6, -5, 2, 9, -9, 5, 1, -3, 31, 8, -6, 0, 3, 14]
-export const COUNTS = Array.from({ length: STEPS }, (_, s) => (s % 2 ? '&' : String((s % 8) / 2 + 1)))
+export const COUNTS = Array.from({ length: STEPS }, (_, s) => (s % 2 ? '' : String((s % 8) / 2 + 1)))
 
 /** [step, x px] pairs laid out by the engraver. */
 export type Anchor = [number, number]

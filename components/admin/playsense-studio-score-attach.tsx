@@ -1,13 +1,24 @@
-'use client';
+'use client'
+
+import { AdminText } from '@/components/admin/admin-text'
+;
 
 // Admin class-item control for PlaySense Studio. Building/importing a score and
 // syncing it all happen inside the Studio now — this just shows whether a score
 // is attached and links into the Studio (and offers detach).
 
-import { CheckCircle2, ExternalLink, FileMusic, X } from 'lucide-react';
-import Link from 'next/link';
+import { CheckCircle2, ExternalLink, FileMusic, Loader2, X } from 'lucide-react';
+import Link, { useLinkStatus } from 'next/link';
 import { useState, useTransition } from 'react';
 import { detachScoreFromClassItem } from '@/app/actions/playsense-studio';
+
+function StudioLinkLabel({ children }: { children: React.ReactNode }) {
+  const { pending } = useLinkStatus();
+  return <>
+    {pending ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : <ExternalLink aria-hidden className="h-4 w-4" />}
+    <span role={pending ? 'status' : undefined}>{pending ? <AdminText text={"Opening PlaySense Studio…"} /> : children}</span>
+  </>;
+}
 
 interface PlaysenseStudioScoreAttachProps {
   classItemId: string;
@@ -38,14 +49,13 @@ export function PlaysenseStudioScoreAttach({
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <FileMusic className="w-4 h-4 text-muted-foreground" />
-          <h4 className="font-medium">PlaySense Studio Sections</h4>
+          <h4 className="font-medium"><AdminText text={"PlaySense Studio Sections"} /></h4>
         </div>
         <Link
           href={studioHref}
           className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md border border-border hover:bg-muted transition text-sm"
         >
-          <ExternalLink className="w-4 h-4" />
-          Open PlaySense Studio — manage scored sections
+          <StudioLinkLabel><AdminText text={"Open PlaySense Studio — manage scored sections"} /></StudioLinkLabel>
         </Link>
         <p className="text-xs text-muted-foreground">
           A video can have multiple scored sections, each placed where the instructor plays. Add,
@@ -73,22 +83,19 @@ export function PlaysenseStudioScoreAttach({
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <FileMusic className="w-4 h-4 text-muted-foreground" />
-        <h4 className="font-medium">PlaySense Studio Score</h4>
+        <h4 className="font-medium"><AdminText text={"PlaySense Studio Score"} /></h4>
       </div>
 
       {hasAttached ? (
         <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-border bg-muted/30 text-sm">
           <span className="flex items-center gap-2 text-muted-foreground">
-            <CheckCircle2 className="w-4 h-4 text-primary" />
-            A score is attached to this class item.
-          </span>
+            <CheckCircle2 className="w-4 h-4 text-primary" /> <AdminText text={"A score is attached to this class item."} /> </span>
           <div className="flex items-center gap-2">
             <Link
               href={studioHref}
               className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Open PlaySense Studio
+              <StudioLinkLabel><AdminText text={"Open PlaySense Studio"} /></StudioLinkLabel>
             </Link>
             <button
               type="button"
@@ -107,17 +114,13 @@ export function PlaysenseStudioScoreAttach({
           href={studioHref}
           className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md border border-border hover:bg-muted transition text-sm"
         >
-          <ExternalLink className="w-4 h-4" />
-          Open PlaySense Studio to add a score
+          <StudioLinkLabel><AdminText text={"Open PlaySense Studio to add a score"} /></StudioLinkLabel>
         </Link>
       )}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
 
-      <p className="text-xs text-muted-foreground">
-        In PlaySense Studio you import or create the score, build the notation, and sync it to the
-        video. Once attached, students see the PlaySense Studio player on this lesson.
-      </p>
+      <p className="text-xs text-muted-foreground"> <AdminText text={"In PlaySense Studio you import or create the score, build the notation, and sync it to the video. Once attached, students see the PlaySense Studio player on this lesson."} /> </p>
     </div>
   );
 }

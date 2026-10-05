@@ -251,7 +251,7 @@ public struct StagePlayerView: View {
                 Text(error).font(LMMFont.caption).foregroundStyle(LMMColor.destructive)
             }
             VStack(spacing: LMMSpacing.xs) {
-                Button(lmmString("stage.start")) { start(offsetMs: 0) }.buttonStyle(.lmmPrimary)
+                Button { start(offsetMs: 0) } label: { Image(systemName: "play.fill") }.accessibilityLabel(lmmString("stage.start")).buttonStyle(.lmmPrimary)
                 #if DEBUG
                 HStack(spacing: LMMSpacing.xs) {
                     Button("Loose") { start(offsetMs: 55) }.buttonStyle(.lmmSecondary)

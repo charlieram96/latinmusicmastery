@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "2.0",
+  "id": "unidades-02",
+  "title": {
+    "es": "2/4: compás = blanca; tiempo = negra; subdivisión = corchea"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "unidades-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 2,
+      "label": "compás"
+    },
+    {
+      "id": "unidades-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 4,
+      "label": "tiempo"
+    },
+    {
+      "id": "unidades-02.n3",
+      "onsetBeats": "3",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8,
+      "label": "subdivisión"
+    }
+  ],
+  "notation": {
+    "title": "2/4: compás = blanca; tiempo = negra; subdivisión = corchea",
+    "events": [
+      {
+        "pitch": "B4",
+        "dur": 2,
+        "label": "compás"
+      },
+      {
+        "pitch": "B4",
+        "dur": 4,
+        "label": "tiempo"
+      },
+      {
+        "pitch": "B4",
+        "dur": 8,
+        "label": "subdivisión"
+      }
+    ]
+  }
+}

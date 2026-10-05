@@ -43,8 +43,9 @@ export type CenterSelection =
   | { type: 'class'; id: string }
   | null
 
-/** What the always-open inspector drawer edits. */
+/** What the inspector edits; none keeps it closed. */
 export type DrawerSelection =
+  | { type: 'none' }
   | { type: 'course' }
   | { type: 'module'; id: string }
   | { type: 'class'; id: string }

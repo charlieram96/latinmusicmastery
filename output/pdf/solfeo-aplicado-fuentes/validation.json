@@ -1,0 +1,8 @@
+{
+  "pdfPages": 55,
+  "modules": 16,
+  "lessonTitles": 85,
+  "editableScores": 36,
+  "checked": "PDF readable text, unique IDs, XML parse, exact timing including tuplets, measured bar totals, MXL contents; page renders visually reviewed.",
+  "notYetTested": "LMM import, interactive player, microphone/video synchronization, complete course content."
+}

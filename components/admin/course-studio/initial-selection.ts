@@ -16,8 +16,7 @@ export interface InitialSelection {
  * Decide what the course studio shows on first render.
  *
  * A requested lesson (and optionally an item inside it) wins when it exists
- * in the course. Otherwise the first lesson is the most useful landing spot,
- * falling back to the first module, then to course settings.
+ * in the course. Otherwise leave the canvas and inspector unselected.
  */
 export function resolveInitialSelection(
   sections: SectionWithClasses[],
@@ -35,19 +34,5 @@ export function resolveInitialSelection(
     }
   }
 
-  const firstClass = sections.find((s) => s.classes.length > 0)?.classes[0] ?? null
-  const firstModule = sections[0] ?? null
-  if (firstClass) {
-    return {
-      center: { type: 'class', id: firstClass.id },
-      drawer: { type: 'class', id: firstClass.id },
-    }
-  }
-  if (firstModule) {
-    return {
-      center: { type: 'module', id: firstModule.id },
-      drawer: { type: 'module', id: firstModule.id },
-    }
-  }
-  return { center: null, drawer: { type: 'course' } }
+  return { center: null, drawer: { type: 'none' } }
 }

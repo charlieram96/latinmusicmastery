@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "2.0",
+  "id": "marcar-3-01",
+  "title": {
+    "es": "Cuenta un número por cada negra"
+  },
+  "meter": "3/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "marcar-3-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "label": "1"
+    },
+    {
+      "id": "marcar-3-01.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "label": "2"
+    },
+    {
+      "id": "marcar-3-01.n3",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "label": "3"
+    }
+  ],
+  "notation": {
+    "title": "Cuenta un número por cada negra",
+    "meter": "3/4",
+    "bars": [
+      [
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "label": "1"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "label": "2"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "label": "3"
+        }
+      ]
+    ]
+  }
+}

@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { ArrowDown, ArrowUp, Palette, Sparkles, Trash2, Upload } from 'lucide-react'
 import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
@@ -64,7 +67,7 @@ export function InspectorBackground({
   return (
     <div className="grid content-start gap-5 p-3.5">
       <div>
-        <Label>Canvas shape · layers and pieces re-fit, nothing distorts</Label>
+        <Label><AdminText text={"Canvas shape · layers and pieces re-fit, nothing distorts"} /></Label>
         <div className="grid grid-cols-4 gap-1.5">
           {ASPECTS.map((a) => (
             <button
@@ -79,14 +82,14 @@ export function InspectorBackground({
               )}
             >
               <i className="block rounded-[2px] border-[1.5px] border-current" style={{ width: 22, height: 22 / a.value }} />
-              {a.label}
+              {<AdminText text={a.label} />}
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <Label>Background colour</Label>
+        <Label><AdminText text={"Background colour"} /></Label>
         <div className="grid grid-cols-7 gap-1.5">
           {SWATCHES.map((c) => (
             <button
@@ -108,8 +111,7 @@ export function InspectorBackground({
       </div>
 
       <div>
-        <Label>
-          Image layers <span className="font-medium normal-case tracking-normal">· back → front · the first one is the base frame</span>
+        <Label> <AdminText text={"Image layers"} /> <span className="font-medium normal-case tracking-normal">· back → front · the first one is the base frame</span>
         </Label>
         <div className="grid gap-1.5">
           {background.layers.map((l, i) => {
@@ -138,7 +140,7 @@ export function InspectorBackground({
                   </small>
                 </span>
                 <span className="inline-flex gap-0.5">
-                  <button type="button" title="Fit the box to the image's natural ratio" aria-label="Fit to image" disabled={!l.ratio} onClick={(e) => { e.stopPropagation(); onFitLayer(l.id) }} className="h-6 rounded-md px-1.5 text-[10.5px] font-bold text-muted-foreground hover:bg-foreground/7 disabled:opacity-30">Fit</button>
+                  <button type="button" title="Fit the box to the image's natural ratio" aria-label="Fit to image" disabled={!l.ratio} onClick={(e) => { e.stopPropagation(); onFitLayer(l.id) }} className="h-6 rounded-md px-1.5 text-[10.5px] font-bold text-muted-foreground hover:bg-foreground/7 disabled:opacity-30"><AdminText text={"Fit"} /></button>
                   <button type="button" aria-label="Send back" disabled={i === 0} onClick={(e) => { e.stopPropagation(); onReorderLayer(l.id, -1) }} className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/7 disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button>
                   <button type="button" aria-label="Bring forward" disabled={i === background.layers.length - 1} onClick={(e) => { e.stopPropagation(); onReorderLayer(l.id, 1) }} className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/7 disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button>
                   <button type="button" aria-label="Delete layer" onClick={(e) => { e.stopPropagation(); onRemoveLayer(l.id) }} className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/7 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
@@ -167,10 +169,10 @@ export function InspectorBackground({
       </div>
 
       <div className="grid gap-2 rounded-xl border border-gold/30 bg-gold/8 px-3.5 py-3 text-xs leading-snug">
-        <b className="flex items-center gap-1.5 text-gold"><Sparkles className="h-3.5 w-3.5" /> Fix images</b>
+        <b className="flex items-center gap-1.5 text-gold"><Sparkles className="h-3.5 w-3.5" /> <AdminText text={"Fix images"} /></b>
         <span>Trims transparent margins off every piece and layer, shrinks them to 1024 px, uploads the new files and rewrites each piece’s size and target from where it sits in its export. Pieces exported at the base image’s size are placed automatically. Originals stay in storage; undo restores the previous data.</span>
         <Button type="button" size="sm" variant="outline" disabled={busy || (background.layers.length === 0)} onClick={onFixImages} className="w-fit">
-          {fixing ? `Fixing ${fixing.done} of ${fixing.total}…` : 'Fix images'}
+          {fixing ? `Fixing ${fixing.done} of ${fixing.total}…` : <AdminText text={"Fix images"} />}
         </Button>
         {fixError && <span className="text-destructive">{fixError}</span>}
       </div>

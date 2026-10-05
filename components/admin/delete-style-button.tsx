@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Trash2 } from 'lucide-react'
@@ -69,16 +72,15 @@ export function DeleteStyleButton({ styleId, styleName, courseCount }: Props) {
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete style?</DialogTitle>
+            <DialogTitle><AdminText text={"Delete style?"} /></DialogTitle>
             <DialogDescription asChild>
               <div className="space-y-2">
-                <p>
-                  This permanently deletes{' '}
+                <p> <AdminText text={"This permanently deletes"} />{' '}
                   <span className="font-semibold text-foreground">{styleName}</span>. The style has no
                   associated courses, but it may still be referenced by instruments (the link will be
                   removed) or by waitlist entries (those keep the style id as a stale reference).
                 </p>
-                <p className="font-medium text-destructive">This cannot be undone.</p>
+                <p className="font-medium text-destructive"><AdminText text={"This cannot be undone."} /></p>
               </div>
             </DialogDescription>
           </DialogHeader>
@@ -90,20 +92,14 @@ export function DeleteStyleButton({ styleId, styleName, courseCount }: Props) {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}> <AdminText text={"Cancel"} /> </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={pending}>
               {pending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Deleting…
-                </>
+                  <Loader2 className="h-4 w-4 animate-spin" /> <AdminText text={"Deleting…"} /> </>
               ) : (
                 <>
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </>
+                  <Trash2 className="h-4 w-4" /> <AdminText text={"Delete"} /> </>
               )}
             </Button>
           </DialogFooter>

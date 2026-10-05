@@ -1,0 +1,46 @@
+{
+  "id": "cuerdas-02",
+  "title": {
+    "es": "Viola · lectura en Do en tercera"
+  },
+  "schemaVersion": "1.0",
+  "timeUnit": "quarter-note",
+  "meter": null,
+  "clef": "C",
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "cuerdas-02.N001",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "C4"
+    },
+    {
+      "id": "cuerdas-02.N002",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "D4"
+    },
+    {
+      "id": "cuerdas-02.N003",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "E4"
+    },
+    {
+      "id": "cuerdas-02.N004",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "F4"
+    }
+  ]
+}

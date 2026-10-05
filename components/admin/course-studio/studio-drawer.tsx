@@ -1,4 +1,6 @@
 'use client'
+import { AdminText } from '@/components/admin/admin-text'
+
 
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -31,7 +33,7 @@ export function StudioDrawer({ widthPx, header, onMobileClose, children }: Studi
             <div className="min-w-0 flex-1">
               {header.label && (
                 <p className="text-[9.5px] font-semibold uppercase leading-3 tracking-[0.14em] text-muted-foreground/70">
-                  {header.label}
+                  {<AdminText text={header.label} />}
                 </p>
               )}
               <p className="truncate text-[13px] font-semibold leading-4 text-foreground">

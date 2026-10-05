@@ -1,0 +1,160 @@
+{
+  "schemaVersion": "2.0",
+  "id": "tonal-2-mayor-04",
+  "title": {
+    "es": "Ejercicio tonal · LMM"
+  },
+  "meter": "4/4",
+  "keyFifths": -1,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "tonal-2-mayor-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2
+    },
+    {
+      "id": "tonal-2-mayor-04.n2",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4
+    },
+    {
+      "id": "tonal-2-mayor-04.n3",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 4
+    },
+    {
+      "id": "tonal-2-mayor-04.n4",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 4
+    },
+    {
+      "id": "tonal-2-mayor-04.n5",
+      "onsetBeats": "5",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 4
+    },
+    {
+      "id": "tonal-2-mayor-04.n6",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 2
+    },
+    {
+      "id": "tonal-2-mayor-04.n7",
+      "onsetBeats": "8",
+      "durationBeats": "2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 2
+    },
+    {
+      "id": "tonal-2-mayor-04.n8",
+      "onsetBeats": "10",
+      "durationBeats": "1",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "E5",
+      "dur": 4
+    },
+    {
+      "id": "tonal-2-mayor-04.n9",
+      "onsetBeats": "11",
+      "durationBeats": "1",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "F5",
+      "dur": 4
+    },
+    {
+      "id": "tonal-2-mayor-04.n10",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 4,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Ejercicio tonal · LMM",
+    "key": -1,
+    "meter": "4/4",
+    "bars": [
+      [
+        {
+          "pitch": "F4",
+          "dur": 2
+        },
+        {
+          "pitch": "G4",
+          "dur": 4
+        },
+        {
+          "pitch": "A4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "Bb4",
+          "dur": 4
+        },
+        {
+          "pitch": "A4",
+          "dur": 4
+        },
+        {
+          "pitch": "G4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "C5",
+          "dur": 2
+        },
+        {
+          "pitch": "E5",
+          "dur": 4
+        },
+        {
+          "pitch": "F5",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 1
+        }
+      ]
+    ]
+  }
+}

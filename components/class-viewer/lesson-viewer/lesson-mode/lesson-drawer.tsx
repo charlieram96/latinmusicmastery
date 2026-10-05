@@ -4,6 +4,7 @@
 // comments, moved out of the page body; on phones it also lists the module's
 // lessons, since the rail is hidden there.
 
+import { stripLanguageLabels } from '@/lib/i18n/content-labels'
 import { useState, type ReactNode } from 'react'
 import { BarChart3, Clock } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
@@ -40,7 +41,7 @@ export function LessonDrawer({ open, onOpenChange, title, description, meta, com
     ...(hasComments ? [{ id: 'comments' as const, label: commentCount > 0 ? t('dashboard.classViewer.lessonMode.drawer.commentsCount', { count: commentCount }) : t('dashboard.classViewer.lessonMode.drawer.comments') }] : []),
     { id: 'lessons', label: t('dashboard.classViewer.lessonMode.drawer.lessons'), className: 'md:hidden' },
   ]
-  const paragraphs = (description ?? '').split(/\n{2,}/).filter(p => p.trim().length > 0)
+  const paragraphs = stripLanguageLabels(description ?? '').split(/\n{2,}/).filter(p => p.trim().length > 0)
   const pill = 'inline-flex items-center gap-1.5 rounded-full border border-border bg-raised px-3 py-1 text-xs font-medium text-foreground/80'
 
   return <Sheet open={open} onOpenChange={onOpenChange}>

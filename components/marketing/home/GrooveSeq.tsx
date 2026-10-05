@@ -97,7 +97,7 @@ export function GrooveSeq() {
           )
         })}
       </div>
-      <div className="counts" aria-hidden="true"><span /><div>{Array.from({ length: 16 }, (_, s) => s % 2 ? <span key={s}>&amp;</span> : <b key={s}>{(s % 8) / 2 + 1}</b>)}</div></div>
+      <div className="counts" aria-hidden="true"><span /><div>{Array.from({ length: 16 }, (_, s) => s % 2 ? <span key={s} /> : <b key={s}>{(s % 8) / 2 + 1}</b>)}</div></div>
       <div className="seq-foot">
         <small>{k('foot')}</small>
         <span className="chord serif" style={{ fontSize: 22 }}>{chord}</span>

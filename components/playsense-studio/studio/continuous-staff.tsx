@@ -122,13 +122,8 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
       if (!built) return;
       formatMeasure(built, Math.max(20, stave.getNoteEndX() - stave.getNoteStartX() - 8));
       if (noteTimeForQN) {
-        // Only the downbeat needs engraving space after its separator. Keep
-        // later attacks at their time coordinates and leave the timing map intact.
-        const nextAttack = [...events, ...voice2]
-          .map(event => noteTimeForQN(event.qnStart) * pixelsPerSecond - win.start)
-          .filter(x => x > x0 + 0.5)
-          .reduce((nearest, x) => Math.min(nearest, x), x1);
-        const downbeatInset = Math.min(17, Math.max(0, nextAttack - x0) / 3);
+        // The sync editor uses a time axis, not engraving spacing: every
+        // attack, including the downbeat, is centered on its waveform time.
         const positioned = new Set<ReturnType<StaveNote['getTickContext']>>();
         built.notes.forEach((notes, voice) => notes.forEach((note, index) => {
           note.setStave(stave);
@@ -136,7 +131,7 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
           const tick = note.getTickContext();
           if (!event || positioned.has(tick)) return;
           const timeX = noteTimeForQN(event.qnStart) * pixelsPerSecond - win.start;
-          const target = timeX + (Math.abs(timeX - x0) < 0.5 ? downbeatInset : 0);
+          const target = timeX;
           // Move the shared rhythmic context, preserving chord displacements,
           // beams, articulations and the formatter's voice collision handling.
           tick.setX(tick.getX() + target - note.getAbsoluteX() - note.getGlyphWidth() / 2);

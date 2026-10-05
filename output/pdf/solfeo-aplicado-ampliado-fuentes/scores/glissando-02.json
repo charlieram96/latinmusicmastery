@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "2.0",
+  "id": "glissando-02",
+  "title": {
+    "es": "Deslizamiento descendente"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "glissando-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 2
+    },
+    {
+      "id": "glissando-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "Deslizamiento descendente",
+    "gliss": [
+      [
+        0,
+        1
+      ]
+    ],
+    "bars": [
+      [
+        {
+          "pitch": "G4",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ]
+    ],
+    "meter": "4/4",
+    "barStyles": {
+      "0": "final"
+    }
+  }
+}

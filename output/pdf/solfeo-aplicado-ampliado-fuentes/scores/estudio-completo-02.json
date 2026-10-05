@@ -1,0 +1,747 @@
+{
+  "schemaVersion": "2.0",
+  "id": "estudio-completo-02",
+  "title": {
+    "es": "Blancas y dirección melódica"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "estudio-completo-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2,
+      "dynamic": "p"
+    },
+    {
+      "id": "estudio-completo-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n3",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n4",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-02.n5",
+      "onsetBeats": "7",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-02.n6",
+      "onsetBeats": "8",
+      "durationBeats": "2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n7",
+      "onsetBeats": "10",
+      "durationBeats": "2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n8",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 4,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 1
+    },
+    {
+      "id": "estudio-completo-02.n9",
+      "onsetBeats": "16",
+      "durationBeats": "2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n10",
+      "onsetBeats": "18",
+      "durationBeats": "2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n11",
+      "onsetBeats": "20",
+      "durationBeats": "2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n12",
+      "onsetBeats": "22",
+      "durationBeats": "1",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-02.n13",
+      "onsetBeats": "23",
+      "durationBeats": "1",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-02.n14",
+      "onsetBeats": "24",
+      "durationBeats": "2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n15",
+      "onsetBeats": "26",
+      "durationBeats": "2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n16",
+      "onsetBeats": "28",
+      "durationBeats": "4",
+      "measure": 8,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "estudio-completo-02.n17",
+      "onsetBeats": "32",
+      "durationBeats": "2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n18",
+      "onsetBeats": "34",
+      "durationBeats": "2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n19",
+      "onsetBeats": "36",
+      "durationBeats": "2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n20",
+      "onsetBeats": "38",
+      "durationBeats": "1",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-02.n21",
+      "onsetBeats": "39",
+      "durationBeats": "1",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-02.n22",
+      "onsetBeats": "40",
+      "durationBeats": "2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n23",
+      "onsetBeats": "42",
+      "durationBeats": "2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n24",
+      "onsetBeats": "44",
+      "durationBeats": "4",
+      "measure": 12,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 1
+    },
+    {
+      "id": "estudio-completo-02.n25",
+      "onsetBeats": "48",
+      "durationBeats": "2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n26",
+      "onsetBeats": "50",
+      "durationBeats": "1",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-02.n27",
+      "onsetBeats": "51",
+      "durationBeats": "1",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "estudio-completo-02.n28",
+      "onsetBeats": "52",
+      "durationBeats": "2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n29",
+      "onsetBeats": "54",
+      "durationBeats": "2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n30",
+      "onsetBeats": "56",
+      "durationBeats": "2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n31",
+      "onsetBeats": "58",
+      "durationBeats": "2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "estudio-completo-02.n32",
+      "onsetBeats": "60",
+      "durationBeats": "4",
+      "measure": 16,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "meter": "4/4",
+    "key": 0,
+    "clef": "G",
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 2,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "E4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 2
+        },
+        {
+          "pitch": "E4",
+          "dur": 4
+        },
+        {
+          "pitch": "F4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 2
+        },
+        {
+          "pitch": "D4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 1
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 2
+        },
+        {
+          "pitch": "F4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 2
+        },
+        {
+          "pitch": "E4",
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "G4",
+          "dur": 1
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 2
+        },
+        {
+          "pitch": "E4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 2
+        },
+        {
+          "pitch": "F4",
+          "dur": 4
+        },
+        {
+          "pitch": "G4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 2
+        },
+        {
+          "pitch": "E4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 1
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 2
+        },
+        {
+          "pitch": "E4",
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 2
+        },
+        {
+          "pitch": "D4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 1
+        }
+      ]
+    ],
+    "beams": [],
+    "tupletGroups": [],
+    "slurs": [
+      [
+        0,
+        4
+      ],
+      [
+        8,
+        12
+      ],
+      [
+        16,
+        20
+      ],
+      [
+        24,
+        28
+      ]
+    ],
+    "ties": [],
+    "spans": [],
+    "gliss": [],
+    "endings": [],
+    "barStyles": {
+      "15": "final"
+    },
+    "wedges": [],
+    "systems": [
+      {
+        "title": "Compases 1-2",
+        "meter": "4/4",
+        "key": 0,
+        "bars": [
+          [
+            {
+              "pitch": "C4",
+              "dur": 2,
+              "dynamic": "p"
+            },
+            {
+              "pitch": "E4",
+              "dur": 2
+            }
+          ],
+          [
+            {
+              "pitch": "D4",
+              "dur": 2
+            },
+            {
+              "pitch": "E4",
+              "dur": 4
+            },
+            {
+              "pitch": "F4",
+              "dur": 4
+            }
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            4
+          ]
+        ],
+        "tempo": "Cantabile · negra = 60"
+      },
+      {
+        "title": "Compases 3-4",
+        "meter": "4/4",
+        "key": 0,
+        "bars": [
+          [
+            {
+              "pitch": "E4",
+              "dur": 2
+            },
+            {
+              "pitch": "D4",
+              "dur": 2
+            }
+          ],
+          [
+            {
+              "pitch": "D4",
+              "dur": 1
+            }
+          ]
+        ]
+      },
+      {
+        "title": "Compases 5-6",
+        "meter": "4/4",
+        "key": 0,
+        "bars": [
+          [
+            {
+              "pitch": "E4",
+              "dur": 2
+            },
+            {
+              "pitch": "F4",
+              "dur": 2
+            }
+          ],
+          [
+            {
+              "pitch": "F4",
+              "dur": 2
+            },
+            {
+              "pitch": "E4",
+              "dur": 4
+            },
+            {
+              "pitch": "D4",
+              "dur": 4
+            }
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            4
+          ]
+        ]
+      },
+      {
+        "title": "Compases 7-8",
+        "meter": "4/4",
+        "key": 0,
+        "bars": [
+          [
+            {
+              "pitch": "D4",
+              "dur": 2
+            },
+            {
+              "pitch": "C4",
+              "dur": 2
+            }
+          ],
+          [
+            {
+              "pitch": "G4",
+              "dur": 1
+            }
+          ]
+        ]
+      },
+      {
+        "title": "Compases 9-10",
+        "meter": "4/4",
+        "key": 0,
+        "bars": [
+          [
+            {
+              "pitch": "C4",
+              "dur": 2
+            },
+            {
+              "pitch": "E4",
+              "dur": 2
+            }
+          ],
+          [
+            {
+              "pitch": "E4",
+              "dur": 2
+            },
+            {
+              "pitch": "F4",
+              "dur": 4
+            },
+            {
+              "pitch": "G4",
+              "dur": 4
+            }
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            4
+          ]
+        ]
+      },
+      {
+        "title": "Compases 11-12",
+        "meter": "4/4",
+        "key": 0,
+        "bars": [
+          [
+            {
+              "pitch": "F4",
+              "dur": 2
+            },
+            {
+              "pitch": "E4",
+              "dur": 2
+            }
+          ],
+          [
+            {
+              "pitch": "E4",
+              "dur": 1
+            }
+          ]
+        ]
+      },
+      {
+        "title": "Compases 13-14",
+        "meter": "4/4",
+        "key": 0,
+        "bars": [
+          [
+            {
+              "pitch": "F4",
+              "dur": 2
+            },
+            {
+              "pitch": "E4",
+              "dur": 4
+            },
+            {
+              "pitch": "D4",
+              "dur": 4
+            }
+          ],
+          [
+            {
+              "pitch": "E4",
+              "dur": 2
+            },
+            {
+              "pitch": "D4",
+              "dur": 2
+            }
+          ]
+        ],
+        "slurs": [
+          [
+            0,
+            4
+          ]
+        ]
+      },
+      {
+        "title": "Compases 15-16",
+        "meter": "4/4",
+        "key": 0,
+        "bars": [
+          [
+            {
+              "pitch": "D4",
+              "dur": 2
+            },
+            {
+              "pitch": "C4",
+              "dur": 2
+            }
+          ],
+          [
+            {
+              "pitch": "C4",
+              "dur": 1
+            }
+          ]
+        ],
+        "barStyles": {
+          "1": "final"
+        }
+      }
+    ]
+  }
+}

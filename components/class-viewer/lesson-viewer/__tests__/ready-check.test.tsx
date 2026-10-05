@@ -30,6 +30,14 @@ const states = () => panels().map(p => p.getAttribute('data-check'))
 const start = () => host.querySelector('[data-ready-start]') as HTMLButtonElement
 
 describe('ReadyCheck', () => {
+  it('shows the audio-driven count-in and lights only the matching circle', () => {
+    act(() => root.render(<ReadyCheck {...base} audioMode="headphones" calibrating
+      calibrationVisual={{phase:'count-in', countInBeat:2, beat:0, pulse:2}} />))
+    expect(host.textContent).toContain('Get ready — listen without clapping · 2 / 4')
+    const circles = [...host.querySelectorAll('.lx-clicks i')]
+    expect(circles.map(dot => dot.getAttribute('data-active'))).toEqual(['false','true','false','false'])
+    expect(host.querySelector('.lx-clicks')?.getAttribute('data-live')).toBe('false')
+  })
   it('shows three panels and the staff preview; start waits for a sound choice', () => {
     act(() => root.render(<ReadyCheck {...base} />))
     expect(panels().map(p => p.getAttribute('data-ready-panel'))).toEqual(['sound', 'input', 'timing'])
@@ -52,7 +60,7 @@ describe('ReadyCheck', () => {
     act(() => root.render(<ReadyCheck {...base} audioMode="headphones" micOpen micHeard latencyMs={42} deviceLabel="MacBook Pro Microphone" onStart={onStart} />))
     expect(states()).toEqual(['done', 'done', 'done'])
     expect(host.textContent).toContain('MacBook Pro Microphone')
-    expect(host.textContent).toContain('latency(42)')
+    expect(host.textContent).toContain('Observed offset: 42 ms')
     act(() => start().click())
     expect(onStart).toHaveBeenCalledOnce()
   })
@@ -67,7 +75,7 @@ describe('ReadyCheck', () => {
 
   it('measures timing on request and shows the progress', () => {
     const onCalibrate = vi.fn()
-    act(() => root.render(<ReadyCheck {...base} audioMode="headphones" onCalibrate={onCalibrate} />))
+    act(() => root.render(<ReadyCheck {...base} audioMode="headphones" micOpen onCalibrate={onCalibrate} />))
     act(() => (host.querySelector('[data-ready-panel=timing] button') as HTMLButtonElement).click())
     expect(onCalibrate).toHaveBeenCalledOnce()
     act(() => root.render(<ReadyCheck {...base} audioMode="headphones" calibrating calibrationBeat={3} />))

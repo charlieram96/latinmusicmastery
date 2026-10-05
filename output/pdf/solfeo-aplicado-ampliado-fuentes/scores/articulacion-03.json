@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "2.0",
+  "id": "articulacion-03",
+  "title": {
+    "es": "Portato: puntos dentro de una ligadura"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "articulacion-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4,
+      "mark": "staccato"
+    },
+    {
+      "id": "articulacion-03.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4,
+      "mark": "staccato"
+    },
+    {
+      "id": "articulacion-03.n3",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4,
+      "mark": "staccato"
+    },
+    {
+      "id": "articulacion-03.n4",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 4,
+      "mark": "staccato"
+    }
+  ],
+  "notation": {
+    "title": "Portato: puntos dentro de una ligadura",
+    "slurs": [
+      [
+        0,
+        3
+      ]
+    ],
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 4,
+          "mark": "staccato"
+        },
+        {
+          "pitch": "D4",
+          "dur": 4,
+          "mark": "staccato"
+        },
+        {
+          "pitch": "E4",
+          "dur": 4,
+          "mark": "staccato"
+        },
+        {
+          "pitch": "F4",
+          "dur": 4,
+          "mark": "staccato"
+        }
+      ]
+    ],
+    "meter": "4/4",
+    "barStyles": {
+      "0": "final"
+    }
+  }
+}

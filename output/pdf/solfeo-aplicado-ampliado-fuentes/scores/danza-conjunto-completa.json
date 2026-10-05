@@ -1,0 +1,1662 @@
+{
+  "schemaVersion": "2.0",
+  "id": "danza-conjunto-completa",
+  "title": {
+    "es": "Danza de cierre: acentuación cruzada"
+  },
+  "meter": "6/8",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "danza-conjunto-completa.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8,
+      "dynamic": "p"
+    },
+    {
+      "id": "danza-conjunto-completa.n2",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n3",
+      "onsetBeats": "1",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n4",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n5",
+      "onsetBeats": "2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n6",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower0-0",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 4,
+      "dynamic": "p"
+    },
+    {
+      "id": "danza-conjunto-completa.lower0-1",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "E3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower0-2",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "G3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n7",
+      "onsetBeats": "3",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n8",
+      "onsetBeats": "7/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n9",
+      "onsetBeats": "4",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n10",
+      "onsetBeats": "9/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n11",
+      "onsetBeats": "5",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n12",
+      "onsetBeats": "11/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower1-0",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 2,
+      "pitch": "G2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower1-1",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 2,
+      "pitch": "B2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower1-2",
+      "onsetBeats": "5",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 2,
+      "pitch": "D3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n13",
+      "onsetBeats": "6",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n14",
+      "onsetBeats": "13/2",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n15",
+      "onsetBeats": "7",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n16",
+      "onsetBeats": "15/2",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n17",
+      "onsetBeats": "8",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n18",
+      "onsetBeats": "17/2",
+      "durationBeats": "1/2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower2-0",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 3,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower2-1",
+      "onsetBeats": "7",
+      "durationBeats": "1",
+      "measure": 3,
+      "staff": 2,
+      "pitch": "E3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower2-2",
+      "onsetBeats": "8",
+      "durationBeats": "1",
+      "measure": 3,
+      "staff": 2,
+      "pitch": "G3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n19",
+      "onsetBeats": "9",
+      "durationBeats": "3/2",
+      "measure": 4,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "danza-conjunto-completa.n20",
+      "onsetBeats": "21/2",
+      "durationBeats": "3/2",
+      "measure": 4,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "danza-conjunto-completa.lower3-0",
+      "onsetBeats": "9",
+      "durationBeats": "1",
+      "measure": 4,
+      "staff": 2,
+      "pitch": "G2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower3-1",
+      "onsetBeats": "10",
+      "durationBeats": "1",
+      "measure": 4,
+      "staff": 2,
+      "pitch": "D3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower3-2",
+      "onsetBeats": "11",
+      "durationBeats": "1",
+      "measure": 4,
+      "staff": 2,
+      "pitch": "B2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n21",
+      "onsetBeats": "12",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "dynamic": "p"
+    },
+    {
+      "id": "danza-conjunto-completa.n22",
+      "onsetBeats": "25/2",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n23",
+      "onsetBeats": "13",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n24",
+      "onsetBeats": "27/2",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n25",
+      "onsetBeats": "14",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n26",
+      "onsetBeats": "29/2",
+      "durationBeats": "1/2",
+      "measure": 5,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower4-0",
+      "onsetBeats": "12",
+      "durationBeats": "1",
+      "measure": 5,
+      "staff": 2,
+      "pitch": "F2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower4-1",
+      "onsetBeats": "13",
+      "durationBeats": "1",
+      "measure": 5,
+      "staff": 2,
+      "pitch": "A2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower4-2",
+      "onsetBeats": "14",
+      "durationBeats": "1",
+      "measure": 5,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n27",
+      "onsetBeats": "15",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "rest": true,
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n28",
+      "onsetBeats": "31/2",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n29",
+      "onsetBeats": "16",
+      "durationBeats": "1",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n30",
+      "onsetBeats": "17",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n31",
+      "onsetBeats": "35/2",
+      "durationBeats": "1/2",
+      "measure": 6,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8,
+      "dynamic": "mf"
+    },
+    {
+      "id": "danza-conjunto-completa.lower5-0",
+      "onsetBeats": "15",
+      "durationBeats": "1",
+      "measure": 6,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower5-1",
+      "onsetBeats": "16",
+      "durationBeats": "1",
+      "measure": 6,
+      "staff": 2,
+      "pitch": "E3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower5-2",
+      "onsetBeats": "17",
+      "durationBeats": "1",
+      "measure": 6,
+      "staff": 2,
+      "pitch": "G3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n32",
+      "onsetBeats": "18",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n33",
+      "onsetBeats": "37/2",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n34",
+      "onsetBeats": "19",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n35",
+      "onsetBeats": "39/2",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n36",
+      "onsetBeats": "20",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n37",
+      "onsetBeats": "41/2",
+      "durationBeats": "1/2",
+      "measure": 7,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower6-0",
+      "onsetBeats": "18",
+      "durationBeats": "1",
+      "measure": 7,
+      "staff": 2,
+      "pitch": "G2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower6-1",
+      "onsetBeats": "19",
+      "durationBeats": "1",
+      "measure": 7,
+      "staff": 2,
+      "pitch": "B2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower6-2",
+      "onsetBeats": "20",
+      "durationBeats": "1",
+      "measure": 7,
+      "staff": 2,
+      "pitch": "D3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n38",
+      "onsetBeats": "21",
+      "durationBeats": "3/2",
+      "measure": 8,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "danza-conjunto-completa.n39",
+      "onsetBeats": "45/2",
+      "durationBeats": "3/2",
+      "measure": 8,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "danza-conjunto-completa.lower7-0",
+      "onsetBeats": "21",
+      "durationBeats": "1",
+      "measure": 8,
+      "staff": 2,
+      "pitch": "G2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower7-1",
+      "onsetBeats": "22",
+      "durationBeats": "1",
+      "measure": 8,
+      "staff": 2,
+      "pitch": "D3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower7-2",
+      "onsetBeats": "23",
+      "durationBeats": "1",
+      "measure": 8,
+      "staff": 2,
+      "pitch": "G2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n40",
+      "onsetBeats": "24",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n41",
+      "onsetBeats": "49/2",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n42",
+      "onsetBeats": "25",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n43",
+      "onsetBeats": "51/2",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n44",
+      "onsetBeats": "26",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n45",
+      "onsetBeats": "53/2",
+      "durationBeats": "1/2",
+      "measure": 9,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower8-0",
+      "onsetBeats": "24",
+      "durationBeats": "1",
+      "measure": 9,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower8-1",
+      "onsetBeats": "25",
+      "durationBeats": "1",
+      "measure": 9,
+      "staff": 2,
+      "pitch": "E3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower8-2",
+      "onsetBeats": "26",
+      "durationBeats": "1",
+      "measure": 9,
+      "staff": 2,
+      "pitch": "G3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n46",
+      "onsetBeats": "27",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n47",
+      "onsetBeats": "55/2",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n48",
+      "onsetBeats": "28",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n49",
+      "onsetBeats": "57/2",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n50",
+      "onsetBeats": "29",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n51",
+      "onsetBeats": "59/2",
+      "durationBeats": "1/2",
+      "measure": 10,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower9-0",
+      "onsetBeats": "27",
+      "durationBeats": "1",
+      "measure": 10,
+      "staff": 2,
+      "pitch": "F2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower9-1",
+      "onsetBeats": "28",
+      "durationBeats": "1",
+      "measure": 10,
+      "staff": 2,
+      "pitch": "A2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower9-2",
+      "onsetBeats": "29",
+      "durationBeats": "1",
+      "measure": 10,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n52",
+      "onsetBeats": "30",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n53",
+      "onsetBeats": "61/2",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n54",
+      "onsetBeats": "31",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n55",
+      "onsetBeats": "63/2",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n56",
+      "onsetBeats": "32",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n57",
+      "onsetBeats": "65/2",
+      "durationBeats": "1/2",
+      "measure": 11,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower10-0",
+      "onsetBeats": "30",
+      "durationBeats": "1",
+      "measure": 11,
+      "staff": 2,
+      "pitch": "D3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower10-1",
+      "onsetBeats": "31",
+      "durationBeats": "1",
+      "measure": 11,
+      "staff": 2,
+      "pitch": "F3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower10-2",
+      "onsetBeats": "32",
+      "durationBeats": "1",
+      "measure": 11,
+      "staff": 2,
+      "pitch": "A3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n58",
+      "onsetBeats": "33",
+      "durationBeats": "3/2",
+      "measure": 12,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "danza-conjunto-completa.n59",
+      "onsetBeats": "69/2",
+      "durationBeats": "3/2",
+      "measure": 12,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "danza-conjunto-completa.lower11-0",
+      "onsetBeats": "33",
+      "durationBeats": "1",
+      "measure": 12,
+      "staff": 2,
+      "pitch": "G2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower11-1",
+      "onsetBeats": "34",
+      "durationBeats": "1",
+      "measure": 12,
+      "staff": 2,
+      "pitch": "B2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower11-2",
+      "onsetBeats": "35",
+      "durationBeats": "1",
+      "measure": 12,
+      "staff": 2,
+      "pitch": "D3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n60",
+      "onsetBeats": "36",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n61",
+      "onsetBeats": "73/2",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n62",
+      "onsetBeats": "37",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n63",
+      "onsetBeats": "75/2",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n64",
+      "onsetBeats": "38",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n65",
+      "onsetBeats": "77/2",
+      "durationBeats": "1/2",
+      "measure": 13,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower12-0",
+      "onsetBeats": "36",
+      "durationBeats": "1",
+      "measure": 13,
+      "staff": 2,
+      "pitch": "F2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower12-1",
+      "onsetBeats": "37",
+      "durationBeats": "1",
+      "measure": 13,
+      "staff": 2,
+      "pitch": "A2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower12-2",
+      "onsetBeats": "38",
+      "durationBeats": "1",
+      "measure": 13,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n66",
+      "onsetBeats": "39",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n67",
+      "onsetBeats": "79/2",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n68",
+      "onsetBeats": "40",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n69",
+      "onsetBeats": "81/2",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n70",
+      "onsetBeats": "41",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n71",
+      "onsetBeats": "83/2",
+      "durationBeats": "1/2",
+      "measure": 14,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower13-0",
+      "onsetBeats": "39",
+      "durationBeats": "1",
+      "measure": 14,
+      "staff": 2,
+      "pitch": "D3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower13-1",
+      "onsetBeats": "40",
+      "durationBeats": "1",
+      "measure": 14,
+      "staff": 2,
+      "pitch": "F3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower13-2",
+      "onsetBeats": "41",
+      "durationBeats": "1",
+      "measure": 14,
+      "staff": 2,
+      "pitch": "A3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n72",
+      "onsetBeats": "42",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n73",
+      "onsetBeats": "85/2",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n74",
+      "onsetBeats": "43",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n75",
+      "onsetBeats": "87/2",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n76",
+      "onsetBeats": "44",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.n77",
+      "onsetBeats": "89/2",
+      "durationBeats": "1/2",
+      "measure": 15,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-completa.lower14-0",
+      "onsetBeats": "42",
+      "durationBeats": "1",
+      "measure": 15,
+      "staff": 2,
+      "pitch": "G2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower14-1",
+      "onsetBeats": "43",
+      "durationBeats": "1",
+      "measure": 15,
+      "staff": 2,
+      "pitch": "B2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.lower14-2",
+      "onsetBeats": "44",
+      "durationBeats": "1",
+      "measure": 15,
+      "staff": 2,
+      "pitch": "D3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-completa.n78",
+      "onsetBeats": "45",
+      "durationBeats": "3/2",
+      "measure": 16,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "danza-conjunto-completa.n79",
+      "onsetBeats": "93/2",
+      "durationBeats": "3/2",
+      "measure": 16,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4,
+      "dot": true,
+      "mark": "fermata"
+    },
+    {
+      "id": "danza-conjunto-completa.lower15-0",
+      "onsetBeats": "45",
+      "durationBeats": "3",
+      "measure": 16,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 2,
+      "dot": true,
+      "mark": "fermata"
+    }
+  ],
+  "notation": {
+    "meter": "6/8",
+    "key": 0,
+    "clef": "G",
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 8,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "A4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 4,
+          "dot": true
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dot": true
+        }
+      ],
+      [
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "A4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "rest": true,
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 4
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8,
+          "dynamic": "mf"
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dot": true
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dot": true
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "A4",
+          "dur": 8
+        },
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "A4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "C5",
+          "dur": 8
+        },
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "A4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 4,
+          "dot": true
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dot": true
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 4,
+          "dot": true
+        },
+        {
+          "pitch": "C4",
+          "dur": 4,
+          "dot": true,
+          "mark": "fermata"
+        }
+      ]
+    ],
+    "beams": [
+      [
+        0,
+        1,
+        2
+      ],
+      [
+        3,
+        4,
+        5
+      ],
+      [
+        6,
+        7,
+        8
+      ],
+      [
+        9,
+        10,
+        11
+      ],
+      [
+        12,
+        13,
+        14
+      ],
+      [
+        15,
+        16,
+        17
+      ],
+      [
+        20,
+        21,
+        22
+      ],
+      [
+        23,
+        24,
+        25
+      ],
+      [
+        29,
+        30
+      ],
+      [
+        31,
+        32,
+        33
+      ],
+      [
+        34,
+        35,
+        36
+      ],
+      [
+        39,
+        40,
+        41
+      ],
+      [
+        42,
+        43,
+        44
+      ],
+      [
+        45,
+        46,
+        47
+      ],
+      [
+        48,
+        49,
+        50
+      ],
+      [
+        51,
+        52,
+        53
+      ],
+      [
+        54,
+        55,
+        56
+      ],
+      [
+        59,
+        60,
+        61
+      ],
+      [
+        62,
+        63,
+        64
+      ],
+      [
+        65,
+        66,
+        67
+      ],
+      [
+        68,
+        69,
+        70
+      ],
+      [
+        71,
+        72,
+        73
+      ],
+      [
+        74,
+        75,
+        76
+      ]
+    ],
+    "tupletGroups": [],
+    "barStyles": {
+      "15": "final"
+    },
+    "endings": [],
+    "nav": [],
+    "wedges": [
+      {
+        "type": "crescendo",
+        "from": 20,
+        "to": 30
+      }
+    ],
+    "spans": [
+      {
+        "text": "rall.",
+        "from": 59,
+        "to": 70
+      }
+    ],
+    "staffClefs": [
+      "G",
+      "F"
+    ]
+  }
+}

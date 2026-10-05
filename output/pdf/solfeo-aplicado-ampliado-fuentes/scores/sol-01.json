@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "2.0",
+  "id": "sol-01",
+  "title": {
+    "es": "Líneas: Mi · Sol · Si · Re · Fa"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "sol-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 1
+    },
+    {
+      "id": "sol-01.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "sol-01.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 1
+    },
+    {
+      "id": "sol-01.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 1
+    },
+    {
+      "id": "sol-01.n5",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F5",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Líneas: Mi · Sol · Si · Re · Fa",
+    "events": [
+      {
+        "pitch": "E4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "B4",
+        "dur": 1
+      },
+      {
+        "pitch": "D5",
+        "dur": 1
+      },
+      {
+        "pitch": "F5",
+        "dur": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.0",
+  "id": "tonal-13-mayor-02",
+  "title": {
+    "es": "Arpegio de tónica · I"
+  },
+  "meter": null,
+  "keyFifths": 7,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "tonal-13-mayor-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C#4",
+      "dur": 2
+    },
+    {
+      "id": "tonal-13-mayor-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E#4",
+      "dur": 2
+    },
+    {
+      "id": "tonal-13-mayor-02.n3",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G#4",
+      "dur": 2
+    },
+    {
+      "id": "tonal-13-mayor-02.n4",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C#5",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "Arpegio de tónica · I",
+    "events": [
+      {
+        "pitch": "C#4",
+        "dur": 2
+      },
+      {
+        "pitch": "E#4",
+        "dur": 2
+      },
+      {
+        "pitch": "G#4",
+        "dur": 2
+      },
+      {
+        "pitch": "C#5",
+        "dur": 2
+      }
+    ],
+    "key": 7
+  }
+}

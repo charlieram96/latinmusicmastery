@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "2.0",
+  "id": "centros-tonales-04",
+  "title": {
+    "es": "Compases 7-8"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "centros-tonales-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 4
+    },
+    {
+      "id": "centros-tonales-04.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "centros-tonales-04.n3",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 4
+    },
+    {
+      "id": "centros-tonales-04.n4",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "centros-tonales-04.n5",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Compases 7-8",
+    "meter": "4/4",
+    "bars": [
+      [
+        {
+          "pitch": "F4",
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        },
+        {
+          "pitch": "B3",
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 1
+        }
+      ]
+    ]
+  }
+}

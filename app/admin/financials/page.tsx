@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import { Badge } from '@/components/ui/badge'
 import {
   DollarSign, TrendingUp, CreditCard, AlertTriangle, XCircle, Clock, Music,
@@ -51,8 +52,8 @@ export default async function AdminFinancialsPage() {
   return (
     <div className="p-6 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight mb-1">Financials</h1>
-        <p className="text-muted-foreground">Revenue, subscription metrics, and billing data from Stripe</p>
+        <h1 className="text-4xl font-bold tracking-tight mb-1"><AdminText text={"Financials"} /></h1>
+        <p className="text-muted-foreground"><AdminText text={"Revenue, subscription metrics, and billing data from Stripe"} /></p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -64,7 +65,7 @@ export default async function AdminFinancialsPage() {
                 <Icon className={`w-4 h-4 ${s.color}`} />
               </div>
               <div className="text-3xl font-bold mb-0.5">{s.value}</div>
-              <div className="text-sm text-muted-foreground">{s.label}</div>
+              <div className="text-sm text-muted-foreground">{<AdminText text={s.label} />}</div>
               {s.sub && <div className="text-xs text-muted-foreground/70 mt-0.5">{s.sub}</div>}
             </div>
           )
@@ -74,10 +75,10 @@ export default async function AdminFinancialsPage() {
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
         {/* Per-instrument breakdown */}
         <div className="rounded-xl border bg-card p-6">
-          <h2 className="font-bold text-lg mb-1">Subscriptions by Instrument</h2>
-          <p className="text-sm text-muted-foreground mb-6">Active subscribers per instrument (with add-ons)</p>
+          <h2 className="font-bold text-lg mb-1"><AdminText text={"Subscriptions by Instrument"} /></h2>
+          <p className="text-sm text-muted-foreground mb-6"><AdminText text={"Active subscribers per instrument (with add-ons)"} /></p>
           {financials.instrumentBreakdown.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No active subscriptions yet.</p>
+            <p className="text-sm text-muted-foreground"><AdminText text={"No active subscriptions yet."} /></p>
           ) : (
             <div className="space-y-4">
               {financials.instrumentBreakdown.map((row) => (
@@ -100,7 +101,7 @@ export default async function AdminFinancialsPage() {
                 </div>
               ))}
               <div className="pt-4 border-t flex justify-between font-bold">
-                <span>Total MRR</span>
+                <span><AdminText text={"Total MRR"} /></span>
                 <span className="text-green-500">{formatCurrency(financials.mrr)}</span>
               </div>
             </div>
@@ -109,44 +110,44 @@ export default async function AdminFinancialsPage() {
 
         {/* Subscription Health */}
         <div className="rounded-xl border bg-card p-6">
-          <h2 className="font-bold text-lg mb-1">Subscription Health</h2>
-          <p className="text-sm text-muted-foreground mb-6">Current subscription status breakdown</p>
+          <h2 className="font-bold text-lg mb-1"><AdminText text={"Subscription Health"} /></h2>
+          <p className="text-sm text-muted-foreground mb-6"><AdminText text={"Current subscription status breakdown"} /></p>
           <div className="grid grid-cols-2 gap-3">
             <div className="p-4 rounded-xl border bg-green-500/5 text-center">
               <div className="flex items-center justify-center gap-1.5 text-3xl font-bold mb-1 text-green-500">
                 <CreditCard className="w-5 h-5" />
                 {financials.activeCount}
               </div>
-              <p className="text-xs text-muted-foreground">Active</p>
+              <p className="text-xs text-muted-foreground"><AdminText text={"Active"} /></p>
             </div>
             <div className="p-4 rounded-xl border bg-red-500/5 text-center">
               <div className="flex items-center justify-center gap-1.5 text-3xl font-bold mb-1 text-red-500">
                 <XCircle className="w-5 h-5" />
                 {financials.canceledCount}
               </div>
-              <p className="text-xs text-muted-foreground">Canceled</p>
+              <p className="text-xs text-muted-foreground"><AdminText text={"Canceled"} /></p>
             </div>
             <div className="p-4 rounded-xl border bg-orange-500/5 text-center">
               <div className="flex items-center justify-center gap-1.5 text-3xl font-bold mb-1 text-orange-500">
                 <AlertTriangle className="w-5 h-5" />
                 {financials.pastDueCount}
               </div>
-              <p className="text-xs text-muted-foreground">Past Due</p>
+              <p className="text-xs text-muted-foreground"><AdminText text={"Past Due"} /></p>
             </div>
             <div className="p-4 rounded-xl border bg-yellow-500/5 text-center">
               <div className="flex items-center justify-center gap-1.5 text-3xl font-bold mb-1 text-yellow-500">
                 <Clock className="w-5 h-5" />
                 {financials.pendingCancelCount}
               </div>
-              <p className="text-xs text-muted-foreground">Pending Cancel</p>
+              <p className="text-xs text-muted-foreground"><AdminText text={"Pending Cancel"} /></p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="rounded-xl border bg-card p-6 mb-6">
-        <h2 className="font-bold text-lg mb-1">Monthly Revenue</h2>
-        <p className="text-sm text-muted-foreground mb-6">Actual revenue from paid Stripe invoices (last 12 months)</p>
+        <h2 className="font-bold text-lg mb-1"><AdminText text={"Monthly Revenue"} /></h2>
+        <p className="text-sm text-muted-foreground mb-6"><AdminText text={"Actual revenue from paid Stripe invoices (last 12 months)"} /></p>
         <div className="space-y-3">
           {financials.monthlyRevenue.map((month) => (
             <div key={month.month} className="flex items-center gap-3">
@@ -165,8 +166,8 @@ export default async function AdminFinancialsPage() {
 
       <div className="rounded-xl border bg-card overflow-hidden">
         <div className="px-6 py-4 border-b">
-          <h2 className="font-bold text-lg">Recent Subscriptions</h2>
-          <p className="text-sm text-muted-foreground">Last 20 subscriptions</p>
+          <h2 className="font-bold text-lg"><AdminText text={"Recent Subscriptions"} /></h2>
+          <p className="text-sm text-muted-foreground"><AdminText text={"Last 20 subscriptions"} /></p>
         </div>
         {financials.recentSubs.length > 0 ? (
           <div className="divide-y">
@@ -178,7 +179,7 @@ export default async function AdminFinancialsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="text-xs">
-                    {sub.instrument || 'Instrument'} · {sub.interval === 'year' ? 'Annual' : 'Monthly'}
+                    {sub.instrument || 'Instrument'} · {sub.interval === 'year' ? <AdminText text={"Annual"} /> : <AdminText text={"Monthly"} />}
                     {sub.genreCount > 1 ? ` +${sub.genreCount - 1}` : ''}
                   </Badge>
                   <Badge
@@ -203,7 +204,7 @@ export default async function AdminFinancialsPage() {
         ) : (
           <div className="text-center py-16 text-muted-foreground">
             <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No subscriptions yet</p>
+            <p className="text-sm"><AdminText text={"No subscriptions yet"} /></p>
           </div>
         )}
       </div>

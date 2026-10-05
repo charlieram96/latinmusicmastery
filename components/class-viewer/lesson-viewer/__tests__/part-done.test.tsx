@@ -10,6 +10,8 @@ vi.mock('@/components/language-provider', () => ({
 import { PartDone } from '../part-done'
 import type { AttemptStats } from '@/lib/play-sense/types'
 import type { BarResult } from '@/lib/play-sense/bar-results'
+import { applyRhythmGrade } from '@/lib/play-sense/rhythm-grade'
+import { evaluateRhythm } from '@/lib/play-sense/rhythm-evaluation'
 
 const stats = { score: 86, accuracy: 88, perfectCount: 20, goodCount: 10, okCount: 2, missCount: 3, extraHits: 0, maxCombo: 21, maxStreak: 9,
   avgOffsetMs: 4, tempoDriftMs: 3, durationSeconds: 192, pitchAccuracy: null } as unknown as AttemptStats
@@ -30,6 +32,12 @@ const render = (previousBest: number | null | undefined, extra: Partial<React.Co
   act(() => root.render(<PartDone stats={stats} bars={bars} previousBest={previousBest} onAgain={vi.fn()} onContinue={vi.fn()} demo={false} {...extra} />))
 
 describe('PartDone', () => {
+  it('distinguishes missing capture from detected hits outside the timing window', () => {
+    render(null, { stats: { ...stats, accuracy: 0, rhythm: evaluateRhythm([0, .5], []) } })
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain('No hits were recorded')
+    render(null, { stats: { ...stats, accuracy: 0, rhythm: evaluateRhythm([0, .5], [.2, .7]) } })
+    expect(host.querySelector('[role="alert"]')).toBeNull()
+  })
   it('shows the accuracy ring, heading and three stat tiles', () => {
     render(null)
     expect(host.querySelector('[data-accuracy-ring]')?.getAttribute('aria-label')).toBe('dashboard.classViewer.lessonMode.part.accuracyLabel(88)')
@@ -81,4 +89,20 @@ describe('PartDone', () => {
     render(undefined)
     expect(host.textContent).not.toContain('part.first')
   })
+})
+
+it('enables Continue at the all-Keep-going passing minimum and shows partial credit',()=>{
+  render(null,{stats:applyRhythmGrade({...stats,perfectCount:0,goodCount:0,okCount:4,missCount:0,extraHits:0}),bars:[bar(1,'close')]})
+  expect(host.textContent).toContain('Keep going: 4 × 75')
+  expect((host.querySelector('[data-part-continue]') as HTMLButtonElement).disabled).toBe(false)
+})
+
+it('lets the student override a failed take without changing its grade', () => {
+  const onContinue=vi.fn()
+  render(null,{stats:{...stats,accuracy:40},onContinue})
+  expect((host.querySelector('[data-part-continue]') as HTMLButtonElement).disabled).toBe(true)
+  act(() => (host.querySelector('[data-part-override]') as HTMLButtonElement).click())
+  expect(onContinue).toHaveBeenCalledOnce()
+  expect(host.textContent).toContain('40%')
+  expect(host.textContent).toContain('Not passed')
 })

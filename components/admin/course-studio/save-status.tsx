@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import {
   createContext,
   useCallback,
@@ -91,13 +94,13 @@ export function SaveIndicator() {
       {state === 'saving' && (
         <>
           <CloudUpload className="h-3.5 w-3.5 animate-pulse" />
-          <span>Saving…</span>
+          <span><AdminText text={"Saving…"} /></span>
         </>
       )}
       {state === 'saved' && (
         <>
           <Check className="h-3.5 w-3.5" />
-          <span>Saved</span>
+          <span><AdminText text={"Saved"} /></span>
         </>
       )}
       {state === 'error' && (

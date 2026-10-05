@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.0",
+  "id": "examen-m08-02",
+  "title": {
+    "es": "B · Cierre"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "examen-m08-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2,
+      "dynamic": "mf"
+    },
+    {
+      "id": "examen-m08-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    },
+    {
+      "id": "examen-m08-02.n3",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1,
+      "mark": "fermata"
+    }
+  ],
+  "notation": {
+    "title": "B · Cierre",
+    "meter": "4/4",
+    "bars": [
+      [
+        {
+          "pitch": "E4",
+          "dur": 2,
+          "dynamic": "mf"
+        },
+        {
+          "pitch": "D4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 1,
+          "mark": "fermata"
+        }
+      ]
+    ],
+    "spans": [
+      {
+        "text": "rit."
+      }
+    ]
+  }
+}

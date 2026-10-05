@@ -23,9 +23,9 @@ export function ListenButton({ status, onToggle }: ListenButtonProps) {
         type="button"
         onClick={onToggle}
         disabled={starting}
-        aria-pressed={live}
+        title={t(live ? 'dashboard.pages.tuner.listen.stop' : 'dashboard.pages.tuner.listen.start')} aria-pressed={live}
         className={cn(
-          'mt-4 inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-xl px-8 font-heading text-[13px] font-bold uppercase tracking-[0.12em] transition-all focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-70 sm:w-auto sm:min-w-[260px]',
+          'mt-4 inline-flex h-12 w-12 items-center justify-center gap-2.5 rounded-xl p-0 font-heading text-[13px] font-bold uppercase tracking-[0.12em] transition-all focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-70',
           live
             ? 'border border-border bg-raised text-foreground hover:bg-muted/60'
             : 'bg-gradient-to-b from-gold to-[hsl(38_58%_46%)] text-[#1C1405] shadow-[0_10px_30px_-12px_hsl(var(--gold-highlight)/0.7)] hover:brightness-105 active:translate-y-px'
@@ -45,7 +45,7 @@ export function ListenButton({ status, onToggle }: ListenButtonProps) {
         ) : (
           <Mic className="h-[18px] w-[18px]" />
         )}
-        <span>
+        <span className="sr-only">
           {live
             ? t('dashboard.pages.tuner.listen.stop')
             : starting

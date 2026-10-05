@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { COUNTS, NOTE_STEPS, ONSETS, judge, loopOf, playheadStep, stepX, type Anchor } from '../staff-demo'
 
 describe('staff demo', () => {
-  it('counts eighths as 1 & 2 & … over two bars', () => {
-    expect(COUNTS.slice(0, 8)).toEqual(['1', '&', '2', '&', '3', '&', '4', '&'])
+  it('labels only beat numbers over two bars', () => {
+    expect(COUNTS.slice(0, 8)).toEqual(['1', '', '2', '', '3', '', '4', ''])
     expect(COUNTS).toHaveLength(16)
   })
   it('every onset is a sounding note step', () => {

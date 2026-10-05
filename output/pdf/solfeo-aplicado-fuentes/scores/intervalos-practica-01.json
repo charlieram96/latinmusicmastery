@@ -1,0 +1,46 @@
+{
+  "id": "intervalos-practica-01",
+  "title": {
+    "es": "Segundas"
+  },
+  "schemaVersion": "1.0",
+  "timeUnit": "quarter-note",
+  "meter": null,
+  "clef": "G",
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "intervalos-practica-01.N001",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "C4"
+    },
+    {
+      "id": "intervalos-practica-01.N002",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "D4"
+    },
+    {
+      "id": "intervalos-practica-01.N003",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "E4"
+    },
+    {
+      "id": "intervalos-practica-01.N004",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "F4"
+    }
+  ]
+}

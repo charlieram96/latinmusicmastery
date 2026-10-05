@@ -24,6 +24,7 @@ import { readFlex, type FlexPoint } from '@/lib/playsense-studio/flex';
 import { rebaseAnchor, secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
 import { getStudioDrafts, type StudioDraft } from '@/app/actions/studio-drafts';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { localExerciseTimingReset } from '@/lib/playsense-studio/local-exercise-timing-reset';
 
 // ============================================
 // M3 — student player read path
@@ -166,7 +167,13 @@ export async function getScoreDocumentForClassItem(
   if (itemErr) return { error: itemErr.message };
   if (!item?.score_document_id) return { error: 'No score document attached' };
 
-  return fetchScorePayload(supabase, item.score_document_id, item.active_time_map_id);
+  const result = await fetchScorePayload(supabase, item.score_document_id, item.active_time_map_id);
+  if (result.data) {
+    result.data.scoreDocument.parsedScore = localExerciseTimingReset(
+      result.data.scoreDocument.parsedScore, classItemId, process.env.NODE_ENV === 'development'
+    );
+  }
+  return result;
 }
 
 // ============================================

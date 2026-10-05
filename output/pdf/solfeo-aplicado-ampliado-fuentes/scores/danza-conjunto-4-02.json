@@ -1,0 +1,194 @@
+{
+  "schemaVersion": "2.0",
+  "id": "danza-conjunto-4-02",
+  "title": {
+    "es": "Danza de cierre: acentuación cruzada · 4/4"
+  },
+  "meter": "6/8",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "danza-conjunto-4-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-4-02.n2",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-4-02.n3",
+      "onsetBeats": "1",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-4-02.n4",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-4-02.n5",
+      "onsetBeats": "2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-4-02.n6",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "danza-conjunto-4-02.lower0-0",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "G2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-4-02.lower0-1",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "B2",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-4-02.lower0-2",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "D3",
+      "dur": 4
+    },
+    {
+      "id": "danza-conjunto-4-02.n7",
+      "onsetBeats": "3",
+      "durationBeats": "3/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4,
+      "dot": true
+    },
+    {
+      "id": "danza-conjunto-4-02.n8",
+      "onsetBeats": "9/2",
+      "durationBeats": "3/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4,
+      "dot": true,
+      "mark": "fermata"
+    },
+    {
+      "id": "danza-conjunto-4-02.lower1-0",
+      "onsetBeats": "3",
+      "durationBeats": "3",
+      "measure": 2,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 2,
+      "dot": true,
+      "mark": "fermata"
+    }
+  ],
+  "notation": {
+    "title": "Compases 15-16",
+    "clef": "G",
+    "meter": "6/8",
+    "bars": [
+      [
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 4,
+          "dot": true
+        },
+        {
+          "pitch": "C4",
+          "dur": 4,
+          "dot": true,
+          "mark": "fermata"
+        }
+      ]
+    ],
+    "alignBeats": true,
+    "beams": [
+      [
+        0,
+        1,
+        2
+      ],
+      [
+        3,
+        4,
+        5
+      ]
+    ],
+    "barStyles": {
+      "1": "final"
+    },
+    "staffClefs": [
+      "G",
+      "F"
+    ]
+  }
+}

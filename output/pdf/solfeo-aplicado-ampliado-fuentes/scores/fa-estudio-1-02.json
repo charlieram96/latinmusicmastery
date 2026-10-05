@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.0",
+  "id": "fa-estudio-1-02",
+  "title": {
+    "es": "Compases 3-4"
+  },
+  "meter": "2/2",
+  "keyFifths": 0,
+  "clef": "F",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "fa-estudio-1-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E3",
+      "dur": 2,
+      "dynamic": "p"
+    },
+    {
+      "id": "fa-estudio-1-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D3",
+      "dur": 2
+    },
+    {
+      "id": "fa-estudio-1-02.n3",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C3",
+      "dur": 1,
+      "dynamic": "mf"
+    }
+  ],
+  "notation": {
+    "title": "Compases 3-4",
+    "clef": "F",
+    "meter": "2/2",
+    "key": 0,
+    "bars": [
+      [
+        {
+          "pitch": "E3",
+          "dur": 2,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "D3",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "C3",
+          "dur": 1,
+          "dynamic": "mf"
+        }
+      ]
+    ],
+    "hairpin": "cresc",
+    "hairpinFrom": 0,
+    "hairpinTo": 2
+  }
+}

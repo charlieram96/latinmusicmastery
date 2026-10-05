@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { DECK_TOP } from './set'
 
 /** Heights of each note layer above the runway, so the render loop places them consistently. */
-export const NOTE_LAYOUT = { head: DECK_TOP + .13, core: DECK_TOP + .245, pool: DECK_TOP + .006 }
+export const NOTE_LAYOUT = { head: DECK_TOP + .13, core: DECK_TOP + .245, pool: DECK_TOP + .006, poolLength: 1.9 }
 
 /** Smoked glass capsule under a clearcoat with a faint pearlescent sheen; carries a lane-coloured light on top. */
 export function noteHead() {

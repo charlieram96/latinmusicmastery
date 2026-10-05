@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -121,9 +124,7 @@ export function CountryImageUpload({
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Replace
-                </>
+                  <Upload className="w-4 h-4 mr-2" /> <AdminText text={"Replace"} /> </>
               )}
             </Button>
             <Button
@@ -133,9 +134,7 @@ export function CountryImageUpload({
               onClick={handleRemoveImage}
               disabled={uploading}
             >
-              <X className="w-4 h-4 mr-2" />
-              Remove
-            </Button>
+              <X className="w-4 h-4 mr-2" /> <AdminText text={"Remove"} /> </Button>
           </div>
         </div>
       ) : (
@@ -157,7 +156,7 @@ export function CountryImageUpload({
           {uploading ? (
             <>
               <Loader2 className="w-10 h-10 text-primary animate-spin" />
-              <p className="text-sm text-muted-foreground">Uploading...</p>
+              <p className="text-sm text-muted-foreground"><AdminText text={"Uploading..."} /></p>
             </>
           ) : (
             <>
@@ -165,9 +164,7 @@ export function CountryImageUpload({
                 <ImageIcon className="w-8 h-8 text-muted-foreground" />
               </div>
               <div className="text-center">
-                <p className="font-medium text-foreground">
-                  Drop an image here or click to upload
-                </p>
+                <p className="font-medium text-foreground"> <AdminText text={"Drop an image here or click to upload"} /> </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   JPEG, PNG, WebP, or GIF • Max 10MB
                 </p>
@@ -180,9 +177,7 @@ export function CountryImageUpload({
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="pt-2">
-        <label htmlFor="country-image-url-input" className="text-sm font-medium">
-          Or paste an image URL
-        </label>
+        <label htmlFor="country-image-url-input" className="text-sm font-medium"> <AdminText text={"Or paste an image URL"} /> </label>
         <Input
           id="country-image-url-input"
           type="url"

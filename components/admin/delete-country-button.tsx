@@ -1,4 +1,6 @@
 'use client'
+import { AdminText } from '@/components/admin/admin-text'
+
 
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
@@ -40,7 +42,7 @@ export function DeleteCountryButton({ countryId, countryName }: DeleteCountryBut
       size="sm"
     >
       <Trash2 className="w-4 h-4 mr-1" />
-      {isLoading ? 'Deleting...' : 'Delete'}
+      {isLoading ? 'Deleting...' : <AdminText text={"Delete"} />}
     </Button>
   )
 }

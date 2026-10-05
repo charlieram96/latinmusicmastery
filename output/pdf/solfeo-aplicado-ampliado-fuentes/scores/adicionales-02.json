@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "2.0",
+  "id": "adicionales-02",
+  "title": {
+    "es": "Por encima: Fa5, Sol5, La5, Si5, Do6"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "adicionales-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F5",
+      "dur": 1
+    },
+    {
+      "id": "adicionales-02.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G5",
+      "dur": 1
+    },
+    {
+      "id": "adicionales-02.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A5",
+      "dur": 1
+    },
+    {
+      "id": "adicionales-02.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B5",
+      "dur": 1
+    },
+    {
+      "id": "adicionales-02.n5",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C6",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Por encima: Fa5, Sol5, La5, Si5, Do6",
+    "events": [
+      {
+        "pitch": "F5",
+        "dur": 1
+      },
+      {
+        "pitch": "G5",
+        "dur": 1
+      },
+      {
+        "pitch": "A5",
+        "dur": 1
+      },
+      {
+        "pitch": "B5",
+        "dur": 1
+      },
+      {
+        "pitch": "C6",
+        "dur": 1
+      }
+    ],
+    "space": 7
+  }
+}

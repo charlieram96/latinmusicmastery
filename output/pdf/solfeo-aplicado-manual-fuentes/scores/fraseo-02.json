@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "2.0",
+  "id": "fraseo-02",
+  "title": {
+    "es": "Tenuto y calderón"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "fraseo-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 2,
+      "mark": "tenuto"
+    },
+    {
+      "id": "fraseo-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2,
+      "mark": "fermata"
+    }
+  ],
+  "notation": {
+    "title": "Tenuto y calderón",
+    "events": [
+      {
+        "pitch": "G4",
+        "dur": 2,
+        "mark": "tenuto"
+      },
+      {
+        "pitch": "C4",
+        "dur": 2,
+        "mark": "fermata"
+      }
+    ]
+  }
+}

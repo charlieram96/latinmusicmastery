@@ -22,9 +22,10 @@ interface LanguageToggleProps {
   /** `rail`: a 40px row for the sidebar rail whose label fades in when the rail expands. */
   variant?: 'icon' | 'labeled' | 'rail'
   className?: string
+  onOpenChange?: (open: boolean) => void
 }
 
-export function LanguageToggle({ variant = 'labeled', className }: LanguageToggleProps) {
+export function LanguageToggle({ variant = 'labeled', className, onOpenChange }: LanguageToggleProps) {
   const { locale, setLocale, locales, t } = useTranslation()
 
   if (variant === 'rail') {
@@ -86,7 +87,7 @@ export function LanguageToggle({ variant = 'labeled', className }: LanguageToggl
 
   if (variant === 'icon') {
     return (
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={onOpenChange}>
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
@@ -126,7 +127,7 @@ export function LanguageToggle({ variant = 'labeled', className }: LanguageToggl
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"

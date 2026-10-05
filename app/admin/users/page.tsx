@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -50,8 +51,8 @@ export default async function AdminUsersPage({
     <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight mb-1">Users</h1>
-        <p className="text-muted-foreground">Manage users, assign roles, and link teacher accounts</p>
+        <h1 className="text-4xl font-bold tracking-tight mb-1"><AdminText text={"Users"} /></h1>
+        <p className="text-muted-foreground"><AdminText text={"Manage users, assign roles, and link teacher accounts"} /></p>
       </div>
 
       {/* Stat Cards */}
@@ -64,7 +65,7 @@ export default async function AdminUsersPage({
                 <Icon className={`w-4 h-4 ${s.color}`} />
               </div>
               <div className="text-3xl font-bold mb-0.5">{s.value}</div>
-              <div className="text-sm text-muted-foreground">{s.label}</div>
+              <div className="text-sm text-muted-foreground">{<AdminText text={s.label} />}</div>
               {s.sub && <div className="text-xs text-muted-foreground/70 mt-0.5">{s.sub}</div>}
             </div>
           )
@@ -81,9 +82,9 @@ export default async function AdminUsersPage({
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            <h2 className="font-bold">Users</h2>
+            <h2 className="font-bold"><AdminText text={"Users"} /></h2>
           </div>
-          <span className="text-sm text-muted-foreground">{total || 0} total</span>
+          <span className="text-sm text-muted-foreground">{total || 0} <AdminText text={"total"} /></span>
         </div>
 
         {users && users.length > 0 ? (
@@ -114,9 +115,7 @@ export default async function AdminUsersPage({
                         )}
                         {user.teachers && user.teachers.length > 0 && (
                           <Badge variant="secondary" className="h-4 text-[10px] px-1">
-                            <GraduationCap className="w-2.5 h-2.5 mr-0.5" />
-                            Teacher
-                          </Badge>
+                            <GraduationCap className="w-2.5 h-2.5 mr-0.5" /> <AdminText text={"Teacher"} /> </Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">{user.email}</p>
@@ -141,7 +140,7 @@ export default async function AdminUsersPage({
                           )}
                         </div>
                       ) : (
-                        <Badge variant="outline" className="text-xs">Free</Badge>
+                        <Badge variant="outline" className="text-xs"><AdminText text={"Free"} /></Badge>
                       )}
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -153,29 +152,24 @@ export default async function AdminUsersPage({
         ) : (
           <div className="text-center py-16 text-muted-foreground">
             <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No users found</p>
+            <p className="text-sm"><AdminText text={"No users found"} /></p>
           </div>
         )}
 
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t">
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
+            <span className="text-sm text-muted-foreground"> <AdminText text={"Page"} /> {page} <AdminText text={"of"} /> {totalPages}
             </span>
             <div className="flex gap-2">
               {page > 1 && (
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/users?${baseQuery}${baseQuery ? '&' : ''}page=${page - 1}`}>
-                    Previous
-                  </Link>
+                  <Link href={`/admin/users?${baseQuery}${baseQuery ? '&' : ''}page=${page - 1}`}> <AdminText text={"Previous"} /> </Link>
                 </Button>
               )}
               {page < totalPages && (
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/users?${baseQuery}${baseQuery ? '&' : ''}page=${page + 1}`}>
-                    Next
-                  </Link>
+                  <Link href={`/admin/users?${baseQuery}${baseQuery ? '&' : ''}page=${page + 1}`}> <AdminText text={"Next"} /> </Link>
                 </Button>
               )}
             </div>

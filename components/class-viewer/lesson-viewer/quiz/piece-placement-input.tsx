@@ -7,7 +7,10 @@ import { cn } from '@/lib/utils'
 import { FALLBACK_ASPECT, type Background } from '@/lib/quiz/composition'
 import { isPieceCorrect, type PiecePlacement, type PlacementPiece } from '@/lib/quiz/grading'
 import { centreOf, clampCentre, pieceHeightPct, resolveDrop, type Centre } from '@/lib/quiz/placement'
+import { hitsPiecePixel, thumbnailOffset, type PieceHitMask } from '@/lib/quiz/piece-hit-test'
 import styles from './quiz.module.css'
+import { Volume2, VolumeX } from 'lucide-react'
+import { TIMBAL_KEYS, timbalSoundKind, timbalSoundUrl } from '@/lib/quiz/timbal-sounds'
 
 type Placement = Record<string, PiecePlacement> // pieceId -> centre in % of the stage
 
@@ -145,10 +148,121 @@ export function PiecePlacementInput({
   /** CSS length for the stage's max height (defaults to the viewport minus the lesson chrome; the admin preview passes px). */
   maxHeight?: string
 }) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const [soundError, setSoundError] = useState(false)
+  const [soundsLoading, setSoundsLoading] = useState(true)
+  const audioContext = useRef<AudioContext | null>(null)
+  const soundBuffers = useRef(new Map<string, AudioBuffer>())
+  const playingSounds = useRef(new Set<AudioBufferSourceNode>())
+  const soundAvailable = pieces.some(piece => timbalSoundKind(piece.label ?? '') !== null)
+  const stopSounds = () => {
+    for (const source of playingSounds.current) { source.stop(); source.disconnect() }
+    playingSounds.current.clear()
+  }
+  useEffect(() => {
+    if (!soundAvailable) return
+    let alive = true
+    const context = new AudioContext({ latencyHint: 'interactive' })
+    audioContext.current = context
+    setSoundsLoading(true)
+    const names = ['high-head','high-shell','low-head','low-shell','contra','hand-bell','cha','jamblock','cymbal']
+    void Promise.all(names.map(async name => {
+      const url = `/audio/quiz-timbal/${name}.wav`
+      const response = await fetch(url)
+      if (!response.ok) throw new Error('Sound unavailable')
+      const buffer = await context.decodeAudioData(await response.arrayBuffer())
+      if (alive) soundBuffers.current.set(url, buffer)
+    })).then(() => { if (alive) setSoundsLoading(false) }).catch(() => {
+      if (alive) { setSoundError(true); setSoundsLoading(false) }
+    })
+    return () => {
+      alive = false; stopSounds(); soundBuffers.current.clear()
+      if (audioContext.current === context) audioContext.current = null
+      void context.close()
+    }
+  }, [soundAvailable])
+  const toggleSound = async () => {
+    stopSounds(); setArmed(null)
+    if (soundEnabled) { setSoundEnabled(false); return }
+    try {
+      await audioContext.current?.resume()
+      if (audioContext.current?.state === 'running') { setSoundError(false); setSoundEnabled(true) }
+    } catch { setSoundError(true) }
+  }
+  const playSound = (url: string) => {
+    if (!soundEnabled) return
+    const context = audioContext.current
+    const buffer = url ? soundBuffers.current.get(url) : undefined
+    if (!context || context.state !== 'running' || !buffer) { setSoundError(true); return }
+    const source = context.createBufferSource()
+    source.buffer = buffer
+    source.connect(context.destination)
+    playingSounds.current.add(source)
+    source.onended = () => { playingSounds.current.delete(source); source.disconnect() }
+    source.start()
+  }
+  const playPiece = (piece: PlacementPiece, x: number, y: number) => {
+    const kind = timbalSoundKind(piece.label ?? '')
+    if (!kind) return
+    const url = timbalSoundUrl(kind, x, y, hitMasks.current.get(piece.id))
+    if (url) playSound(url)
+  }
+  const keyboardSounds = useRef({ playSound, pieces, placement })
+  keyboardSounds.current = { playSound, pieces, placement }
+  useEffect(() => {
+    if (!soundEnabled) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return
+      const target = event.target
+      if (target instanceof Element && target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"]')) return
+      const binding = TIMBAL_KEYS.find(binding => binding.key === event.key.toUpperCase())
+      if (!binding) return
+      const current = keyboardSounds.current
+      if (!current.pieces.some(piece => current.placement[piece.id] && timbalSoundKind(piece.label ?? '') === binding.kind)) return
+      event.preventDefault()
+      event.stopPropagation()
+      // A new buffer source for every strike lets different keys and repeated
+      // hits overlap naturally; no previous note is cut off.
+      current.playSound(`/audio/quiz-timbal/${binding.sound}.wav`)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [soundEnabled])
   const stageRef = useRef<HTMLDivElement>(null)
   const trayRef = useRef<HTMLDivElement>(null)
   const ghostRef = useRef<HTMLDivElement>(null)
+  const hitMasks = useRef(new Map<string, PieceHitMask>())
+  const [thumbnailOffsets, setThumbnailOffsets] = useState<Record<string, { url: string; x: number; y: number; scale: number }>>({})
+  useEffect(() => {
+    let alive = true
+    hitMasks.current.clear()
+    pieces.forEach(piece => {
+      if (!piece.imageUrl) return
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
+      image.onload = () => {
+        if (!alive || !image.naturalWidth || !image.naturalHeight) return
+        const scale = Math.min(1, 768 / Math.max(image.naturalWidth, image.naturalHeight))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale))
+        const ctx = canvas.getContext('2d', { willReadFrequently: true })
+        if (!ctx) return
+        try {
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+          const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+          const alpha = new Uint8Array(canvas.width * canvas.height)
+          for (let i = 0; i < alpha.length; i++) alpha[i] = pixels[i * 4 + 3]
+          hitMasks.current.set(piece.id, { width: canvas.width, height: canvas.height, alpha })
+          const offset = thumbnailOffset({ width: canvas.width, height: canvas.height, alpha }, 68, 60)
+          setThumbnailOffsets(previous => ({ ...previous, [piece.id]: { url: piece.imageUrl, ...offset } }))
+        } catch { /* Remote images without CORS retain rectangular selection and keyboard access. */ }
+      }
+      image.src = piece.imageUrl
+    })
+    return () => { alive = false }
+  }, [pieces])
   const aspect = useStageAspect(background)
   const measured = useSpriteRatios(pieces)
   const reduced = useReducedMotionFlag()
@@ -235,7 +349,7 @@ export function PiecePlacementInput({
   const stable = useRef({ move: (e: PointerEvent) => impl.current.move(e), up: (e: PointerEvent) => impl.current.up(e) })
 
   const startDrag = (e: React.PointerEvent, id: string, fromTray: boolean) => {
-    if (isGraded || session.current || e.button !== 0 || !e.isPrimary) return
+    if (soundEnabled || isGraded || session.current || e.button !== 0 || !e.isPrimary) return
     const stage = stageRef.current?.getBoundingClientRect()
     const piece = byId.get(id)
     if (!stage || !piece) return
@@ -286,8 +400,34 @@ export function PiecePlacementInput({
     lift(id)
   }
 
+  const onStagePointerDown = (e: React.PointerEvent) => {
+    if ((e.target as Element).closest('[data-sound-controls]')) return
+    if (e.button !== 0 || !e.isPrimary || (isGraded && !soundEnabled)) return
+    // Search front to back, skipping transparent pixels instead of letting a
+    // cymbal/stand's large rectangular image intercept the pieces beneath it.
+    const candidates = pieces.filter(p => placement[p.id])
+      .sort((a, b) => (zOrder[b.id] ?? 0) - (zOrder[a.id] ?? 0) || (indexOf.get(b.id) ?? 0) - (indexOf.get(a.id) ?? 0))
+    const nodes = stageRef.current?.querySelectorAll<HTMLElement>('[data-piece]')
+    for (const piece of candidates) {
+      const node = Array.from(nodes ?? []).find(n => n.dataset.piece === piece.id)
+      if (!node) continue
+      const rect = node.getBoundingClientRect()
+      const x = (e.clientX - rect.left) / rect.width
+      const y = (e.clientY - rect.top) / rect.height
+      if (x < 0 || y < 0 || x >= 1 || y >= 1) continue
+      const mask = hitMasks.current.get(piece.id)
+      if (mask && !hitsPiecePixel(mask, x, y)) continue
+      e.stopPropagation()
+      node.focus({ preventScroll: true })
+      if (soundEnabled) { e.preventDefault(); playPiece(piece, x, y) }
+      else startDrag(e, piece.id, false)
+      return
+    }
+    e.stopPropagation()
+  }
+
   const onStageClick = (e: React.MouseEvent) => {
-    if (!armed || isGraded || Date.now() - lastDropAt.current < 200) return
+    if (soundEnabled || !armed || isGraded || Date.now() - lastDropAt.current < 200) return
     if ((e.target as HTMLElement).closest('[data-piece]')) return
     const r = stageRef.current?.getBoundingClientRect()
     if (!r) return
@@ -298,7 +438,7 @@ export function PiecePlacementInput({
   }
 
   const onStageKey = (e: React.KeyboardEvent) => {
-    if (e.target !== e.currentTarget) return
+    if (soundEnabled || e.target !== e.currentTarget) return
     if (e.key === 'Enter' && armed && !isGraded) {
       e.preventDefault()
       const id = armed
@@ -312,7 +452,7 @@ export function PiecePlacementInput({
     if (isGraded) return
     const c = placement[id]
     if (!c) return
-    const step = e.shiftKey ? 5 : 1
+    const step = e.altKey ? 0.1 : e.shiftKey ? 5 : 1
     let next: Centre | null = null
     if (e.key === 'ArrowLeft') next = { x: c.x - step, y: c.y }
     else if (e.key === 'ArrowRight') next = { x: c.x + step, y: c.y }
@@ -339,19 +479,28 @@ export function PiecePlacementInput({
 
   return (
     <div className={styles.ppRoot}>
-      <div className={styles.pp}>
+      <div className={cn(styles.pp, soundAvailable && styles.ppWithSound)}>
         <div className={styles.stageWrap}>
           <div
             ref={stageRef}
             tabIndex={0}
             role="group"
             aria-label={t('dashboard.classViewer.quiz.puzzleBackground')}
+            onPointerDownCapture={onStagePointerDown}
             onClick={onStageClick}
             onKeyDown={onStageKey}
-            className={cn(styles.stage, 'border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold', drag?.live && drag.overStage && styles.stageOver, armed && !isGraded && styles.stageArmed)}
+            className={cn(styles.stage, 'ring-1 ring-inset ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold', drag?.live && drag.overStage && styles.stageOver, armed && !isGraded && styles.stageArmed)}
             style={stageStyle}
           >
             <CompositionBackground background={background} />
+      {soundAvailable && <div data-sound-controls className="absolute bottom-3 left-1/2 z-[60] flex -translate-x-1/2 flex-col items-center gap-1" onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
+        <button type="button" title={locale === 'es' ? 'Toca las piezas colocadas. Desactiva para seguir armando.' : 'Tap placed pieces. Turn off to keep assembling.'} aria-pressed={soundEnabled} disabled={soundsLoading} onClick={() => void toggleSound()} className={cn('inline-flex items-center gap-2 whitespace-nowrap rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors', soundEnabled ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary')}>
+          {soundEnabled ? <Volume2 aria-hidden className="h-4 w-4" /> : <VolumeX aria-hidden className="h-4 w-4" />}
+          {soundsLoading ? (locale === 'es' ? 'Cargando sonidos…' : 'Loading sounds…') : (locale === 'es' ? 'Probar sonido' : 'Try sound')} · {soundEnabled ? (locale === 'es' ? 'Activado' : 'On') : (locale === 'es' ? 'Desactivado' : 'Off')}
+        </button>
+        {soundError && <span role="alert" className="text-xs text-danger">{locale === 'es' ? 'No se pudo reproducir el sonido.' : 'The sound could not be played.'}</span>}
+      </div>}
+
 
             {!isGraded && !drag?.live && (placedCount === 0 || armed) && (
               <div className="pointer-events-none absolute inset-x-0 top-3 z-[45] flex justify-center px-3">
@@ -382,21 +531,19 @@ export function PiecePlacementInput({
                     style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${p.width}%`, zIndex: 5 }}
                     className={cn(styles.reveal, 'rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold', hover === p.id && styles.revealHi)}
                   >
-                    <div className="rounded-lg border-2 border-dashed border-success p-0.5">
-                      <PieceImage piece={p} label="" className="opacity-40 transition-opacity" />
-                    </div>
+                    <PieceImage piece={p} label="" className={cn("opacity-80 transition-opacity", styles.silhouetteOk)} />
                     <span className={cn(styles.revealTag, 'absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-success px-1.5 py-0.5 text-[10px] font-semibold text-white')}>{label}</span>
                   </div>
                 )
               })}
 
-            {/* Placed pieces, last-touched on top. After grading, correct ones sit on their exact target. */}
+            {/* Placed pieces stay at the submitted positions, including after grading. */}
             {pieces
               .filter((p) => placement[p.id])
               .sort((a, b) => (zOrder[a.id] ?? 0) - (zOrder[b.id] ?? 0))
               .map((p) => {
                 const ok = correct(p)
-                const pos = ok ? centreOf(p.area) : placement[p.id]
+                const pos = placement[p.id]
                 const label = labelOf(p, indexOf.get(p.id) ?? 0)
                 const lifting = drag?.live && drag.id === p.id
                 return (
@@ -404,24 +551,22 @@ export function PiecePlacementInput({
                     key={p.id}
                     data-piece={p.id}
                     role="button"
-                    tabIndex={isGraded ? -1 : 0}
+                    tabIndex={isGraded && !soundEnabled ? -1 : 0}
                     aria-label={t('dashboard.classViewer.quiz.pieces.placedAria', { label })}
                     title={label}
                     onPointerDown={(e) => startDrag(e, p.id, false)}
-                    onKeyDown={(e) => onPieceKey(e, p.id)}
+                    onKeyDown={(e) => { if (soundEnabled) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); playPiece(p, .5, .5) } } else onPieceKey(e, p.id) }}
                     style={{ left: `${pos.x}%`, top: `${pos.y}%`, width: `${p.width}%`, zIndex: 10 + (zOrder[p.id] ?? 0) }}
                     className={cn(
                       styles.piece,
                       'drop-shadow-lg focus-visible:outline-none',
-                      !isGraded && 'cursor-grab active:cursor-grabbing',
+                      soundEnabled ? 'cursor-pointer' : !isGraded && 'cursor-grab active:cursor-grabbing',
                       lifting && 'invisible',
                       isGraded && styles.pieceSnap,
                       isGraded && (ok ? styles.pieceOk : styles.pieceBad),
                     )}
                   >
-                    <div className={cn('rounded-lg', isGraded && (ok ? 'ring-[2.5px] ring-success ring-offset-[3px] ring-offset-card' : 'ring-[2.5px] ring-terracotta ring-offset-[3px] ring-offset-card'), !isGraded && 'focus-visible:ring-2')}>
-                      <PieceImage piece={p} label={label} />
-                    </div>
+                    <PieceImage piece={p} label={label} className={isGraded ? (ok ? styles.silhouetteOk : styles.silhouetteBad) : undefined} />
                   </div>
                 )
               })}
@@ -440,6 +585,8 @@ export function PiecePlacementInput({
                 const label = labelOf(p, i)
                 const lifted = drag?.live && drag.id === p.id && drag.fromTray
                 const isArmed = armed === p.id
+                const soundKind = timbalSoundKind(p.label ?? '')
+                const thumbnailScale = soundKind === 'cha' ? 0.72 : soundKind === 'cymbal' ? 1.12 : 1
                 return (
                   <button
                     key={p.id}
@@ -449,7 +596,7 @@ export function PiecePlacementInput({
                     aria-label={isArmed ? t('dashboard.classViewer.quiz.pieces.selectedAria', { label }) : label}
                     onPointerDown={(e) => startDrag(e, p.id, true)}
                     onClick={(e) => {
-                      if (e.detail === 0 && !isGraded) setArmed((a) => (a === p.id ? null : p.id))
+                      if (e.detail === 0 && !isGraded && !soundEnabled) setArmed((a) => (a === p.id ? null : p.id))
                     }}
                     onMouseEnter={() => setHover(p.id)}
                     onMouseLeave={() => setHover((h) => (h === p.id ? null : h))}
@@ -457,17 +604,21 @@ export function PiecePlacementInput({
                     onBlur={() => setHover((h) => (h === p.id ? null : h))}
                     className={cn(
                       styles.trayItem,
-                      'grid h-[46px] w-full grid-cols-[40px_1fr] items-center gap-2.5 rounded-xl border-[1.5px] border-border bg-raised px-1.5 text-left select-none transition-[transform,border-color,opacity,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold',
+                      'grid min-h-[80px] w-full grid-cols-[76px_1fr] items-center gap-2.5 rounded-xl border-[1.5px] border-border bg-raised px-1.5 text-left select-none transition-[transform,border-color,opacity,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold',
                       !isGraded && 'cursor-grab hover:-translate-y-px hover:border-foreground/20 active:cursor-grabbing',
                       lifted && styles.trayLifted,
                       isArmed && 'border-gold shadow-[0_0_0_3px_hsl(var(--gold-highlight)/0.25)]',
                       isGraded && 'border-terracotta',
                     )}
                   >
-                    <span className="grid h-9 w-10 place-items-center overflow-hidden rounded-lg bg-sunken p-1">
-                      <PieceImage piece={p} label="" fit />
+                    <span className="relative block h-[68px] w-[76px] overflow-hidden rounded-lg bg-sunken">
+                      <span className="absolute inset-0" style={{ transform: `scale(${thumbnailScale})` }}>
+                      <span className="absolute inset-1" style={{ transform: thumbnailOffsets[p.id]?.url === p.imageUrl ? `translate(${thumbnailOffsets[p.id].x}px, ${thumbnailOffsets[p.id].y}px) scale(${thumbnailOffsets[p.id].scale})` : undefined }}>
+                        <PieceImage piece={p} label="" fit />
+                      </span>
+                      </span>
                     </span>
-                    <span className="min-w-0 truncate text-[13px] font-semibold leading-tight">
+                    <span className="min-w-0 break-words text-sm font-semibold leading-snug">
                       {label}
                       {isGraded && <small className="block text-[11px] font-medium text-muted-foreground">{t('dashboard.classViewer.quiz.pieces.notPlaced')}</small>}
                     </span>
@@ -485,6 +636,19 @@ export function PiecePlacementInput({
             )}
           </div>
         </aside>
+          {soundAvailable && <section className={cn(styles.soundLegend, "rounded-2xl border border-border bg-card p-3")} aria-label={locale === 'es' ? 'Teclas para tocar' : 'Playing keys'}>
+            <h3 className="mb-2 text-sm font-semibold">{locale === 'es' ? 'Toca con el teclado' : 'Play with your keyboard'}</h3>
+            <div className="space-y-1.5">
+              {TIMBAL_KEYS.filter(binding => pieces.some(piece => timbalSoundKind(piece.label ?? '') === binding.kind)).map(binding => {
+                const placed = pieces.some(piece => placement[piece.id] && timbalSoundKind(piece.label ?? '') === binding.kind)
+                return <div key={binding.key} className={cn('flex items-center gap-2 text-xs text-foreground', !placed && 'opacity-80')}>
+                  <kbd className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-primary/25 bg-primary/10 font-semibold text-primary">{binding.key}</kbd>
+                  <span>= {locale === 'es' ? binding.es : binding.en}</span>
+                </div>
+              })}
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{locale === 'es' ? 'Activa Probar sonido. Las piezas colocadas se pueden tocar con varias teclas a la vez.' : 'Turn on Try sound. Play placed pieces with several keys at once.'}</p>
+          </section>}
       </div>
 
       {/* Drag ghost: portaled to <body> so no transformed ancestor can offset it. */}

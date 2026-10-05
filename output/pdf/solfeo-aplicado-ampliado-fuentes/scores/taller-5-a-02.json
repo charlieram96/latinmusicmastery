@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "2.0",
+  "id": "taller-5-a-02",
+  "title": {
+    "es": "A · Células rítmicas · compases 3-4"
+  },
+  "meter": "4/4",
+  "keyFifths": 1,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "taller-5-a-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 2
+    },
+    {
+      "id": "taller-5-a-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "taller-5-a-02.n3",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F#4",
+      "dur": 8
+    },
+    {
+      "id": "taller-5-a-02.n4",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "taller-5-a-02.n5",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "A · Células rítmicas · compases 3-4",
+    "meter": "4/4",
+    "key": 1,
+    "bars": [
+      [
+        {
+          "pitch": "B3",
+          "dur": 2
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "F#4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "G3",
+          "dur": 1
+        }
+      ]
+    ],
+    "beams": [
+      [
+        1,
+        2
+      ]
+    ]
+  }
+}

@@ -27,6 +27,7 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     // notes have sounded. Pending chroma analyses are queued here.
     this.chordWindowSec = 0.08
     this.pendingChromas = []
+    this.pendingLevels = []
 
     // State
     this.inputBuffer = new Float32Array(this.config.frameSize)
@@ -37,6 +38,7 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     this.pitchBuffer = new Float32Array(this.pitchBufferSize)
     this.pitchBufferWritePos = 0
     this.envelope = 0
+    this.previousRms = 0
     this.energyHistory = []
     this.fluxHistory = []
     this.prevMagnitudes = null
@@ -393,13 +395,22 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
       }
     }
 
-    // Also compute input level for the UI meter (unfiltered)
+    // Unfiltered RMS and sample peak for the input meter.
     let rms = 0
+    let peak = 0
     for (let i = 0; i < channelData.length; i++) {
       rms += channelData[i] * channelData[i]
+      peak = Math.max(peak, Math.abs(channelData[i]))
     }
     rms = Math.sqrt(rms / channelData.length)
-    this.port.postMessage({ type: 'level', level: rms })
+    this.port.postMessage({ type: 'level', level: rms, peak })
+    this.pendingLevels = this.pendingLevels.filter(hit => {
+      hit.peak = Math.max(hit.peak, peak)
+      hit.rms = Math.max(hit.rms, rms)
+      if (currentTime < hit.timestamp + 0.08) return true
+      this.port.postMessage({ type: 'onset-level', ...hit })
+      return false
+    })
 
     return true
   }
@@ -409,6 +420,8 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
 
     // Criterion 1: Energy envelope
     const rms = this.computeRMS(frame)
+    const rising = rms > this.previousRms
+    this.previousRms = rms
 
     // Fix: compute envelope coefficients per-frame (not per-sample)
     const frameSize = this.config.frameSize
@@ -440,7 +453,9 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     const fluxExceeds = flux > fluxThreshold
 
     // Energy is primary criterion; flux only boosts confidence
-    if (energyExceeds) {
+    // A decaying envelope can stay over threshold beyond the refractory period.
+    // Require a fresh rise in the actual frame, not just residual envelope energy.
+    if (energyExceeds && rising && rms > energyThreshold) {
       const now = currentTime // Global in AudioWorklet scope
       const refractorySec = this.config.refractoryPeriodMs / 1000
 
@@ -449,6 +464,15 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
 
         // Run pitch detection on the raw sample buffer
         const pitchSnapshot = this.getPitchBufferSnapshot()
+        // Include the attack preceding detection, then the following 80 ms.
+        let attackPeak = 0
+        let attackPower = 0
+        const attack = pitchSnapshot.subarray(pitchSnapshot.length - 1024)
+        for (const sample of attack) {
+          attackPeak = Math.max(attackPeak, Math.abs(sample))
+          attackPower += sample * sample
+        }
+        this.pendingLevels.push({ timestamp: now, peak: attackPeak, rms: Math.sqrt(attackPower / attack.length) })
         const detectedFreq = this.detectPitch(pitchSnapshot, this.sampleRate)
 
         this.port.postMessage({
