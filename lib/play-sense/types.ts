@@ -40,6 +40,10 @@ export interface ExerciseEvent {
   expectedNoteName?: string
   /** Expected drum surface for PlaySense scoring (e.g. 'quinto', 'macho') */
   surface?: string
+  /** Authored stroke identity for distinct visual lanes (independent of hardware sensors). */
+  strokeId?: string
+  strokeLabel?: string
+  notehead?: import('@/components/playsense-studio/shared/score-model/types').PercussionNotehead
   /**
    * Chord group id (pitched instruments only). All notes of one strummed chord
    * share the same id so the scorer can grade them as a set. Single notes are

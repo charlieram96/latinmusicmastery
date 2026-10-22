@@ -7,6 +7,7 @@ export function packScoreRows(measureWidths: readonly number[], availableWidth: 
   rowStartExtra: readonly number[] = [], maxPerRow = 3): ScoreRow[] {
   const rows: ScoreRow[] = []
   let startIndex = 0
+  let previousExtra: number | undefined
   while (startIndex < measureWidths.length) {
     let count = 1
     const first = measureWidths[startIndex] + (rowStartExtra[startIndex] ?? 0)
@@ -18,7 +19,10 @@ export function packScoreRows(measureWidths: readonly number[], availableWidth: 
     }
     // Give every bar equal breathing room while preserving its required width.
     // An oversized bar occupies a row by itself and remains horizontally readable.
-    const extra = Math.max(0, availableWidth - used) / count
+    const remainingExtra = Math.max(0, availableWidth - used) / count
+    const isLastRow = startIndex + count === measureWidths.length
+    const extra = isLastRow && previousExtra !== undefined ? Math.min(remainingExtra, previousExtra) : remainingExtra
+    previousExtra = extra
     rows.push({ startIndex, widths: [first, ...measureWidths.slice(startIndex + 1, startIndex + count)].map(width => width + extra) })
     startIndex += count
   }

@@ -1,6 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from '@/components/language-provider';
 import { symbolCaption } from '@/lib/playsense-studio/i18n/text';
@@ -18,9 +19,9 @@ export const commonPalettes: Record<string, string[]> = {
   'Líneas y reguladores': ['Crescendo','Diminuendo','Ligadura de unión','Ligadura de expresión','ottava','ottavaBassa'],
   'Alteraciones y microtonos': ['accidentalFlat','accidentalNatural','accidentalSharp','accidentalDoubleFlat','accidentalDoubleSharp'],
   'Grupos irregulares': ['Dosillo','Tresillo','Quintillo','Seisillo','Septillo'],
-  'Claves y pentagramas': ['gClef','fClef','cClef','unpitchedPercussionClef1','sixStringTabClef'],
-  'Compás y barras': ['timeSigCommon','timeSigCutCommon','barlineSingle','barlineDouble','barlineFinal'],
-  'Repeticiones y navegación': ['repeatLeft','repeatRight','repeat1Bar','segno','coda','daCapo','dalSegno'],
+  'Claves y pentagramas': ['gClef','fClef','cClef','Tenor clef','unpitchedPercussionClef1','sixStringTabClef'],
+  'Compás y barras': ['timeSigCommon','timeSigCutCommon','barlineSingle','barlineDouble','barlineFinal','2/4','3/4','4/4','6/8','9/8','12/8'],
+  'Repeticiones y navegación': ['repeatLeft','repeatRight','First ending','Second ending','Remove ending','Remove repeat signs','repeat1Bar','segno','coda','daCapo','dalSegno'],
   'Tempo y agógica': ['Largo','Adagio','Andante','Moderato','Allegro','Presto','ritardando','accelerando','a tempo','breathMarkComma','caesura'],
   'Adornos y trémolos': ['ornamentTrill','ornamentMordent','ornamentTurn','tremolo1','tremolo2','tremolo3'],
   'Arpa y pedales': ['harpPedalRaised','harpPedalCentered','harpPedalLowered','harpPedalDivider'],
@@ -39,17 +40,29 @@ const PALETTE_WIDTH = 224;
 const paletteWidth = (id: string) => id === 'playback' ? 620 : PALETTE_WIDTH;
 const storageKey = 'lmm-floating-palettes-v2';
 
-type Position={x:number;y:number};
+type Position={x:number;y:number;floating?:boolean};
 function FloatingPalette({id,title,position,onMove,onClose,children}:{id:string;title:string;position:Position;onMove:(p:Position)=>void;onClose:()=>void;children:ReactNode}) {
  const ref=useRef<HTMLElement>(null);
  const drag=useRef<{x:number;y:number;origin:Position}|null>(null);
  const [availableHeight,setAvailableHeight]=useState<number>();
+ const move=useRef(onMove);move.current=onMove;
+ useEffect(()=>{
+  const pointerMove=(e:PointerEvent)=>{
+   const d=drag.current;if(!d)return;
+   e.preventDefault();
+   move.current({x:Math.max(0,Math.min(window.innerWidth-(ref.current?.offsetWidth??paletteWidth(id)),d.origin.x+e.clientX-d.x)),y:Math.max(0,Math.min(window.innerHeight-40,d.origin.y+e.clientY-d.y)),floating:true});
+  };
+  const end=()=>{drag.current=null;};
+  window.addEventListener('pointermove',pointerMove,{passive:false});
+  window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end);window.addEventListener('blur',end);
+  return()=>{window.removeEventListener('pointermove',pointerMove);window.removeEventListener('pointerup',end);window.removeEventListener('pointercancel',end);window.removeEventListener('blur',end);};
+ },[id]);
  useLayoutEffect(()=>{
   const element=ref.current, parent=element?.parentElement;
   if(!element||!parent)return;
   const measure=()=>{
    const top=element.getBoundingClientRect().top;
-   const bottom=Math.min(parent.getBoundingClientRect().bottom,window.innerHeight);
+   const bottom=position.floating?window.innerHeight:Math.min(parent.getBoundingClientRect().bottom,window.innerHeight);
    setAvailableHeight(Math.max(36,bottom-top-8));
   };
   measure();
@@ -57,16 +70,20 @@ function FloatingPalette({id,title,position,onMove,onClose,children}:{id:string;
   window.addEventListener('resize',measure);
   window.addEventListener('scroll',measure,true);
   return()=>{observer.disconnect();window.removeEventListener('resize',measure);window.removeEventListener('scroll',measure,true);};
- },[position.y]);
- return <section ref={ref} data-palette={id} aria-label={title} data-score-preserve-selection className="pointer-events-auto absolute flex max-w-full flex-col overflow-hidden rounded-md border border-border bg-card text-foreground shadow-lg" style={{left:position.x,top:position.y,width:paletteWidth(id),maxHeight:availableHeight,overflow:"hidden"}}>
+ },[position.y,position.floating]);
+ const panel=<section ref={ref} data-palette={id} aria-label={title} data-score-preserve-selection className="pointer-events-auto absolute flex max-w-full flex-col overflow-hidden rounded-md border border-border bg-card text-foreground shadow-lg" style={{position:position.floating?"fixed":"absolute",zIndex:position.floating?60:undefined,left:position.x,top:position.y,width:paletteWidth(id),maxWidth:"calc(100vw - 8px)",maxHeight:availableHeight,overflow:"hidden"}}>
   <div className="lmm-palette-header flex shrink-0 touch-none select-none items-center justify-between border-b border-border bg-muted px-2 py-0.5 text-[11px]" style={{cursor:'grab'}}
-   onPointerDown={e=>{if((e.target as HTMLElement).closest('button'))return;drag.current={x:e.clientX,y:e.clientY,origin:position};e.currentTarget.setPointerCapture(e.pointerId);}}
-   onPointerMove={e=>{const d=drag.current;if(!d)return;const parent=ref.current?.parentElement;onMove({x:Math.max(0,Math.min((parent?.clientWidth??1000)-(ref.current?.offsetWidth??224),d.origin.x+e.clientX-d.x)),y:Math.max(0,Math.min((parent?.clientHeight??600)-36,d.origin.y+e.clientY-d.y))});}}
-   onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}>
+   onPointerDown={e=>{
+    if(e.button!==0||(e.target as HTMLElement).closest('button'))return;
+    e.preventDefault();e.stopPropagation();
+    const bounds=ref.current!.getBoundingClientRect();
+    drag.current={x:e.clientX,y:e.clientY,origin:{x:bounds.left,y:bounds.top}};
+   }}>
    <h3 className="font-medium">{title}</h3><button aria-label={`× ${title}`} onClick={onClose} title={`${title} · ×`} className="lmm-palette-close"><X size={15} strokeWidth={2} aria-hidden="true"/></button>
   </div>
   <div data-palette-scroll className="min-h-0 overflow-auto overscroll-contain" style={{scrollbarGutter:"stable"}}>{children}</div>
  </section>;
+ return position.floating?createPortal(panel,document.body):panel;
 }
 
 export function MusicPalettes({hasSelection,hasMeasureSelection,onApply,onWrite,open,onCloseMenu,playback}: {
@@ -95,6 +112,8 @@ export function MusicPalettes({hasSelection,hasMeasureSelection,onApply,onWrite,
  const layer=useRef<HTMLDivElement>(null);
  const [width,setWidth]=useState(1200);
  const [height,setHeight]=useState(600);
+ const [viewport,setViewport]=useState({width:1200,height:800});
+ useEffect(()=>{const resize=()=>setViewport({width:window.innerWidth,height:window.innerHeight});resize();window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);},[]);
  useEffect(()=>{const el=layer.current;if(!el)return;const resize=()=>{setWidth(el.clientWidth||1200);setHeight(el.clientHeight||600);};resize();const observer=new ResizeObserver(resize);observer.observe(el);return()=>observer.disconnect();},[]);
  useEffect(()=>{try{const p=JSON.parse(localStorage.getItem(storageKey)??'null');if(p){if(Array.isArray(p.panels))setPanels(p.panels.filter((k:string)=>k==='playback'||k==='favorites'||(k.startsWith('common:')&&k.slice(7) in commonPalettes)||(k.startsWith('extras:')&&extraFamilies.includes(k.slice(7)))));setPositions(p.positions??{});setFavorites(p.favorites??[]);}}catch{}},[]);
  const persist=(p=panels,pos=positions,f=favorites)=>{try{localStorage.setItem(storageKey,JSON.stringify({panels:p,positions:pos,favorites:f}));}catch{}};
@@ -113,7 +132,7 @@ export function MusicPalettes({hasSelection,hasMeasureSelection,onApply,onWrite,
   </aside>}
   {panels.filter(k=>k!=='playback'||playback).map((key,index)=>{
    const cols=Math.max(1,Math.floor(width/232));const initial={x:8+(index%cols)*232,y:56+Math.floor(index/cols)*126};
-   const saved=positions[key]??initial;const position={x:Math.max(0,Math.min(width-paletteWidth(key),saved.x)),y:Math.max(0,Math.min(height-40,saved.y))};
+   const saved=positions[key]??initial;const position={...saved,x:Math.max(0,Math.min((saved.floating?viewport.width:width)-paletteWidth(key),saved.x)),y:Math.max(0,Math.min((saved.floating?viewport.height:height)-40,saved.y))};
    const names=key==='favorites'?favorites:commonPalettes[key.slice(7)]??[];
    const list=key.startsWith('extras:')?extras.filter(s=>s.family===key.slice(7)):names.map(n=>symbols.find(s=>s.name===n)).filter((s):s is typeof symbols[number]=>!!s);
    return <FloatingPalette key={key} id={key} title={title(key)} position={position} onClose={()=>toggle(key)} onMove={p=>{const next={...positions,[key]:p};setPositions(next);persist(panels,next);}}>

@@ -36,7 +36,7 @@ const noteBaseShape = {
   slurToNext: z.boolean().optional(),
   articulation: z.enum(['staccato', 'accent', 'tenuto']).optional(),
   id: z.string().min(1).optional(),
-  dots: z.union([z.literal(1), z.literal(2)]).optional(),
+  dots: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
   tuplet: z.object({ id: z.string().min(1), n: z.number().int().min(2).max(15), m: z.number().int().min(1).max(16) }).optional(),
   articulations: z.array(z.enum(['staccato', 'staccatissimo', 'tenuto', 'accent', 'marcato', 'fermata'])).max(6).optional(),
   ornament: z.enum(['trill', 'mordent', 'turn']).optional(),
@@ -102,6 +102,8 @@ const timeSignatureSchema = z.tuple([
 ]);
 
 const measureSchema = z.object({
+  durationQN: z.number().positive().optional(),
+  senzaMisura: z.boolean().optional(),
   repeat: z.object({
     id: z.string().min(1),
     pass: z.number().int().min(0).max(7),
@@ -114,6 +116,7 @@ const measureSchema = z.object({
   tempoChange: z.number().positive().optional(),
   keyFifths: z.number().int().min(-7).max(7).optional(),
   endBarline: z.enum(['single', 'final', 'double']).optional(),
+  emptyText: z.object({text:z.string().max(200),fontSize:z.number().min(10).max(48)}).optional(),
   clef: z.enum(['treble', 'bass', 'alto', 'tenor', 'percussion']).optional(),
   repeatStart: z.boolean().optional(),
   repeatEnd: z.boolean().optional(),

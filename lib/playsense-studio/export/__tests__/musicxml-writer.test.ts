@@ -243,3 +243,12 @@ describe('writeMusicXml — element order is pinned, not just tag presence', () 
     );
   });
 });
+
+it('round trips authored repeat signs, single-measure endings and explicit double bars',()=>{
+ const score=structuredClone(SON_MONTUNO_FIXTURE);
+ score.tracks[0].measures[0]={...score.tracks[0].measures[0],repeatStart:true,repeatEnd:true,volta:'1.',endBarline:'double'};
+ const back=parseMusicXmlString(writeMusicXml(score,[0]));
+ expect(back.tracks[0].measures[0]).toMatchObject({repeatStart:true,repeatEnd:true,volta:'1.'});
+ score.tracks[0].measures[0].repeatEnd=false;
+ expect(parseMusicXmlString(writeMusicXml(score,[0])).tracks[0].measures[0].endBarline).toBe('double');
+});

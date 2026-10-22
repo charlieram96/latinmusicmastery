@@ -5,7 +5,10 @@
 // bar-by-bar strip built from the scorer's per-note judgements. Again and
 // Continue live in the action bar.
 
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
+import { BarPracticeDialog } from './bar-practice-dialog'
+import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
+import type { BarPracticeClip } from '@/lib/play-sense/bar-practice'
 import { Check, Clock, Eye, Flame, RotateCcw, Settings2, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
@@ -16,7 +19,8 @@ import './lesson-mode/lesson-mode.css'
 
 const BASE = 'dashboard.classViewer.lessonMode.part'
 
-export function PartDone({ stats, bars, previousBest, onAgain, onContinue, onWatchDemo, onRecalibrate, demo }: {
+export function PartDone({ stats, bars, previousBest, onAgain, onContinue, onWatchDemo, onRecalibrate, demo, practice }: {
+  practice?: { score?: ScoreDocument; videoUrl: string; clipForBar: (bar: number) => BarPracticeClip | null }
   stats: AttemptStats
   bars: BarResult[]
   /** Best accuracy from earlier takes, null for a first take, undefined while it loads. */
@@ -28,6 +32,8 @@ export function PartDone({ stats, bars, previousBest, onAgain, onContinue, onWat
   demo: boolean
 }) {
   const { t, locale } = useTranslation()
+  const [selectedBar, setSelectedBar] = useState<BarResult | null>(null)
+  const selectedClip = selectedBar ? practice?.clipForBar(selectedBar.bar) : null
   const graded = stats.perfectCount + stats.goodCount + stats.okCount + stats.missCount
   const accuracy = graded ? Math.max(0, Math.min(100, Math.round(stats.accuracy))) : 0
   const band = accuracy >= 90 ? 'great' : accuracy >= 75 ? 'good' : accuracy >= 50 ? 'ok' : 'low'
@@ -82,7 +88,9 @@ export function PartDone({ stats, bars, previousBest, onAgain, onContinue, onWat
         {bars.map((bar, i) => <li key={bar.bar} data-bar-tile data-status={bar.status} className="lx-bar" style={{ animationDelay: `${i * 40}ms` }}
           aria-label={t(`${BASE}.barLabel`, { n: bar.bar, status: t(`${BASE}.legend.${bar.status}`) })}
           title={t(`${BASE}.barLabel`, { n: bar.bar, status: t(`${BASE}.legend.${bar.status}`) })}>
-          <span className="tabular-nums" aria-hidden>{bar.bar}</span><i aria-hidden />
+          {practice && (bar.status === 'close' || bar.status === 'miss') && practice.clipForBar(bar.bar) ? <button type="button" className="lx-bar-practice" onClick={() => setSelectedBar(bar)} aria-label={locale === 'es' ? `Practicar compás ${bar.bar} en bucle` : `Practice bar ${bar.bar} in a loop`}>
+            <span className="tabular-nums">{bar.bar}</span><span className="text-[9px]">{locale === 'es' ? 'Practicar' : 'Practice'}</span><i aria-hidden/>
+          </button> : <><span className="tabular-nums" aria-hidden>{bar.bar}</span><i aria-hidden /></>}
         </li>)}
       </ol>
       <div className="lx-legend">
@@ -93,12 +101,14 @@ export function PartDone({ stats, bars, previousBest, onAgain, onContinue, onWat
       </div>
     </section>
 
+    {selectedBar && selectedClip && practice && <BarPracticeDialog key={selectedBar.bar} bar={selectedBar} clip={selectedClip} score={practice.score} videoUrl={practice.videoUrl} onClose={() => setSelectedBar(null)}/>}
+
     <LessonAction>
       <ActionMessage icon={<Trophy className="h-5 w-5" />} title={demo ? t(`${BASE}.demo`) : t(`${BASE}.saved`)} detail={t(`${BASE}.savedDetail`)} />
       {onWatchDemo && <Button type="button" variant="ghost" onClick={onWatchDemo} className="lx-hide-phone"><Eye className="h-4 w-4" />{t(`${BASE}.watch`)}</Button>}
       <Button type="button" variant="chunky-ghost" data-part-again="" onClick={onAgain}><RotateCcw className="h-4 w-4" />{t(`${BASE}.again`)}</Button>
       {onRecalibrate && <Button type="button" variant="outline" size="icon" aria-label={locale==='es'?'Recalibrar':'Recalibrate'} title={locale==='es'?'Recalibrar':'Recalibrate'} onClick={onRecalibrate}><Settings2 className="h-4 w-4" /></Button>}
-      {onContinue && !demo && !passed && <Button type="button" variant="outline" data-part-override="" onClick={onContinue} title={locale === 'es' ? 'Ir al siguiente ejercicio conservando esta calificación' : 'Go to the next exercise and keep this grade'}>{locale === 'es' ? 'Override · Continuar de todos modos' : 'Override · Continue anyway'}</Button>}
+      {onContinue && !demo && !passed && <Button type="button" variant="outline" data-part-override="" onClick={onContinue} title={locale === 'es' ? 'Ir al siguiente ejercicio conservando esta calificación' : 'Go to the next exercise and keep this grade'}>{locale === 'es' ? 'Continuar de todos modos' : 'Override · Continue anyway'}</Button>}
       {onContinue && <Button type="button" variant="chunky" data-primary="" data-part-continue="" disabled={!demo && !passed} onClick={() => { if (demo || passed) onContinue() }}>{t(`${BASE}.continue`)}</Button>}
     </LessonAction>
   </div>

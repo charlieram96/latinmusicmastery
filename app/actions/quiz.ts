@@ -1,5 +1,6 @@
 'use server'
 
+import { localQuestions, createLocalQuestion, updateLocalQuestion, deleteLocalQuestion, reorderLocalQuestions } from '@/lib/courses/local-solfeo-questions'
 import type { Database } from '@/types/database';
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
@@ -10,6 +11,7 @@ import type { QuizQuestion } from '@/types/modules'
 export async function getQuizQuestions(
   classItemId: string
 ): Promise<{ data: QuizQuestion[]; error?: string }> {
+  if(classItemId.startsWith('local-solfeo-')) return {data:await localQuestions(classItemId)}
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('quiz_questions')
@@ -37,7 +39,8 @@ type QuestionInput = {
   options_es?: unknown
 }
 
-export async function createQuizQuestion(classItemId: string, input: QuestionInput) {
+export async function createQuizQuestion(classItemId: string, input: QuestionInput):Promise<{data?:QuizQuestion;error?:string}> {
+  if(classItemId.startsWith('local-solfeo-')) return createLocalQuestion(classItemId,input as Partial<QuizQuestion>)
   const supabase = await createClient()
 
   const { data: existing } = await supabase
@@ -73,7 +76,8 @@ export async function createQuizQuestion(classItemId: string, input: QuestionInp
   return { data: data as QuizQuestion }
 }
 
-export async function updateQuizQuestion(questionId: string, input: QuestionInput) {
+export async function updateQuizQuestion(questionId: string, input: QuestionInput):Promise<{data?:QuizQuestion;error?:string}> {
+  if(questionId.startsWith('local-solfeo-')) return updateLocalQuestion(questionId,input as Partial<QuizQuestion>)
   const supabase = await createClient()
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
@@ -101,6 +105,7 @@ export async function updateQuizQuestion(questionId: string, input: QuestionInpu
 }
 
 export async function deleteQuizQuestion(questionId: string) {
+  if(questionId.startsWith('local-solfeo-')) return deleteLocalQuestion(questionId)
   const supabase = await createClient()
   const { error } = await supabase.from('quiz_questions').delete().eq('id', questionId)
   if (error) return { error: error.message }
@@ -109,6 +114,7 @@ export async function deleteQuizQuestion(questionId: string) {
 }
 
 export async function reorderQuizQuestions(classItemId: string, questionIds: string[]) {
+  if(classItemId.startsWith('local-solfeo-')) return reorderLocalQuestions(classItemId,questionIds)
   const supabase = await createClient()
   await Promise.all(
     questionIds.map((id, index) =>

@@ -1,0 +1,80 @@
+{
+  "classId": "local-solfeo-m06-c01",
+  "duration": 95.876411,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Procedimiento de lectura tonal",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 20.666667,
+      "kind": "explanation",
+      "title": "Procedimiento de lectura tonal",
+      "sourceTopic": "estudio-tonal",
+      "soundEvents": []
+    },
+    {
+      "start": 20.666667,
+      "end": 42,
+      "kind": "explanation",
+      "title": "Procedimiento de lectura tonal",
+      "sourceTopic": "estudio-tonal",
+      "soundEvents": []
+    },
+    {
+      "start": 42,
+      "end": 60.842,
+      "kind": "explanation",
+      "title": "Procedimiento de lectura tonal",
+      "sourceTopic": "estudio-tonal",
+      "soundEvents": []
+    },
+    {
+      "start": 60.842,
+      "end": 80.855063,
+      "kind": "explanation",
+      "title": "Procedimiento de lectura tonal",
+      "sourceTopic": "estudio-tonal",
+      "soundEvents": []
+    },
+    {
+      "start": 80.855063,
+      "end": 89.855063,
+      "kind": "explanation",
+      "title": "Procedimiento de lectura tonal",
+      "sourceTopic": "estudio-tonal",
+      "soundEvents": []
+    },
+    {
+      "start": 89.855063,
+      "end": 95.855063,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

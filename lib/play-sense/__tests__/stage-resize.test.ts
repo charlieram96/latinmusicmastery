@@ -64,6 +64,17 @@ describe('stage resizing between rendered frames', () => {
     expect(applySize).toHaveBeenCalledExactlyOnceWith(800, 420)
   })
 
+  it('redraws on page zoom even when the CSS panel dimensions stay the same', () => {
+    vi.stubGlobal('window', { devicePixelRatio: 1 })
+    const { applySize, viewport } = surface()
+    vi.stubGlobal('window', { devicePixelRatio: 1.25 })
+    expect(viewport.flush()).toBe(true)
+    expect(applySize).toHaveBeenCalledExactlyOnceWith(800, 600)
+    expect(viewport.flush()).toBe(false)
+    vi.stubGlobal('window', { devicePixelRatio: 1 })
+    expect(viewport.flush()).toBe(true)
+  })
+
   it('discards pending work when the stage is destroyed', () => {
     const { element, applySize, viewport } = surface()
     element.clientWidth = 700; notify()

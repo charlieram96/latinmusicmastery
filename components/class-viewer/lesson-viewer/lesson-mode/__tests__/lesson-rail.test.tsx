@@ -9,7 +9,7 @@ vi.mock('@/components/language-provider', () => ({
 vi.mock('next/link', () => ({ default: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props}>{children}</a> }))
 // eslint-disable-next-line @next/next/no-img-element
 vi.mock('next/image', () => ({ default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img alt="" {...props} /> }))
-vi.mock('@/components/theme-toggle', () => ({ ThemeToggle: () => <button data-theme-toggle /> }))
+vi.mock('@/components/theme-toggle', () => ({ RAIL_REVEAL: '', ThemeToggle: () => <button data-theme-toggle /> }))
 vi.mock('@/components/language-toggle', () => ({ LanguageToggle: () => <button data-language-toggle /> }))
 
 import { LessonRail } from '../lesson-rail'

@@ -3,7 +3,7 @@
 // count-in); the media shows bar 1 at `bar1` seconds. Pure: the game's rAF loop
 // asks where the video should be and how fast it should run, then applies it.
 
-export interface PlayMedia { bar1: number; trimIn: number; trimOut: number | null; countInSeconds: number; preroll: boolean; loopSeconds: number }
+export interface PlayMedia { bar1: number; trimIn: number; trimOut: number | null; countInSeconds: number; preroll: boolean; loopSeconds: number; loopCount?: number }
 
 /** Beyond this much drift the element hard-seeks instead of rate-trimming. */
 const SEEK_DRIFT_SECONDS = 0.5
@@ -25,6 +25,11 @@ export function expectedMediaTime(m: PlayMedia, e: number): { media: number; pla
     const from = Math.max(m.trimIn, m.bar1 - m.countInSeconds)
     const at = m.bar1 + e
     return at >= from ? { media: at, playing: true } : { media: from, playing: false }
+  }
+  // Evaluation may remain active briefly for late input. Never wrap the
+  // reference recording into another pass while that input is being graded.
+  if (m.loopCount != null && m.loopSeconds > 0 && e >= m.loopSeconds * m.loopCount) {
+    return { media: Math.max(m.trimIn, Math.min(m.bar1 + m.loopSeconds, m.trimOut ?? Infinity)), playing: false }
   }
   const within = m.loopSeconds > 0 ? e % m.loopSeconds : e
   const at = m.bar1 + within

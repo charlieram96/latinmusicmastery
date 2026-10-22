@@ -1,4 +1,6 @@
 'use client'
+
+import { StudioSequence } from './studio-sequence'
 import { useTranslation } from '@/components/language-provider'
 import { pick } from '@/lib/i18n/localize'
 
@@ -449,7 +451,7 @@ function StudioWorkspace({
   } else if (drawerSelection.type === 'module' && drawerModule) {
     drawerHeader = {
       label: 'Module',
-      title: drawerModule.title || 'Untitled module',
+      title: pick(locale, drawerModule.title, drawerModule.title_es ?? '') || 'Untitled module',
       icon: (
         <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gold/10 text-gold">
           <Layers className="h-3.5 w-3.5" />
@@ -467,7 +469,7 @@ function StudioWorkspace({
   } else if (drawerSelection.type === 'class' && drawerClass) {
     drawerHeader = {
       label: 'Class',
-      title: drawerClass.title || 'Untitled class',
+      title: pick(locale, drawerClass.title, drawerClass.title_es ?? '') || 'Untitled class',
       icon: (
         <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <ListMusic className="h-3.5 w-3.5" />
@@ -487,7 +489,7 @@ function StudioWorkspace({
     const Icon = meta.icon
     drawerHeader = {
       label: meta.label,
-      title: drawerItem.title || 'Untitled',
+      title: pick(locale, drawerItem.title, drawerItem.title_es ?? '') || 'Untitled',
       icon: (
         <span
           className={cn(
@@ -555,6 +557,7 @@ function StudioWorkspace({
               moduleIndex={activeClass.moduleIndex}
               classIndex={activeClass.classIndex}
               hasModules={sections.length > 0}
+              localPreview={course.is_local_draft}
               activeItemId={drawerSelection.type === 'item' ? drawerSelection.id : null}
               onAddItem={handleAddItem}
               onSelectItem={handleSelectItem}
@@ -575,6 +578,7 @@ function StudioWorkspace({
               moduleIndex={0}
               classIndex={0}
               hasModules={sections.length > 0}
+              localPreview={course.is_local_draft}
               activeItemId={null}
               onAddItem={handleAddItem}
               onSelectItem={handleSelectItem}
@@ -582,6 +586,11 @@ function StudioWorkspace({
               onReorderItems={handleReorderItems}
             />
           )}
+          {activeClass && <div className="sticky bottom-0 z-10 border-t bg-background p-2">
+            <StudioSequence sections={sections} courseId={course.id} classId={activeClass.cls.id}
+              itemId={drawerSelection.type === 'item' ? drawerSelection.id : null}
+              onClass={handleSelectClass} onItem={handleSelectItem} />
+          </div>}
         </main>
 
         {/* Mobile drawer backdrop */}

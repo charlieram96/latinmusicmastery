@@ -1,0 +1,31 @@
+.exercise-video-guidance { position:absolute; inset:0; z-index:25; container-type:inline-size; pointer-events:none; }
+.exercise-video-guidance button { pointer-events:auto; }
+.exercise-video-guidance h2 { font-size:clamp(18px,4.5cqw,54px); margin:1cqw 0; }
+.exercise-video-guidance p { font-size:clamp(10px,1.5cqw,16px); }
+.exercise-video-guidance button { font-size:clamp(11px,1.6cqw,16px); padding:1cqw 2cqw; margin-top:1cqw; }
+.exercise-guidance-toggle { position:absolute; top:12px; right:12px; border-radius:8px; background:#111c; color:white; }
+.exercise-guidance-tip { position:absolute; top:16%; right:3%; width:38%; height:24%; }
+.exercise-guidance-tip .lmm-coaching-card { position:relative; inset:auto; max-width:none; color:white; padding:1.5cqw; }
+.exercise-guidance-tip .lmm-coaching-title { font-size:clamp(14px,2.8cqw,30px); }
+@container (max-width:450px) {
+ .exercise-video-guidance [class*="pills"] { display:none; }
+ .exercise-video-guidance [class*="readyLabel"] { margin-top:4px; }
+}
+.exercise-video-guidance { container-type:size; }
+.exercise-video-guidance > [class*="scrim"] { padding:clamp(8px,3cqh,24px); }
+.exercise-video-guidance h2 { font-size:clamp(17px,min(4.5cqw,10cqh),54px); }
+.exercise-video-guidance [class*="readyLabel"] { margin-top:2cqh; }
+.exercise-video-guidance [class*="pills"] { margin:2cqh 0; }
+@container (max-height:320px) {
+ .exercise-video-guidance [class*="pills"] { display:none; }
+ .exercise-video-guidance p { font-size:clamp(10px,4cqh,13px); }
+ .exercise-video-guidance button { margin-top:2cqh; padding:2cqh 2cqw; }
+}
+:has(> .exercise-video-guidance) > .lmm-video-watermark { z-index:26; }
+
+/* Classroom titles and buttons use the same scale in solo and split video panes. */
+[data-kids-score-workspace] .exercise-video-guidance h2 { font-size:20px; margin:6px 0; }
+[data-kids-score-workspace] .exercise-video-guidance p { font-size:10px; }
+[data-kids-score-workspace] .exercise-video-guidance [class*="readyLabel"] { margin-top:10px; }
+[data-kids-score-workspace] .exercise-video-guidance [class*="pills"] { display:none; }
+[data-kids-score-workspace] .exercise-video-guidance button { font-size:11px; padding:5px 12px; margin-top:6px; }

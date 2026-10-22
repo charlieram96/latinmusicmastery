@@ -173,7 +173,7 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
     expect(acts.saveStudioDraft).toHaveBeenCalledWith(
       expect.objectContaining({
         owner: { kind: 'exercise', id: 'ci-1' },
-        timing: { ...EMPTY_TIMING, play: exerciseMedia.play },
+        timing: { ...EMPTY_TIMING, anchor:{seconds:exerciseMedia.metronomeAnchorSeconds,qn:exerciseMedia.metronomeAnchorQn}, play: exerciseMedia.play },
       })
     );
   });
@@ -204,7 +204,7 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
     expect(last.mode).toBe('graded');
     // The legacy exercise map on the media is never a seed here.
     expect(last.activeTimeMap).toBeNull();
-    expect(last.props.initialMetronomeAnchorSeconds).toBeNull();
+    expect(last.props.initialMetronomeAnchorSeconds).toBe(1.5);
     expect(last.props.play).toEqual({ bar1Seconds: 2.5, countInBars: 2, preroll: false });
     expect(last.props.gradedOnsets).toEqual([]);
 
@@ -290,6 +290,7 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
     // Went through workspaceSeed → timingToTimeMap, not the raw prop.
     expect(stub.syncPanelCalls.at(-1)?.activeTimeMap).toEqual({
       id: 'draft',
+      params: {},
       method: 'drag',
       waypoints: [wp(0, 0), wp(4, 2)],
       nudges: [],
@@ -324,6 +325,7 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
 
     expect(stub.syncPanelCalls.at(-1)?.activeTimeMap).toEqual({
       id: 'draft',
+      params: { nudges: [] },
       method: 'drag',
       waypoints: [wp(0, 5), wp(4, 9)],
       nudges: [],
@@ -443,6 +445,7 @@ describe('StudioWorkspace — Student preview and copy notes (Studio rework P5, 
       startSeconds: exerciseMedia.videoStartSeconds,
       trimOutSeconds: exerciseMedia.videoTrimOutSeconds,
       timeMap: null,
+      metronomeAnchorSeconds: exerciseMedia.metronomeAnchorSeconds,
     });
     expect(call.backingTracks).toBe(exerciseMedia.backingTracks);
     expect((call.exercise as { title: string }).title).toBe('Graded');

@@ -51,3 +51,24 @@ next-env.d.ts
 /.pnpm-store/
 /tmp/
 **/__pycache__/
+
+# Local optimized introduction preview (retain the master separately)
+/public/local-course-assets/eb756201-e82e-4c37-a3c1-9d6e3dd975a4-1791599647914.m4v
+
+/public/local-course-assets/codex-ritmo/ritmo-basico-aligned.mp4
+
+/public/local-course-assets/codex-ritmo/codex-ritmo-original.m4v
+
+/public/local-course-assets/codex-ritmo/codex-ritmo-audio-corrected.mp4
+
+# Local audio processing intermediates (published audio lives under public/)
+/local-artifacts/elevenlabs-variaciones-*/stems-*/
+/local-artifacts/elevenlabs-variaciones-*/source-es.*
+/local-artifacts/elevenlabs-variaciones-test/
+
+# Interrupted writes and tool scratch files
+*.tmp
+*.log
+
+# Published media is versioned by checksum in lib/release/manifest.json.
+/public/local-course-assets/

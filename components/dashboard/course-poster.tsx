@@ -11,6 +11,7 @@ import { instrumentLabel } from '@/lib/i18n/instruments'
 import { cn } from '@/lib/utils'
 
 export interface PosterCourse {
+  href?: string
   id: string
   slug: string | null
   title: string
@@ -74,7 +75,7 @@ export function LevelDot({ difficulty }: { difficulty: string | null }) {
  */
 export function CoursePoster({ course, priority = false, compact = false }: { course: PosterCourse; priority?: boolean; compact?: boolean }) {
   const { t, locale } = useTranslation()
-  const href = `/dashboard/course/${course.slug || course.id}`
+  const href = course.href ?? `/dashboard/course/${course.slug || course.id}`
   const level = course.difficulty
     ? t(`dashboard.pages.courses.difficulty.${course.difficulty}`)
     : t('dashboard.pages.courses.allLevels')

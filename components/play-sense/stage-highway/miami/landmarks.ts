@@ -87,6 +87,22 @@ export function createBridge(uniforms: SkyUniforms, from: THREE.Vector3, to: THR
     for (const side of [-1, 1]) parts.push(new THREE.CylinderGeometry(1.1, 1.3, top - SEA_Y, 10).translate(t * length, (top + SEA_Y) / 2, side * 3.2))
     parts.push(new THREE.BoxGeometry(2, 1.4, 9).translate(t * length, top - .7, 0))
   }
+  // Continuous parapet rails, individual balusters and expansion joints.
+  for (let i=0;i<120;i++) {
+    const t=(i+.5)/120, x=t*length, y=deckHeight(t)
+    for(const side of [-1,1]) {
+      parts.push(new THREE.BoxGeometry(.22,1.15,.22).translate(x,y+1.05,side*6.4))
+      const rail=new THREE.BoxGeometry(length/120+.05,.18,.24)
+      rail.rotateZ(Math.atan2(6*Math.PI*Math.cos(t*Math.PI),length))
+      parts.push(rail.translate(x,y+1.63,side*6.4))
+    }
+    if(i%6===0) parts.push(new THREE.BoxGeometry(.12,.06,12).translate(x,y+.61,0))
+  }
+  for(let i=0;i<=48;i++) for(const side of [-1,1]) {
+    const t=i/48, y=deckHeight(t), x=t*length
+    parts.push(new THREE.CylinderGeometry(.10,.16,3.4,8).translate(x,y+1.9,side*6.8))
+    parts.push(new THREE.BoxGeometry(.8,.18,.45).translate(x,y+3.55,side*6.8))
+  }
   const structure = new THREE.Mesh(flat(parts), distantMaterial(uniforms, concrete))
   structure.applyMatrix4(toWorld)
   group.add(structure)

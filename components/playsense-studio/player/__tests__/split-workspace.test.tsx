@@ -50,14 +50,14 @@ afterEach(async () => {
   vi.unstubAllGlobals()
 })
 
-function Harness({ defaults, layouts, frame = 'fill', highway, media = true }: {
-  defaults: WorkspaceState; layouts?: readonly WorkspaceLayout[]; frame?: 'card' | 'bleed' | 'fill'; highway?: boolean; media?: boolean
+function Harness({ defaults, layouts, frame = 'fill', highway, media = true, visiblePanes }: {
+  visiblePanes?: {video:boolean;score:boolean;highway:boolean}; defaults: WorkspaceState; layouts?: readonly WorkspaceLayout[]; frame?: 'card' | 'bleed' | 'fill'; highway?: boolean; media?: boolean
 }) {
   const controller = useWorkspaceLayout('test', defaults, layouts ? { layouts } : undefined)
   useEffect(() => { ctl = controller })
   return <>
     <WorkspaceLayoutSwitcher controller={controller} />
-    <SplitWorkspace controller={controller} frame={frame}
+    <SplitWorkspace controller={controller} frame={frame} visiblePanes={visiblePanes}
       media={media ? <div data-media><video /><button type="button" data-tap onClick={tapped}>play</button><div data-ws-nodrag data-controls /></div> : undefined}
       music={<div data-staff />}
       highway={highway ? <div data-highway /> : undefined} />
@@ -275,9 +275,9 @@ describe('SplitWorkspace picture in picture', () => {
 describe('WorkspaceLayoutSwitcher', () => {
   const buttons = () => [...host.querySelectorAll<HTMLButtonElement>('[role="group"] button')].map(b => b.getAttribute('aria-label'))
 
-  it('shows four layouts and swap, marking the active one', () => {
+  it('shows five layouts and swap, marking the active one', () => {
     render()
-    expect(buttons()).toEqual(['lessonWorkspace.side', 'lessonWorkspace.stack', 'lessonWorkspace.pip', 'lessonWorkspace.music', 'lessonWorkspace.swap'])
+    expect(buttons()).toEqual(['lessonWorkspace.side', 'lessonWorkspace.stack', 'lessonWorkspace.pip', 'lessonWorkspace.music', 'lessonWorkspace.video', 'lessonWorkspace.swap'])
     expect(q('button[aria-label="lessonWorkspace.side"]').getAttribute('aria-pressed')).toBe('true')
     pick('lessonWorkspace.pip')
     expect(q('button[aria-label="lessonWorkspace.pip"]').getAttribute('aria-pressed')).toBe('true')
@@ -373,4 +373,53 @@ describe('SplitWorkspace dock (W3)', () => {
     expect(btn.textContent).toBe('1')
     expect(mounts).toBe(1)
   })
+})
+
+
+describe('custom exercise panes', () => {
+  it('keeps Score and PlaySense side by side without video and resizes their shared divider', () => {
+    render({highway:true,visiblePanes:{video:false,score:true,highway:true}})
+    expect(ws().style.gridTemplateAreas).toBe('"s d h"')
+    expect(q('.ws-div2').getAttribute('aria-orientation')).toBe('vertical')
+    pointer(q('.ws-div2'),'pointerdown',440,300)
+    pointer(window,'pointermove',600,300)
+    pointer(window,'pointerup',600,300)
+    expect(ctl.state.split).toBe(60)
+    act(()=>ctl.swap())
+    expect(ws().style.gridTemplateAreas).toBe('"h d s"')
+  })
+  it('reorders all panes and changes orientation without replacing media or scene nodes', () => {
+    render({highway:true,visiblePanes:{video:true,score:true,highway:true}})
+    const video=q('video'), scene=q('[data-highway]'), staff=q('[data-staff]')
+    act(()=>{
+      const select=q<HTMLSelectElement>('select[aria-label="Pane 1"]')
+      select.value='highway'
+      select.dispatchEvent(new Event('change',{bubbles:true}))
+    })
+    expect(ctl.state.paneOrder).toEqual(['highway','video','score'])
+    act(()=>ctl.setLayout('stack'))
+    expect(ws().style.gridTemplateAreas).toBe('"h h h" "d d d" "v e s"')
+    expect(q('video')).toBe(video)
+    expect(q('[data-highway]')).toBe(scene)
+    expect(q('[data-staff]')).toBe(staff)
+    expect(JSON.parse(localStorage.getItem('lmm-workspace:test')!).paneOrder).toEqual(['highway','video','score'])
+  })
+  it('keeps the chosen side-by-side orientation on a narrow screen', () => {
+    phone=true
+    render({highway:true,visiblePanes:{video:false,score:true,highway:true}})
+    expect(ws().dataset.layout).toBe('side')
+  })
+})
+
+it('keeps video and transport mounted and exposes a return picker in video-only mode', () => {
+  render()
+  const media = q('[data-media]')
+  pick('lessonWorkspace.video')
+  expect(ws().dataset.layout).toBe('video')
+  expect(q('[data-media]')).toBe(media)
+  const picker = host.querySelector('.ws-footer select') as HTMLSelectElement
+  expect(picker).not.toBeNull()
+  act(() => { picker.value = 'both'; picker.dispatchEvent(new Event('change', { bubbles: true })) })
+  expect(ws().dataset.layout).toBe('side')
+  expect(q('[data-media]')).toBe(media)
 })

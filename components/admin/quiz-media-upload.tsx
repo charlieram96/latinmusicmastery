@@ -1,5 +1,6 @@
 'use client'
 
+import { uploadLocalSolfeoMedia } from '@/lib/courses/upload-local-solfeo-media'
 import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -45,6 +46,7 @@ export function QuizMediaUpload({ kind, slug, value, onChange, compact = false }
     setError(null)
     setUploading(true)
     try {
+      if(slug.startsWith('local-solfeo-')) {onChange(await uploadLocalSolfeoMedia(slug.split(/-(?:q(?:\d+|-)|listen-\d+)/)[0],file));return}
       const supabase = createClient()
       const ext = file.name.split('.').pop()
       const fileName = `${slug}-${Date.now()}.${ext}`

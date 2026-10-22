@@ -1,0 +1,223 @@
+{
+  "local-solfeo-m04-c02": {
+    "explanations": [
+      "Cada paso hacia una figura menor divide la duración por dos. Una negra equivale a dos corcheas, cuatro semicorcheas, ocho fusas o dieciséis semifusas.",
+      "La fusa lleva tres corchetes o tres barras de unión; la semifusa lleva cuatro. Las barras agrupan visualmente las figuras, pero no cambian su duración.",
+      "Si la negra es la unidad, una fusa dura 1/8 de tiempo y una semifusa 1/16. Los silencios de esas figuras conservan los mismos valores.",
+      "Lee primero el pulso y después la subdivisión. Empieza despacio: la precisión se mantiene al repartir cada tiempo en partes iguales."
+    ],
+    "question": {
+      "prompt": "Si la negra vale un tiempo, ¿cuánto dura una fusa?",
+      "choices": [
+        "1/8 de tiempo",
+        "1/4 de tiempo",
+        "1/16 de tiempo"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m05-c07": {
+    "explanations": [
+      "Una tríada reúne fundamental, tercera y quinta. En Do mayor: Do, Mi y Sol. Cuenta los nombres para encontrar la tercera y la quinta; después comprueba los semitonos.",
+      "La tríada mayor tiene cuatro semitonos entre fundamental y tercera y siete entre fundamental y quinta. La menor tiene tres y siete: cambia la tercera, no la quinta justa.",
+      "En un acorde las notas pueden sonar juntas. En un arpegio se escuchan sucesivamente. Ascender o descender no cambia qué notas forman la tríada."
+    ],
+    "rowTitleExclude": "V7",
+    "question": {
+      "prompt": "¿Qué nota cambia al convertir la tríada Do–Mi–Sol en Do menor?",
+      "choices": [
+        "Mi pasa a Mi bemol",
+        "Sol pasa a Sol bemol",
+        "Do pasa a Do sostenido"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m05-c08": {
+    "explanations": [
+      "La dominante es el quinto grado. Su acorde de séptima reúne fundamental, tercera mayor, quinta justa y séptima menor. Desde la fundamental son 0, 4, 7 y 10 semitonos.",
+      "En Do mayor, la dominante es Sol. Su acorde V7 contiene Sol, Si, Re y Fa. Escúchalo como arpegio y distingue la séptima, Fa, de la octava, Sol.",
+      "En La menor, el acorde de dominante es Mi–Sol sostenido–Si–Re. El Sol sostenido crea la tercera mayor del acorde y la sensible que conduce hacia La.",
+      "No confundas séptima de dominante con séptima mayor. Sol–Si–Re–Fa es V7 de Do; Sol–Si–Re–Fa sostenido tiene otra estructura."
+    ],
+    "rowTitleInclude": "V7",
+    "question": {
+      "prompt": "¿Qué notas forman la dominante con séptima de La menor?",
+      "choices": [
+        "Mi–Sol sostenido–Si–Re",
+        "Mi–Sol–Si–Re",
+        "Mi–Sol sostenido–Si–Re sostenido"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m07-c06": {
+    "explanations": [
+      "Un acorde pivote pertenece a dos tonalidades. Primero lo oímos con una función en la tonalidad de partida y después lo reinterpretamos dentro de la nueva tonalidad.",
+      "De Do mayor a Sol mayor, La menor puede funcionar como vi de Do y como ii de Sol. La sucesión La menor–Re séptima–Sol ayuda a confirmar el nuevo centro.",
+      "Una dominante secundaria destaca temporalmente un grado. Por ejemplo, Re séptima delante de Sol dentro de Do mayor es V7 de V. Ese gesto aislado no demuestra por sí solo una modulación estable.",
+      "Para reconocer una modulación, escucha la llegada y la continuidad del nuevo centro. Comprueba las cadencias y el contexto, además de las alteraciones escritas."
+    ],
+    "question": {
+      "prompt": "En Do mayor, Re séptima que conduce a Sol puede funcionar como…",
+      "choices": [
+        "Dominante de la dominante",
+        "Tónica de Do mayor",
+        "Subdominante menor"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m08-c01": {
+    "explanations": [
+      "La dinámica indica intensidad, no velocidad. Piano pide un sonido suave; forte, un sonido fuerte. Mantén el pulso cuando cambies de intensidad.",
+      "La escala habitual va de pianissimo a fortissimo: pp, p, mp, mf, f, ff. Son relaciones expresivas; la intensidad concreta depende del instrumento y del contexto.",
+      "Escucha el mismo motivo en distintas intensidades. Conserva su afinación y duración mientras cambia la energía del sonido."
+    ],
+    "rowTitleInclude": "Gradación",
+    "question": {
+      "prompt": "¿Qué cambia principalmente una indicación de dinámica?",
+      "choices": [
+        "La intensidad",
+        "El compás",
+        "El nombre de las notas"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m08-c02": {
+    "explanations": [
+      "Crescendo significa aumentar progresivamente la intensidad. Diminuendo o decrescendo significa reducirla progresivamente.",
+      "El regulador que se abre hacia la derecha indica crescendo. El que se cierra indica diminuendo. Sigue su extensión para distribuir el cambio a lo largo de la frase.",
+      "Aumentar intensidad no significa acelerar. Sostén un pulso regular y modifica la energía gradualmente, sin convertir cada nota en un golpe aislado."
+    ],
+    "rowTitleExclude": "Gradación",
+    "question": {
+      "prompt": "Un regulador que se abre hacia la derecha indica…",
+      "choices": [
+        "Crescendo",
+        "Diminuendo",
+        "Accelerando"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m08-c05": {
+    "explanations": [
+      "Largo sugiere amplitud; adagio, un movimiento pausado; andante, un movimiento cómodo como al caminar; moderato, una velocidad moderada.",
+      "Estas palabras combinan velocidad y carácter. No tienen límites universales de BPM: el contexto de la obra y una indicación metronómica ayudan a precisar la interpretación.",
+      "Comprueba qué figura acompaña al número del metrónomo. Negra igual a 72 y blanca igual a 72 representan unidades diferentes: no se interpretan a la misma velocidad de negras."
+    ],
+    "question": {
+      "prompt": "¿Una palabra como andante fija siempre un número exacto de BPM?",
+      "choices": [
+        "No: hay que considerar contexto y metrónomo",
+        "Sí: siempre 120",
+        "Sí: siempre 60"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m08-c06": {
+    "explanations": [
+      "Allegretto suele indicar un movimiento relativamente vivo, generalmente menos rápido que allegro. Allegro combina rapidez y carácter animado.",
+      "Vivace pide vivacidad; presto, mucha rapidez; prestissimo intensifica esa rapidez. La interpretación depende de la obra y de la unidad metronómica.",
+      "Ma non troppo significa pero no demasiado. Allegro ma non troppo pide movimiento rápido con moderación. Practica lentamente antes de alcanzar la velocidad de la obra."
+    ],
+    "question": {
+      "prompt": "¿Qué significa ma non troppo?",
+      "choices": [
+        "Pero no demasiado",
+        "Cada vez más lento",
+        "Volver al comienzo"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m09-c03": {
+    "explanations": [
+      "D.C. significa da capo: vuelve al comienzo de la pieza. Si aparece D.C. al Fine, la segunda lectura termina donde está escrito Fine.",
+      "En un ejemplo de cuatro compases con Fine después del segundo, recorre 1–2–3–4; vuelve al principio y toca 1–2. Entonces termina.",
+      "Antes de tocar, localiza comienzo, indicación de retorno y final. No vuelvas a ejecutar el salto indefinidamente."
+    ],
+    "navigationMode": "DCFine",
+    "question": {
+      "prompt": "¿Adónde devuelve D.C.?",
+      "choices": [
+        "Al comienzo",
+        "Al segno",
+        "Directamente a la coda"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m09-c04": {
+    "explanations": [
+      "D.S. significa dal segno: vuelve al signo segno. Ese signo puede estar después del comienzo, por lo que D.S. y D.C. no son equivalentes.",
+      "D.S. al Fine pide regresar al segno y continuar hasta Fine. Identifica ambos signos antes de comenzar la interpretación.",
+      "Marca el recorrido con números de compás. Al llegar a la orden de retorno, cambia de posición de lectura y conserva el pulso."
+    ],
+    "navigationMode": "DSFine",
+    "question": {
+      "prompt": "¿Adónde devuelve D.S.?",
+      "choices": [
+        "Al segno",
+        "Siempre al primer compás",
+        "Al final"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m09-c05": {
+    "explanations": [
+      "La coda es una sección conclusiva. Su símbolo, un círculo cruzado, es distinto del segno.",
+      "D.C. al Coda indica volver al comienzo. En la segunda lectura, al llegar a la indicación a Coda, salta a la sección marcada con el símbolo de coda.",
+      "D.S. al Coda usa el mismo tipo de salida hacia la coda, pero el retorno inicial va al segno. Separa mentalmente las dos órdenes: regresar y después saltar a la coda."
+    ],
+    "navigationMode": "DCCoda",
+    "question": {
+      "prompt": "En D.S. al Coda, ¿cuál es el primer retorno?",
+      "choices": [
+        "Al segno",
+        "Al principio necesariamente",
+        "Directamente a Fine"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m12-c08": {
+    "explanations": [
+      "Integra cuatro lecturas: forma, ritmo, altura y expresión. Antes de tocar, identifica la clave, la armadura, el compás y los posibles retornos.",
+      "Percute el ritmo conservando los silencios. Después nombra las notas, comprueba las alteraciones y entona la frase lentamente.",
+      "Une ritmo y altura sin perder continuidad. Añade articulación y dinámica cuando la lectura sea estable; evita corregir una nota a costa de detener el pulso cada vez.",
+      "Revisa cada aspecto por separado: notas correctas, duraciones, silencios, recorrido y expresión. La puntuación del ejercicio mide las respuestas comprobadas; la interpretación requiere escuchar también el resultado musical."
+    ],
+    "question": {
+      "prompt": "¿Qué conviene comprobar antes de interpretar una partitura nueva?",
+      "choices": [
+        "Clave, armadura, compás y recorrido",
+        "Solo el título",
+        "Solo la última nota"
+      ],
+      "answer": 0
+    }
+  },
+  "local-solfeo-m05-c05": {
+    "explanations": [
+      "Dos tonalidades relativas comparten la armadura, pero tienen tónicas diferentes. Do mayor y La menor natural usan las mismas notas sin sostenidos ni bemoles en la armadura.",
+      "Para encontrar la relativa menor de una tonalidad mayor, baja una tercera menor desde la tónica. Desde Do llegas a La; desde Sol, a Mi; desde Fa, a Re.",
+      "En sentido inverso, sube una tercera menor desde la tónica menor. La menor se relaciona con Do mayor, Mi menor con Sol mayor y Re menor con Fa mayor.",
+      "Compartir notas no significa tener el mismo centro. Escucha la escala de La menor natural: su recorrido y su llegada se organizan alrededor de La. Las formas armónica y melódica se estudian en la siguiente clase."
+    ],
+    "rowTitleInclude": "natural",
+    "question": {
+      "prompt": "¿Cuál es la relativa menor de Sol mayor?",
+      "choices": [
+        "Mi menor",
+        "Sol menor",
+        "Re menor"
+      ],
+      "answer": 0
+    }
+  }
+}

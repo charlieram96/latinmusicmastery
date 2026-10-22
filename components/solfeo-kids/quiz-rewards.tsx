@@ -1,0 +1,11 @@
+'use client'
+import {useEffect,useState} from 'react'
+import {useTranslation} from '@/components/language-provider'
+import {readRewards,rewardTotals,REWARDS_EVENT} from '@/lib/quiz/local-rewards'
+export function QuizRewards(){
+ const {locale}=useTranslation(),es=locale==='es'
+ const [scores,setScores]=useState<Record<string,number>>({})
+ useEffect(()=>{const update=()=>setScores(readRewards());update();window.addEventListener(REWARDS_EVENT,update);window.addEventListener('storage',update);return()=>{window.removeEventListener(REWARDS_EVENT,update);window.removeEventListener('storage',update)}},[])
+ const {points,stars,fruit,nextMilestone}=rewardTotals(scores)
+ return <section className="mb-8 rounded-3xl border-2 border-orange-300 bg-card p-6" aria-label={es?'Mis recompensas musicales':'My music rewards'}><h2 className="text-2xl font-bold">🌟 {es?'Mi jardín de logros':'My achievement garden'}</h2><div className="my-5 flex flex-wrap gap-4">{[[points,es?'Puntos':'Points','🎵'],[stars,es?'Estrellas':'Stars','⭐'],[fruit,es?'Frutas ganadas':'Fruit earned','🍎']].map(([count,label,icon])=><div key={label} className="rounded-2xl border bg-primary/10 p-4 text-center"><span aria-hidden="true" className="text-3xl">{icon}</span><strong className="block text-3xl">{count}</strong><span>{label}</span></div>)}</div><label className="block font-semibold" htmlFor="music-reward-progress">{es?`Próxima fruta: ${points} / ${nextMilestone} puntos`:`Next fruit: ${points} / ${nextMilestone} points`}</label><progress id="music-reward-progress" className="my-3 h-5 w-full accent-orange-500" value={points%500} max={500}/><p>{es?'Cada 100 puntos ganas una estrella; cada 500, una fruta. Premio por definir: tus recompensas quedan registradas.':'Every 100 points earns a star; every 500 earns a fruit. Prize to be defined: your rewards stay recorded.'}</p><p className="mt-3 text-sm text-muted-foreground">{es?'Se suma tu mejor nota de cada quiz. Si mejoras, ganas solo la diferencia; repetir no duplica puntos. Progreso local de este navegador, sin sincronización con la cuenta.':'Your best score per quiz counts. Improving earns only the difference; replaying never duplicates points. Local browser progress, not synced to your account.'}</p></section>
+}

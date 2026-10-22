@@ -19,7 +19,7 @@ it('plays by tempo, pauses, seeks, resumes and stops without editing the score',
  function Harness(){api=useScoreTransport(score,0);return null;}
  const el=document.createElement('div'),root=createRoot(el);
  try {
-  act(()=>root.render(<Harness/>));
+  act(()=>root.render(<Harness/>));act(()=>api!.setCountInBars(0));
   expect(api!.duration).toBe(5000);
   act(()=>{void api!.play();});
   expect(audio.grid).toHaveBeenCalledWith([0,.5,1,1.5,2,3,4]);
@@ -53,7 +53,7 @@ it('seeks to the selected note using its voice, rests and local tempo, then play
  function Harness(){api=useScoreTransport(score,0);return null;}
  const host=document.createElement('div'),root=createRoot(host);
  try{
-  act(()=>root.render(<Harness/>));
+  act(()=>root.render(<Harness/>));act(()=>api!.setCountInBars(0));
   act(()=>api!.seekEvent(1,1,1));
   expect(api!.currentMs).toBe(3500);expect(api!.index).toBe(1);expect(api!.beat).toBe(4);
   act(()=>api!.play());expect(audio.start).toHaveBeenLastCalledWith(3.5,1,true);
@@ -72,7 +72,7 @@ it('starts the score clock at the scheduled first click, including after a playi
  function Harness(){api=useScoreTransport(score,0);return null;}
  const host=document.createElement('div'),root=createRoot(host);
  try{
-  act(()=>root.render(<Harness/>));act(()=>api!.play());
+  act(()=>root.render(<Harness/>));act(()=>api!.setCountInBars(0));act(()=>api!.play());
   audio.now=20;act(()=>frame(audio.now));expect(api!.currentMs).toBe(0);
   audio.now=40;act(()=>frame(audio.now));expect(api!.currentMs).toBe(0);
   audio.now=540;act(()=>frame(audio.now));expect(api!.currentMs).toBe(500);
@@ -80,4 +80,25 @@ it('starts the score clock at the scheduled first click, including after a playi
   audio.now=580;act(()=>frame(audio.now));expect(api!.currentMs).toBeCloseTo(0);
   audio.now=1080;act(()=>frame(audio.now));expect(api!.currentMs).toBeCloseTo(500);
  }finally{act(()=>root.unmount());audio.start.mockReset();vi.unstubAllGlobals();}
+});
+
+
+it('allows an audible full measure before a pickup and preserves the selected position',()=>{
+ Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.useFakeTimers();audio.now=0;audio.start.mockReset();
+ vi.stubGlobal('requestAnimationFrame',()=>1);vi.stubGlobal('cancelAnimationFrame',()=>{});
+ const score={initialTempo:120,initialTimeSignature:[4,4],tracks:[{measures:[{number:0,durationQN:1,voices:[{events:[]}]},{number:1,voices:[{events:[]}]}]}]} as unknown as ScoreDocument;
+ let api:ReturnType<typeof useScoreTransport>;
+ function Harness(){api=useScoreTransport(score,0);return null;}
+ const root=createRoot(document.createElement('div'));
+ try{
+  act(()=>root.render(<Harness/>));
+  expect(api!.metronome).toBe(true);expect(api!.countInBars).toBe(0);
+  act(()=>api!.setCountInBars(1));
+  act(()=>api!.seek(100));act(()=>api!.play());
+  expect(api!.countdown).toBe(4);expect(api!.playing).toBe(false);expect(api!.currentMs).toBe(100);
+  expect(audio.grid).toHaveBeenLastCalledWith([0,.5,1,1.5]);
+  audio.now=2061;act(()=>vi.advanceTimersByTime(8));
+  expect(api!.countdown).toBe(0);expect(api!.playing).toBe(true);
+  expect(audio.start).toHaveBeenLastCalledWith(.1,1,true);
+ }finally{act(()=>root.unmount());vi.useRealTimers();vi.unstubAllGlobals();}
 });

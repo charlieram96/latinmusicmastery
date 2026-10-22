@@ -1,4 +1,5 @@
 'use client'
+import { LearningIcon } from '@/components/learning-mode/art'
 
 import { useTranslation } from '@/components/language-provider'
 import { adminLabel } from '@/lib/i18n/admin-labels'
@@ -70,7 +71,7 @@ export function AdminMobileSidebar() {
                   }
                 `}
               >
-                <Icon className="w-[18px] h-[18px]" />
+                <LearningIcon name={item.label.toLowerCase()} icon={Icon} className="w-[18px] h-[18px]" />
                 {<AdminText text={item.label} />}
               </Link>
             )

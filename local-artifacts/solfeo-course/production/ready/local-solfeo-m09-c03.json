@@ -1,0 +1,155 @@
+{
+  "classId": "local-solfeo-m09-c03",
+  "title": {
+    "es": "9.3 · Da Capo y Fine",
+    "en": "9.3 · Da Capo and Fine"
+  },
+  "videoUrl": "/local-course-assets/solfeo/films/local-solfeo-m09-c03-sync-v3.mp4",
+  "posterUrl": "/local-course-assets/solfeo/films/local-solfeo-m09-c03.png",
+  "duration": 56.533938,
+  "sections": [],
+  "questions": [
+    {
+      "id": "local-solfeo-m09-c03-exercise-q1",
+      "class_item_id": "local-solfeo-m09-c03-exercise",
+      "order_index": 0,
+      "question": "¿Adónde devuelve D.C.?",
+      "question_es": "¿Adónde devuelve D.C.?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Al comienzo"
+          },
+          {
+            "id": "choice-1",
+            "text": "Al segno"
+          },
+          {
+            "id": "choice-2",
+            "text": "Directamente a la coda"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-0",
+      "explanation": "La respuesta es Al comienzo.",
+      "explanation_es": "La respuesta es Al comienzo.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m09-c03-exercise-q2",
+      "class_item_id": "local-solfeo-m09-c03-exercise",
+      "order_index": 1,
+      "question": "En D.C. al Fine, después de volver al comienzo, se termina…",
+      "question_es": "En D.C. al Fine, después de volver al comienzo, se termina…",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Siempre en la última barra escrita"
+          },
+          {
+            "id": "choice-1",
+            "text": "En el primer silencio"
+          },
+          {
+            "id": "choice-2",
+            "text": "En Fine"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-2",
+      "explanation": "La respuesta es En Fine.",
+      "explanation_es": "La respuesta es En Fine.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m09-c03-exercise-q3",
+      "class_item_id": "local-solfeo-m09-c03-exercise",
+      "order_index": 2,
+      "question": "Con cuatro compases y Fine al final del segundo, D.C. al Fine recorre…",
+      "question_es": "Con cuatro compases y Fine al final del segundo, D.C. al Fine recorre…",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "4–3–2–1"
+          },
+          {
+            "id": "choice-1",
+            "text": "1–2–3–4 / 1–2"
+          },
+          {
+            "id": "choice-2",
+            "text": "1–2 / 4"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-1",
+      "explanation": "La respuesta es 1–2–3–4 / 1–2.",
+      "explanation_es": "La respuesta es 1–2–3–4 / 1–2.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m09-c03-exercise-q4",
+      "class_item_id": "local-solfeo-m09-c03-exercise",
+      "order_index": 3,
+      "question": "¿D.C. y D.S. significan exactamente lo mismo?",
+      "question_es": "¿D.C. y D.S. significan exactamente lo mismo?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "No"
+          },
+          {
+            "id": "choice-1",
+            "text": "Sí"
+          },
+          {
+            "id": "choice-2",
+            "text": "Solo si hay sostenidos"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-0",
+      "explanation": "La respuesta es No.",
+      "explanation_es": "La respuesta es No.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    }
+  ],
+  "nextHref": "/solfeo-preview?class=local-solfeo-m09-c04",
+  "metronome": {
+    "trimInSeconds": 0,
+    "trimOutSeconds": null,
+    "bpm": 100,
+    "anchorSeconds": null,
+    "segments": [
+      {
+        "from": 39.512603999999996,
+        "to": 43.112604,
+        "bpm": 100
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+// @vitest-environment jsdom
+import React,{act} from 'react'
+import {createRoot} from 'react-dom/client'
+import {expect,it,vi} from 'vitest'
+vi.mock('@/components/language-provider',()=>({useTranslation:()=>({locale:'es'})}))
+vi.mock('@/components/solfeo/use-note-demonstration',()=>({useNoteDemonstration:()=>({stop:vi.fn(),play:vi.fn().mockResolvedValue(undefined)})}))
+vi.mock('@/components/lesson-narration/lesson-narration',()=>({LessonNarration:()=>null}))
+vi.mock('@/components/playsense-studio/shared/video-watermark',()=>({VideoWatermark:()=>null}))
+vi.mock('../first-garden',()=>({GardenFrame:({children}:{children:React.ReactNode})=><div>{children}</div>}))
+vi.mock('../answer-reaction',()=>({KidsCorcheita:()=>null,AnswerFireworks:()=>null}))
+import {MascotEntrance} from '../mascot-entrance'
+it('holds every movie scene until a click and shares advancement between mascot and button',async()=>{
+ Object.assign(globalThis,{React,IS_REACT_ACT_ENVIRONMENT:true})
+ const host=document.createElement('div'),root=createRoot(host),enter=vi.fn()
+ await act(async()=>root.render(<MascotEntrance onEnter={enter} onMusic={()=>{}}/>))
+ const button=(text:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent===text)!
+ const mascot=()=>host.querySelector<HTMLButtonElement>('[aria-label="Corcheíta: sigue la historia"]')!
+ await act(async()=>button('Sigue la historia →').click())
+ expect(host.textContent).toContain('Quiero escribir una canción')
+ await act(async()=>mascot().dispatchEvent(new Event('animationend',{bubbles:true})))
+ expect(host.textContent).toContain('Quiero escribir una canción')
+ expect(mascot().disabled).toBe(false)
+ await act(async()=>mascot().click())
+ expect(host.textContent).toContain('Lechuza, ¿me ayudas?')
+ await act(async()=>mascot().dispatchEvent(new Event('animationend',{bubbles:true})))
+ expect(host.textContent).toContain('Lechuza, ¿me ayudas?')
+ await act(async()=>button('Sigue la historia →').click())
+ expect(host.textContent).toContain('La lechuza dice')
+ await act(async()=>button('← Volver').click())
+ expect(host.textContent).toContain('Lechuza, ¿me ayudas?')
+ await act(async()=>button('Sigue la historia →').click())
+ await act(async()=>mascot().click())
+ expect(host.textContent).toContain('La lechuza recomienda')
+ await act(async()=>mascot().dispatchEvent(new Event('animationend',{bubbles:true})))
+ expect(host.textContent).toContain('La lechuza recomienda')
+ expect(host.querySelector<HTMLButtonElement>('[aria-label="Abrir la puerta del curso"]')!.disabled).toBe(true)
+ await act(async()=>button('🎬 Ver pequeña historia').click())
+ expect(host.textContent).toContain('Una mañana escuché una campanita')
+ expect(enter).not.toHaveBeenCalled()
+ await act(async()=>root.unmount())
+})
+it('opens an independent short story without summoning the owl or advancing the main scene',async()=>{
+ Object.assign(globalThis,{React,IS_REACT_ACT_ENVIRONMENT:true})
+ const host=document.createElement('div'),root=createRoot(host)
+ await act(async()=>root.render(<MascotEntrance onEnter={()=>{}} onMusic={()=>{}}/>))
+ const button=(text:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent===text)!
+ await act(async()=>button('🎬 Ver pequeña historia').click())
+ expect(host.textContent).toContain('Una mañana escuché una campanita')
+ expect(host.querySelector('[aria-label="La lechuza nos ayuda"]')).toBeNull()
+ expect(host.querySelector('[aria-label="Corcheíta mira la pequeña historia"]')).not.toBeNull()
+ const pages=host.querySelector('[aria-label="Páginas de la pequeña historia"]')!
+ expect(pages.textContent).toContain('Siguiente →')
+ await act(async()=>button('Siguiente →').click())
+ expect(host.textContent).toContain('Después de cantar, hice una pausa')
+ await act(async()=>button('Volver a Corcheíta').click())
+ expect(host.textContent).toContain('Soy la mascota oficial')
+ expect(host.querySelector('[aria-label="La lechuza nos ayuda"]')).toBeNull()
+ await act(async()=>root.unmount())
+})
+it('unlocks the door on the final page and returning to Corcheita enters instead of looping',async()=>{
+ Object.assign(globalThis,{React,IS_REACT_ACT_ENVIRONMENT:true})
+ const host=document.createElement('div'),root=createRoot(host),enter=vi.fn(),music=vi.fn()
+ await act(async()=>root.render(<MascotEntrance onEnter={enter} onMusic={music}/>))
+ const button=(text:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent===text)!
+ await act(async()=>button('🎬 Ver pequeña historia').click())
+ for(let i=0;i<3;i++)await act(async()=>button('Siguiente →').click())
+ await act(async()=>button('Volver a Corcheíta').click())
+ expect(host.querySelector<HTMLButtonElement>('[aria-label="Abrir la puerta del curso"]')!.disabled).toBe(false)
+ expect(host.textContent).toContain('¡Ya conoces nuestra pequeña historia!')
+ const mascot=host.querySelector<HTMLButtonElement>('[aria-label="Corcheíta: vamos a la puerta"]')!
+ await act(async()=>mascot.click())
+ expect(music).toHaveBeenCalledOnce()
+ expect(host.textContent).not.toContain('Una mañana escuché una campanita')
+ await act(async()=>mascot.dispatchEvent(new Event('animationend',{bubbles:true})))
+ expect(enter).toHaveBeenCalledOnce()
+ await act(async()=>root.unmount())
+})

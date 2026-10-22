@@ -1,0 +1,72 @@
+{
+  "classId": "local-solfeo-m07-c06",
+  "duration": 65.366688,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Acorde pivote, dominante y nueva tónica",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 18,
+      "kind": "explanation",
+      "title": "Acorde pivote, dominante y nueva tónica",
+      "sourceTopic": "modulacion-concepto",
+      "soundEvents": []
+    },
+    {
+      "start": 18,
+      "end": 32,
+      "kind": "explanation",
+      "title": "Acorde pivote, dominante y nueva tónica",
+      "sourceTopic": "modulacion-concepto",
+      "soundEvents": []
+    },
+    {
+      "start": 32,
+      "end": 47.222222,
+      "kind": "explanation",
+      "title": "Acorde pivote, dominante y nueva tónica",
+      "sourceTopic": "modulacion-concepto",
+      "soundEvents": []
+    },
+    {
+      "start": 47.222222,
+      "end": 59.345347000000004,
+      "kind": "explanation",
+      "title": "Acorde pivote, dominante y nueva tónica",
+      "sourceTopic": "modulacion-concepto",
+      "soundEvents": []
+    },
+    {
+      "start": 59.345347000000004,
+      "end": 65.345347,
+      "kind": "completion",
+      "title": "¡Sigues progresando!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

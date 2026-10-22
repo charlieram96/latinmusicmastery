@@ -1,0 +1,232 @@
+{
+  "classId": "local-solfeo-m02-c01",
+  "duration": 97.533638,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Pulso, ritmo y tempo",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 21,
+      "kind": "explanation",
+      "title": "Pulso, ritmo y tempo",
+      "sourceTopic": "pulso",
+      "soundEvents": []
+    },
+    {
+      "start": 21,
+      "end": 31,
+      "kind": "photo",
+      "title": "Una referencia para el pulso",
+      "soundEvents": []
+    },
+    {
+      "start": 31,
+      "end": 52.512292,
+      "kind": "explanation",
+      "title": "Pulso, ritmo y tempo",
+      "sourceTopic": "pulso",
+      "soundEvents": []
+    },
+    {
+      "start": 52.512292,
+      "end": 64.512292,
+      "kind": "notation",
+      "title": "Negra = 60: cuatro pulsos regulares",
+      "sourceTopic": "pulso",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 100,
+        "rows": [
+          {
+            "title": "Negra = 60: cuatro pulsos regulares",
+            "tempo": "Negra = 60",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "1"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "2"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "3"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "4"
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "pulso",
+        "rowHeights": [
+          100
+        ],
+        "sourcePageId": "pulso"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 4,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 60
+    },
+    {
+      "start": 64.512292,
+      "end": 76.512292,
+      "kind": "notation",
+      "title": "Duraciones diferentes sobre la misma referencia",
+      "sourceTopic": "pulso",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 86,
+        "rows": [
+          {
+            "title": "Duraciones diferentes sobre la misma referencia",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2,
+                  "label": "2 pulsos"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "1 pulso"
+                },
+                {
+                  "rest": true,
+                  "dur": 4
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "pulso",
+        "rowHeights": [
+          86
+        ],
+        "sourcePageId": "pulso"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 76.512292,
+      "end": 91.512292,
+      "kind": "explanation",
+      "title": "Pulso, ritmo y tempo",
+      "sourceTopic": "pulso",
+      "soundEvents": []
+    },
+    {
+      "start": 91.512292,
+      "end": 97.512292,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

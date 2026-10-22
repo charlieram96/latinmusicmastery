@@ -1,0 +1,1909 @@
+{
+  "classId": "local-solfeo-m06-c16",
+  "duration": 344.97875,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Do bemol mayor y La bemol menor",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 16.135375,
+      "kind": "explanation",
+      "title": "Do bemol mayor y La bemol menor",
+      "sourceTopic": "tonal-14-mayor",
+      "soundEvents": []
+    },
+    {
+      "start": 16.135375,
+      "end": 38.357597,
+      "kind": "notation",
+      "title": "Escala mayor ascendente · T / ST",
+      "sourceTopic": "tonal-14-mayor",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 109,
+        "rows": [
+          {
+            "title": "Escala mayor ascendente · T / ST",
+            "events": [
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Fb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Gb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab4",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb5",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "intervals": [
+              "T",
+              "T",
+              "S",
+              "T",
+              "T",
+              "T",
+              "S"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-mayor",
+        "rowHeights": [
+          109
+        ],
+        "sourcePageId": "flow-cont-131"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Fb4",
+          "soundPitch": "Fb4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb5",
+          "soundPitch": "Cb5",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 38.357597,
+      "end": 60.579819,
+      "kind": "notation",
+      "title": "Escala mayor descendente · T / ST",
+      "sourceTopic": "tonal-14-mayor",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 109,
+        "rows": [
+          {
+            "title": "Escala mayor descendente · T / ST",
+            "events": [
+              {
+                "pitch": "Cb5",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab4",
+                "dur": 1
+              },
+              {
+                "pitch": "Gb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Fb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db4",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "intervals": [
+              "S",
+              "T",
+              "T",
+              "T",
+              "S",
+              "T",
+              "T"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-mayor",
+        "rowHeights": [
+          109
+        ],
+        "sourcePageId": "flow-cont-131"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Cb5",
+          "soundPitch": "Cb5",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Fb4",
+          "soundPitch": "Fb4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 60.579819,
+      "end": 80.379819,
+      "kind": "notation",
+      "title": "Arpegio de tónica · I · ascenso y descenso",
+      "sourceTopic": "tonal-14-mayor",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Arpegio de tónica · I · ascenso y descenso",
+            "events": [
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Gb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb5",
+                "dur": 1
+              },
+              {
+                "pitch": "Gb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-mayor",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-131"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb5",
+          "soundPitch": "Cb5",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 80.379819,
+      "end": 100.179819,
+      "kind": "notation",
+      "title": "Arpegio de séptima de dominante · V7 · ascenso y descenso",
+      "sourceTopic": "tonal-14-mayor-detalle-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Arpegio de séptima de dominante · V7 · ascenso y descenso",
+            "events": [
+              {
+                "pitch": "Gb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db5",
+                "dur": 1
+              },
+              {
+                "pitch": "Fb5",
+                "dur": 1
+              },
+              {
+                "pitch": "Db5",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Gb4",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-mayor-detalle-2",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-131"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Db5",
+          "soundPitch": "Db5",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Fb5",
+          "soundPitch": "Fb5",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Db5",
+          "soundPitch": "Db5",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 100.179819,
+      "end": 113.179819,
+      "kind": "notation",
+      "title": "Ejercicio tonal · LMM",
+      "sourceTopic": "tonal-14-mayor-detalle-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Ejercicio tonal · LMM",
+            "key": -7,
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "Cb4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "Db4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Eb4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "Fb4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Eb4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Db4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "Gb4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "Bb4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Cb5",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "Cb4",
+                  "dur": 1
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-mayor-detalle-2",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-131"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Fb4",
+          "soundPitch": "Fb4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 6,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 7.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "Cb5",
+          "soundPitch": "Cb5",
+          "start": 7.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 2
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 8.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 113.179819,
+      "end": 121.679819,
+      "kind": "explanation",
+      "title": "Do bemol mayor y La bemol menor",
+      "sourceTopic": "tonal-14-mayor-detalle-2",
+      "soundEvents": []
+    },
+    {
+      "start": 121.679819,
+      "end": 131.679819,
+      "kind": "explanation",
+      "title": "Do bemol mayor y La bemol menor",
+      "sourceTopic": "tonal-14-menor",
+      "soundEvents": []
+    },
+    {
+      "start": 131.679819,
+      "end": 153.902041,
+      "kind": "notation",
+      "title": "Menor natural ascendente",
+      "sourceTopic": "tonal-14-menor",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 116,
+        "rows": [
+          {
+            "title": "Menor natural ascendente",
+            "events": [
+              {
+                "pitch": "Ab3",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb3",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Fb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Gb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab4",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "intervals": [
+              "T",
+              "S",
+              "T",
+              "T",
+              "S",
+              "T",
+              "T"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-menor",
+        "rowHeights": [
+          116
+        ],
+        "sourcePageId": "flow-cont-132"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Ab3",
+          "soundPitch": "Ab3",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb3",
+          "soundPitch": "Bb3",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Fb4",
+          "soundPitch": "Fb4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 153.902041,
+      "end": 176.12426299999998,
+      "kind": "notation",
+      "title": "Menor natural descendente",
+      "sourceTopic": "tonal-14-menor",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 116,
+        "rows": [
+          {
+            "title": "Menor natural descendente",
+            "events": [
+              {
+                "pitch": "Ab4",
+                "dur": 1
+              },
+              {
+                "pitch": "Gb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Fb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db4",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb3",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab3",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "intervals": [
+              "T",
+              "T",
+              "S",
+              "T",
+              "T",
+              "S",
+              "T"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-menor",
+        "rowHeights": [
+          116
+        ],
+        "sourcePageId": "flow-cont-132"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Fb4",
+          "soundPitch": "Fb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb3",
+          "soundPitch": "Bb3",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab3",
+          "soundPitch": "Ab3",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 176.12426299999998,
+      "end": 198.34648499999997,
+      "kind": "notation",
+      "title": "Menor armónica ascendente",
+      "sourceTopic": "tonal-14-menor",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 116,
+        "rows": [
+          {
+            "title": "Menor armónica ascendente",
+            "events": [
+              {
+                "pitch": "Ab3",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb3",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Fb4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab4",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "intervals": [
+              "T",
+              "S",
+              "T",
+              "T",
+              "S",
+              "T+S",
+              "S"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-menor",
+        "rowHeights": [
+          116
+        ],
+        "sourcePageId": "flow-cont-132"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Ab3",
+          "soundPitch": "Ab3",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb3",
+          "soundPitch": "Bb3",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Fb4",
+          "soundPitch": "Fb4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 198.34648499999997,
+      "end": 220.56870699999996,
+      "kind": "notation",
+      "title": "Menor armónica descendente",
+      "sourceTopic": "tonal-14-menor",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 116,
+        "rows": [
+          {
+            "title": "Menor armónica descendente",
+            "events": [
+              {
+                "pitch": "Ab4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "Fb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db4",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb3",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab3",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "intervals": [
+              "S",
+              "T+S",
+              "S",
+              "T",
+              "T",
+              "S",
+              "T"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-menor",
+        "rowHeights": [
+          116
+        ],
+        "sourcePageId": "flow-cont-132"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Fb4",
+          "soundPitch": "Fb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb3",
+          "soundPitch": "Bb3",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab3",
+          "soundPitch": "Ab3",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 220.56870699999996,
+      "end": 232.56870699999996,
+      "kind": "explanation",
+      "title": "Do bemol mayor y La bemol menor",
+      "sourceTopic": "tonal-14-menor",
+      "soundEvents": []
+    },
+    {
+      "start": 232.56870699999996,
+      "end": 244.56870699999996,
+      "kind": "explanation",
+      "title": "Do bemol mayor y La bemol menor",
+      "sourceTopic": "tonal-14-desc",
+      "soundEvents": []
+    },
+    {
+      "start": 244.56870699999996,
+      "end": 266.79092899999995,
+      "kind": "notation",
+      "title": "Melódica ascendente · VI y VII elevados",
+      "sourceTopic": "tonal-14-desc",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 116,
+        "rows": [
+          {
+            "title": "Melódica ascendente · VI y VII elevados",
+            "events": [
+              {
+                "pitch": "Ab3",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb3",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "F4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab4",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "intervals": [
+              "T",
+              "S",
+              "T",
+              "T",
+              "T",
+              "T",
+              "S"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-desc",
+        "rowHeights": [
+          116
+        ],
+        "sourcePageId": "flow-cont-133"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Ab3",
+          "soundPitch": "Ab3",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb3",
+          "soundPitch": "Bb3",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 266.79092899999995,
+      "end": 289.01315099999994,
+      "kind": "notation",
+      "title": "Melódica descendente clásica",
+      "sourceTopic": "tonal-14-desc",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 116,
+        "rows": [
+          {
+            "title": "Melódica descendente clásica",
+            "events": [
+              {
+                "pitch": "Ab4",
+                "dur": 1
+              },
+              {
+                "pitch": "Gb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Fb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db4",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb3",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab3",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "intervals": [
+              "T",
+              "T",
+              "S",
+              "T",
+              "T",
+              "S",
+              "T"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-desc",
+        "rowHeights": [
+          116
+        ],
+        "sourcePageId": "flow-cont-133"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Fb4",
+          "soundPitch": "Fb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb3",
+          "soundPitch": "Bb3",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab3",
+          "soundPitch": "Ab3",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 289.01315099999994,
+      "end": 308.81315099999995,
+      "kind": "notation",
+      "title": "Arpegio de tónica · i · ascenso y descenso",
+      "sourceTopic": "tonal-14-desc",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Arpegio de tónica · i · ascenso y descenso",
+            "events": [
+              {
+                "pitch": "Ab3",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Cb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Ab3",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-desc",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-133"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Ab3",
+          "soundPitch": "Ab3",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "Cb4",
+          "soundPitch": "Cb4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab3",
+          "soundPitch": "Ab3",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 308.81315099999995,
+      "end": 328.61315099999996,
+      "kind": "notation",
+      "title": "Arpegio de dominante · V7 · ascenso y descenso",
+      "sourceTopic": "tonal-14-desc",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Arpegio de dominante · V7 · ascenso y descenso",
+            "events": [
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb4",
+                "dur": 1
+              },
+              {
+                "pitch": "Db5",
+                "dur": 1
+              },
+              {
+                "pitch": "Bb4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "Eb4",
+                "dur": 1
+              }
+            ],
+            "key": -7,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "tonal-14-desc",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-133"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Db5",
+          "soundPitch": "Db5",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 328.61315099999996,
+      "end": 338.95742199999995,
+      "kind": "explanation",
+      "title": "Do bemol mayor y La bemol menor",
+      "sourceTopic": "tonal-14-desc",
+      "soundEvents": []
+    },
+    {
+      "start": 338.95742199999995,
+      "end": 344.95742199999995,
+      "kind": "completion",
+      "title": "¡Un paso más en tu música!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

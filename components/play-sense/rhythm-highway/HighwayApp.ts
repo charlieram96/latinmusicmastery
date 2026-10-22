@@ -3,7 +3,7 @@ import { Application } from 'pixi.js'
 import type { ExerciseDefinition, HitGrade } from '@/lib/play-sense/types'
 import { getExerciseDuration } from '@/lib/play-sense/exercise-utils'
 import { getInstrumentCategory } from '@/lib/play-sense/types'
-import { PLAYSENSE_MAPPINGS } from '@/lib/play-sense/playsense-mappings'
+import { percussionLanes } from '@/lib/play-sense/percussion-lanes'
 import { Highway } from './Highway'
 import type { FadeStyle, CongaStyle, ReceptorStyle } from './Highway'
 import { NoteManager } from './NoteManager'
@@ -207,19 +207,9 @@ export class HighwayApp {
 
   private getLaneConfig(exercise: ExerciseDefinition): { surfaces: string[]; labels: string[]; style: ReceptorStyle } {
     // Percussion with PlaySense piezo mapping
-    const mapping = PLAYSENSE_MAPPINGS[exercise.instrument]
-    if (mapping) {
-      const surfaces = Object.values(mapping.piezoMap)
-      return { surfaces, labels: surfaces.map(s => capitalize(s)), style: 'drum' }
-    }
-
-    const category = getInstrumentCategory(exercise.instrument)
-
-    // Percussion without PlaySense mapping — use unique techniques from events
-    if (category === 'percussion') {
-      const techniques = [...new Set(exercise.events.map(e => e.surface || e.technique))]
-      const surfaces = techniques.length > 0 ? techniques : ['open', 'slap', 'mute']
-      return { surfaces, labels: surfaces.map(s => capitalize(s)), style: 'drum' }
+    if (getInstrumentCategory(exercise.instrument) === 'percussion') {
+      const lanes = percussionLanes(exercise)
+      return {surfaces:lanes.map(l=>l.id), labels:lanes.map(l=>l.label), style:'drum'}
     }
 
     // Pitched / melodic instruments — one lane per unique note in the exercise.

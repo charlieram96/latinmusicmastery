@@ -29,6 +29,7 @@ import type { BackingTrack, ExerciseMedia } from '@/app/actions/playsense-studio
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 
 export interface StudentPreviewExerciseVideo {
+  metronomeAnchorSeconds?: number | null;
   url: string;
   /** Trim in-point: where the usable region of the video starts. */
   startSeconds: number;

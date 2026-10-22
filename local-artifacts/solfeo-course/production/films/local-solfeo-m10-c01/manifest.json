@@ -1,0 +1,3000 @@
+{
+  "classId": "local-solfeo-m10-c01",
+  "duration": 436.991862,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Clave de Fa y sus registros",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 25,
+      "kind": "explanation",
+      "title": "Clave de Fa y sus registros",
+      "sourceTopic": "fa",
+      "soundEvents": []
+    },
+    {
+      "start": 25,
+      "end": 40,
+      "kind": "notation",
+      "title": "Líneas: Sol-Si-Re-Fa-La",
+      "sourceTopic": "fa",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Líneas: Sol-Si-Re-Fa-La",
+            "events": [
+              {
+                "pitch": "G2",
+                "dur": 1
+              },
+              {
+                "pitch": "B2",
+                "dur": 1
+              },
+              {
+                "pitch": "D3",
+                "dur": 1
+              },
+              {
+                "pitch": "F3",
+                "dur": 1
+              },
+              {
+                "pitch": "A3",
+                "dur": 1
+              }
+            ],
+            "clef": "F",
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "fa",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "fa"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 40,
+      "end": 52.611111,
+      "kind": "notation",
+      "title": "Espacios: La-Do-Mi-Sol",
+      "sourceTopic": "fa",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Espacios: La-Do-Mi-Sol",
+            "events": [
+              {
+                "pitch": "A2",
+                "dur": 1
+              },
+              {
+                "pitch": "C3",
+                "dur": 1
+              },
+              {
+                "pitch": "E3",
+                "dur": 1
+              },
+              {
+                "pitch": "G3",
+                "dur": 1
+              }
+            ],
+            "clef": "F",
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "fa",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "fa"
+      },
+      "soundEvents": [
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 52.611111,
+      "end": 91.611111,
+      "kind": "notation",
+      "title": "Do mayor en clave de Fa · ascenso y descenso",
+      "sourceTopic": "fa",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 102,
+        "rows": [
+          {
+            "title": "Do mayor en clave de Fa · ascenso y descenso",
+            "events": [
+              {
+                "pitch": "C3",
+                "dur": 1
+              },
+              {
+                "pitch": "D3",
+                "dur": 1
+              },
+              {
+                "pitch": "E3",
+                "dur": 1
+              },
+              {
+                "pitch": "F3",
+                "dur": 1
+              },
+              {
+                "pitch": "G3",
+                "dur": 1
+              },
+              {
+                "pitch": "A3",
+                "dur": 1
+              },
+              {
+                "pitch": "B3",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "B3",
+                "dur": 1
+              },
+              {
+                "pitch": "A3",
+                "dur": 1
+              },
+              {
+                "pitch": "G3",
+                "dur": 1
+              },
+              {
+                "pitch": "F3",
+                "dur": 1
+              },
+              {
+                "pitch": "E3",
+                "dur": 1
+              },
+              {
+                "pitch": "D3",
+                "dur": 1
+              },
+              {
+                "pitch": "C3",
+                "dur": 1
+              }
+            ],
+            "clef": "F",
+            "intervals": [
+              "T",
+              "T",
+              "S",
+              "T",
+              "T",
+              "T",
+              "S",
+              "S",
+              "T",
+              "T",
+              "T",
+              "S",
+              "T",
+              "T"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 115,
+        "_sourcePage": "fa",
+        "rowHeights": [
+          102
+        ],
+        "sourcePageId": "fa"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 20.2,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 22.599999999999998,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 24.999999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 27.399999999999995,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 29.799999999999994,
+          "duration": 2.208000000000002,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 32.199999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 34.599999999999994,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 91.611111,
+      "end": 107.910528,
+      "kind": "explanation",
+      "title": "Clave de Fa y sus registros",
+      "sourceTopic": "fa-mapa-ampliado",
+      "soundEvents": []
+    },
+    {
+      "start": 107.910528,
+      "end": 119.910528,
+      "kind": "notation",
+      "title": "Líneas adicionales inferiores: Mi-Do-La",
+      "sourceTopic": "fa-mapa-ampliado",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "Líneas adicionales inferiores: Mi-Do-La",
+            "events": [
+              {
+                "pitch": "E2",
+                "dur": 1
+              },
+              {
+                "pitch": "C2",
+                "dur": 1
+              },
+              {
+                "pitch": "A1",
+                "dur": 1
+              }
+            ],
+            "clef": "F",
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 106,
+        "_sourcePage": "fa-mapa-ampliado",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-162"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E2",
+          "soundPitch": "E2",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C2",
+          "soundPitch": "C2",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "A1",
+          "soundPitch": "A1",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 119.910528,
+      "end": 131.910528,
+      "kind": "notation",
+      "title": "Líneas adicionales superiores: Do-Mi-Sol",
+      "sourceTopic": "fa-mapa-ampliado",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Líneas adicionales superiores: Do-Mi-Sol",
+            "events": [
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "E4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              }
+            ],
+            "clef": "F",
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 106,
+        "_sourcePage": "fa-mapa-ampliado",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-162"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 131.910528,
+      "end": 170.910528,
+      "kind": "notation",
+      "title": "Recorrido ascendente · Do2 a Do4",
+      "sourceTopic": "fa-mapa-ampliado",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Recorrido ascendente · Do2 a Do4",
+            "events": [
+              {
+                "pitch": "C2",
+                "dur": 1
+              },
+              {
+                "pitch": "D2",
+                "dur": 1
+              },
+              {
+                "pitch": "E2",
+                "dur": 1
+              },
+              {
+                "pitch": "F2",
+                "dur": 1
+              },
+              {
+                "pitch": "G2",
+                "dur": 1
+              },
+              {
+                "pitch": "A2",
+                "dur": 1
+              },
+              {
+                "pitch": "B2",
+                "dur": 1
+              },
+              {
+                "pitch": "C3",
+                "dur": 1
+              },
+              {
+                "pitch": "D3",
+                "dur": 1
+              },
+              {
+                "pitch": "E3",
+                "dur": 1
+              },
+              {
+                "pitch": "F3",
+                "dur": 1
+              },
+              {
+                "pitch": "G3",
+                "dur": 1
+              },
+              {
+                "pitch": "A3",
+                "dur": 1
+              },
+              {
+                "pitch": "B3",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            "clef": "F",
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 106,
+        "_sourcePage": "fa-mapa-ampliado",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-162"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C2",
+          "soundPitch": "C2",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D2",
+          "soundPitch": "D2",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E2",
+          "soundPitch": "E2",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F2",
+          "soundPitch": "F2",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 20.2,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 22.599999999999998,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 24.999999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 27.399999999999995,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 29.799999999999994,
+          "duration": 2.208000000000002,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 0
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 32.199999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 34.599999999999994,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 170.910528,
+      "end": 209.910528,
+      "kind": "notation",
+      "title": "Recorrido descendente · Do4 a Do2",
+      "sourceTopic": "fa-mapa-ampliado",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Recorrido descendente · Do4 a Do2",
+            "events": [
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "B3",
+                "dur": 1
+              },
+              {
+                "pitch": "A3",
+                "dur": 1
+              },
+              {
+                "pitch": "G3",
+                "dur": 1
+              },
+              {
+                "pitch": "F3",
+                "dur": 1
+              },
+              {
+                "pitch": "E3",
+                "dur": 1
+              },
+              {
+                "pitch": "D3",
+                "dur": 1
+              },
+              {
+                "pitch": "C3",
+                "dur": 1
+              },
+              {
+                "pitch": "B2",
+                "dur": 1
+              },
+              {
+                "pitch": "A2",
+                "dur": 1
+              },
+              {
+                "pitch": "G2",
+                "dur": 1
+              },
+              {
+                "pitch": "F2",
+                "dur": 1
+              },
+              {
+                "pitch": "E2",
+                "dur": 1
+              },
+              {
+                "pitch": "D2",
+                "dur": 1
+              },
+              {
+                "pitch": "C2",
+                "dur": 1
+              }
+            ],
+            "clef": "F",
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 106,
+        "_sourcePage": "fa-mapa-ampliado",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-162"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 20.2,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 22.599999999999998,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 24.999999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "F2",
+          "soundPitch": "F2",
+          "start": 27.399999999999995,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 0
+        },
+        {
+          "pitch": "E2",
+          "soundPitch": "E2",
+          "start": 29.799999999999994,
+          "duration": 2.208000000000002,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 0
+        },
+        {
+          "pitch": "D2",
+          "soundPitch": "D2",
+          "start": 32.199999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 0
+        },
+        {
+          "pitch": "C2",
+          "soundPitch": "C2",
+          "start": 34.599999999999994,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 209.910528,
+      "end": 220.414966,
+      "kind": "explanation",
+      "title": "Clave de Fa y sus registros",
+      "sourceTopic": "fa-mapa-ampliado",
+      "soundEvents": []
+    },
+    {
+      "start": 220.414966,
+      "end": 233.63718799999998,
+      "kind": "explanation",
+      "title": "Clave de Fa y sus registros",
+      "sourceTopic": "fa-estudio-1",
+      "soundEvents": []
+    },
+    {
+      "start": 233.63718799999998,
+      "end": 245.63718799999998,
+      "kind": "notation",
+      "title": "Compases 1-2",
+      "sourceTopic": "fa-estudio-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 100,
+        "rows": [
+          {
+            "title": "Compases 1-2",
+            "clef": "F",
+            "meter": "2/2",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 2,
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E3",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G3",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-1",
+        "rowHeights": [
+          100
+        ],
+        "sourcePageId": "flow-cont-163"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.075,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.075,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.075,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 245.63718799999998,
+      "end": 257.637188,
+      "kind": "notation",
+      "title": "Compases 3-4",
+      "sourceTopic": "fa-estudio-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 100,
+        "rows": [
+          {
+            "title": "Compases 3-4",
+            "clef": "F",
+            "meter": "2/2",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "E3",
+                  "dur": 2,
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 1,
+                  "dynamic": "mf"
+                }
+              ]
+            ],
+            "hairpin": "cresc",
+            "hairpinFrom": 0,
+            "hairpinTo": 2,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-1",
+        "rowHeights": [
+          100
+        ],
+        "sourcePageId": "flow-cont-163"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.07,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 3.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.27,
+          "visualIndex": 2,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 257.637188,
+      "end": 269.637188,
+      "kind": "notation",
+      "title": "Compases 5-6",
+      "sourceTopic": "fa-estudio-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Compases 5-6",
+            "clef": "F",
+            "meter": "2/2",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "G2",
+                  "dur": 2
+                },
+                {
+                  "pitch": "B2",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E3",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-163"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 269.637188,
+      "end": 281.637188,
+      "kind": "notation",
+      "title": "Compases 7-8",
+      "sourceTopic": "fa-estudio-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Compases 7-8",
+            "clef": "F",
+            "meter": "2/2",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "F3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 1
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-163"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 3.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 281.637188,
+      "end": 289.637188,
+      "kind": "explanation",
+      "title": "Clave de Fa y sus registros",
+      "sourceTopic": "fa-estudio-1",
+      "soundEvents": []
+    },
+    {
+      "start": 289.637188,
+      "end": 302.85940999999997,
+      "kind": "explanation",
+      "title": "Clave de Fa y sus registros",
+      "sourceTopic": "fa-estudio-2",
+      "soundEvents": []
+    },
+    {
+      "start": 302.85940999999997,
+      "end": 314.85940999999997,
+      "kind": "notation",
+      "title": "Compases 1-2",
+      "sourceTopic": "fa-estudio-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 114,
+        "rows": [
+          {
+            "title": "Compases 1-2",
+            "clef": "F",
+            "meter": "2/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "E3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "G3",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "F3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "E3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C3",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                4,
+                5,
+                6
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              },
+              {
+                "indices": [
+                  4,
+                  5,
+                  6
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-2",
+        "rowHeights": [
+          114
+        ],
+        "sourcePageId": "flow-cont-164"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1,
+          "duration": 0.1916666666666666,
+          "gain": 0.075,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 1.2083333333333333,
+          "duration": 0.1916666666666666,
+          "gain": 0.075,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 1.4166666666666665,
+          "duration": 0.1916666666666666,
+          "gain": 0.075,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1.6249999999999998,
+          "duration": 0.5750000000000002,
+          "gain": 0.075,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 2.25,
+          "duration": 0.19166666666666682,
+          "gain": 0.075,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 2.4583333333333335,
+          "duration": 0.19166666666666682,
+          "gain": 0.075,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.666666666666667,
+          "duration": 0.19166666666666682,
+          "gain": 0.075,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.8750000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 314.85940999999997,
+      "end": 326.85940999999997,
+      "kind": "notation",
+      "title": "Compases 3-4",
+      "sourceTopic": "fa-estudio-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 114,
+        "rows": [
+          {
+            "title": "Compases 3-4",
+            "clef": "F",
+            "meter": "2/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "E3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "F#3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "G3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C3",
+                  "dur": 4,
+                  "dynamic": "mf"
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                4,
+                5,
+                6
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              },
+              {
+                "indices": [
+                  4,
+                  5,
+                  6
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "hairpin": "cresc",
+            "hairpinFrom": 0,
+            "hairpinTo": 7,
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-2",
+        "rowHeights": [
+          114
+        ],
+        "sourcePageId": "flow-cont-164"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 1,
+          "duration": 0.1916666666666666,
+          "gain": 0.07,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F#3",
+          "soundPitch": "F#3",
+          "start": 1.2083333333333333,
+          "duration": 0.1916666666666666,
+          "gain": 0.09857142857142857,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1.4166666666666665,
+          "duration": 0.1916666666666666,
+          "gain": 0.12714285714285714,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 1.6249999999999998,
+          "duration": 0.5750000000000002,
+          "gain": 0.15571428571428572,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 2.25,
+          "duration": 0.19166666666666682,
+          "gain": 0.18428571428571427,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.4583333333333335,
+          "duration": 0.19166666666666682,
+          "gain": 0.21285714285714288,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.666666666666667,
+          "duration": 0.19166666666666682,
+          "gain": 0.24142857142857144,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.8750000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.27,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 326.85940999999997,
+      "end": 338.85940999999997,
+      "kind": "notation",
+      "title": "Compases 5-6",
+      "sourceTopic": "fa-estudio-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Compases 5-6",
+            "clef": "F",
+            "meter": "2/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "G2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "A2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "B2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "G2",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                4,
+                5,
+                6
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              },
+              {
+                "indices": [
+                  4,
+                  5,
+                  6
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-2",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-164"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 1,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 1.2083333333333333,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 1.4166666666666665,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 1.6249999999999998,
+          "duration": 0.5750000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 2.25,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.4583333333333335,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.666666666666667,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 2.8750000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 338.85940999999997,
+      "end": 350.85940999999997,
+      "kind": "notation",
+      "title": "Compases 7-8",
+      "sourceTopic": "fa-estudio-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Compases 7-8",
+            "clef": "F",
+            "meter": "2/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "B2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "F3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-2",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-164"
+      },
+      "soundEvents": [
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 1,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 1.2083333333333333,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 1.4166666666666665,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 1.6249999999999998,
+          "duration": 0.5750000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 350.85940999999997,
+      "end": 358.85940999999997,
+      "kind": "explanation",
+      "title": "Clave de Fa y sus registros",
+      "sourceTopic": "fa-estudio-2",
+      "soundEvents": []
+    },
+    {
+      "start": 358.85940999999997,
+      "end": 372.08163199999996,
+      "kind": "explanation",
+      "title": "Clave de Fa y sus registros",
+      "sourceTopic": "fa-estudio-3",
+      "soundEvents": []
+    },
+    {
+      "start": 372.08163199999996,
+      "end": 384.08163199999996,
+      "kind": "notation",
+      "title": "Compases 1-2",
+      "sourceTopic": "fa-estudio-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 118,
+        "rows": [
+          {
+            "title": "Compases 1-2",
+            "clef": "F",
+            "meter": "2/4",
+            "key": -1,
+            "bars": [
+              [
+                {
+                  "pitch": "F2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "G2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "A2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C3",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "Bb2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "A2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "G2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "F2",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                4,
+                5,
+                6
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              },
+              {
+                "indices": [
+                  4,
+                  5,
+                  6
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-3",
+        "rowHeights": [
+          118
+        ],
+        "sourcePageId": "flow-cont-165"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F2",
+          "soundPitch": "F2",
+          "start": 1,
+          "duration": 0.1916666666666666,
+          "gain": 0.075,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 1.2083333333333333,
+          "duration": 0.1916666666666666,
+          "gain": 0.075,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 1.4166666666666665,
+          "duration": 0.1916666666666666,
+          "gain": 0.075,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1.6249999999999998,
+          "duration": 0.5750000000000002,
+          "gain": 0.075,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb2",
+          "soundPitch": "Bb2",
+          "start": 2.25,
+          "duration": 0.19166666666666682,
+          "gain": 0.075,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 2.4583333333333335,
+          "duration": 0.19166666666666682,
+          "gain": 0.075,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 2.666666666666667,
+          "duration": 0.19166666666666682,
+          "gain": 0.075,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "F2",
+          "soundPitch": "F2",
+          "start": 2.8750000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 384.08163199999996,
+      "end": 396.08163199999996,
+      "kind": "notation",
+      "title": "Compases 3-4",
+      "sourceTopic": "fa-estudio-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 118,
+        "rows": [
+          {
+            "title": "Compases 3-4",
+            "clef": "F",
+            "meter": "2/4",
+            "key": -1,
+            "bars": [
+              [
+                {
+                  "pitch": "A2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "Bb2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "G2",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "A2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "G2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "F2",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "F2",
+                  "dur": 4,
+                  "dynamic": "mf"
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                4,
+                5,
+                6
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              },
+              {
+                "indices": [
+                  4,
+                  5,
+                  6
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "hairpin": "cresc",
+            "hairpinFrom": 0,
+            "hairpinTo": 7,
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-3",
+        "rowHeights": [
+          118
+        ],
+        "sourcePageId": "flow-cont-165"
+      },
+      "soundEvents": [
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 1,
+          "duration": 0.1916666666666666,
+          "gain": 0.07,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb2",
+          "soundPitch": "Bb2",
+          "start": 1.2083333333333333,
+          "duration": 0.1916666666666666,
+          "gain": 0.09857142857142857,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1.4166666666666665,
+          "duration": 0.1916666666666666,
+          "gain": 0.12714285714285714,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 1.6249999999999998,
+          "duration": 0.5750000000000002,
+          "gain": 0.15571428571428572,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 2.25,
+          "duration": 0.19166666666666682,
+          "gain": 0.18428571428571427,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 2.4583333333333335,
+          "duration": 0.19166666666666682,
+          "gain": 0.21285714285714288,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "F2",
+          "soundPitch": "F2",
+          "start": 2.666666666666667,
+          "duration": 0.19166666666666682,
+          "gain": 0.24142857142857144,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "F2",
+          "soundPitch": "F2",
+          "start": 2.8750000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.27,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 396.08163199999996,
+      "end": 408.08163199999996,
+      "kind": "notation",
+      "title": "Compases 5-6",
+      "sourceTopic": "fa-estudio-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Compases 5-6",
+            "clef": "F",
+            "meter": "2/4",
+            "key": -1,
+            "bars": [
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "E3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "G3",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "F3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "E3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C3",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                4,
+                5,
+                6
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              },
+              {
+                "indices": [
+                  4,
+                  5,
+                  6
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "endings": [
+              {
+                "number": "1",
+                "from": 1,
+                "to": 1
+              }
+            ],
+            "barStyles": {
+              "1": "repeat"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-3",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-165"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 1.2083333333333333,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 1.4166666666666665,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1.6249999999999998,
+          "duration": 0.5750000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 2.25,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 2.4583333333333335,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.666666666666667,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.8750000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 408.08163199999996,
+      "end": 420.08163199999996,
+      "kind": "notation",
+      "title": "Compases 7-8",
+      "sourceTopic": "fa-estudio-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Compases 7-8",
+            "clef": "F",
+            "meter": "2/4",
+            "key": -1,
+            "bars": [
+              [
+                {
+                  "pitch": "E3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "G3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "Bb3",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "G3",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "F3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "endings": [
+              {
+                "number": "2",
+                "from": 0,
+                "to": 1
+              }
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "fa-estudio-3",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-165"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 1,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1.2083333333333333,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb3",
+          "soundPitch": "Bb3",
+          "start": 1.4166666666666665,
+          "duration": 0.1916666666666666,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1.6249999999999998,
+          "duration": 0.5750000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 420.08163199999996,
+      "end": 430.97052099999996,
+      "kind": "explanation",
+      "title": "Clave de Fa y sus registros",
+      "sourceTopic": "fa-estudio-3",
+      "soundEvents": []
+    },
+    {
+      "start": 430.97052099999996,
+      "end": 436.97052099999996,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

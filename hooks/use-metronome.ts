@@ -1,11 +1,18 @@
 'use client'
 
+import {stopClicksAtFinalBars} from '@/lib/playsense-studio/final-bar-click-stops'
+import {anchoredClickGrid,type ClickAnchor} from '@/lib/playsense-studio/click-anchors'
 import { useRef, useCallback, useState } from 'react'
 import type { ExerciseGrid } from '@/lib/play-sense/types'
 import { gridBeats, gridCountIn, gridLoopSeconds } from '@/lib/play-sense/grid'
 
 interface UseMetronomeOptions {
+  durationSeconds?: number
   volume?: number
+  /** Click phase relative to the score clock; does not move notes or media. */
+  offsetSeconds?: number
+  clickStopSeconds?: number[]
+  clickAnchors?: ClickAnchor[]
   bpm: number
   timeSignature: [number, number]
   countInBeats?: number
@@ -50,10 +57,12 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   const countInStartRef = useRef(0)
   const beatCounterRef = useRef(0) // total beats elapsed (for visual tracking)
 
+  const endTimeRef = useRef(Infinity)
   const clickNodes = useRef(new Set<OscillatorNode>())
 
   const scheduleClick = useCallback(
     (audioContext: AudioContext, time: number, isDownbeat: boolean, force = false) => {
+      if (time >= endTimeRef.current) return
       // Skip audio output when silent. The count-in forces its clicks: it plays
       // before the student starts, so it can't mask their onsets, and without it
       // they have nothing but a visual countdown to come in on.
@@ -120,19 +129,35 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
       if (grid) {
         // Graded owners: the count-in and the exercise clicks follow the
         // per-bar grid instead of a uniform bpm.
-        const beats = gridBeats(grid)
         const loopLen = gridLoopSeconds(grid)
-        const beatSec0 = grid.beatQN[0] * grid.secPerQN[0]
-        // 1-indexed position within each beat's own measure, for the visual counter.
+        const shift = Number.isFinite(options.offsetSeconds) ? options.offsetSeconds ?? 0 : 0
+        // Preserve each beat's identity when an anchor wraps it around the loop.
         let posInMeasure = 0
-        const beatPositions = beats.map(b => {
-          posInMeasure = b.downbeat ? 1 : posInMeasure + 1
-          return posInMeasure
-        })
+        const legacyBeats = gridBeats(grid).map(beat => {
+          posInMeasure = beat.downbeat ? 1 : posInMeasure + 1
+          return {
+            ...beat,
+            position: posInMeasure,
+            seconds: shift !== 0 && loopLen > 0
+              ? ((beat.seconds + shift) % loopLen + loopLen) % loopLen
+              : beat.seconds,
+          }
+        }).sort((a, b) => a.seconds - b.seconds)
+        const confirmed=options.clickAnchors;
+        const candidateBeats=confirmed===undefined?legacyBeats:anchoredClickGrid(confirmed,bpm,timeSignature[1],0,loopLen).map(seconds=>{
+          const anchor=[...confirmed].sort((a,b)=>a.seconds-b.seconds).filter(a=>a.seconds<=seconds+1e-7).at(-1)!;
+          const position=Math.round((seconds-anchor.seconds)/(60/bpm*4/timeSignature[1]))%beatsPerMeasure+1;
+          return {seconds,position,downbeat:position===1};
+        });
+        const allowed=new Set(stopClicksAtFinalBars(candidateBeats.map(b=>b.seconds),confirmed?.map(a=>a.seconds)??[shift],options.clickStopSeconds??[]));
+        const beats=candidateBeats.filter(b=>allowed.has(b.seconds));
+        const beatSec0 = grid.beatQN[0] * grid.secPerQN[0]
+        const beatPositions = beats.map(beat => beat.position)
 
         const countInOffsets = offsetSeconds == null ? gridCountIn(grid, countInBars, beatsPerMeasure) : []
         const countInSeconds = countInOffsets.length > 0 ? -countInOffsets[0] : 0
         const exerciseStart = countInStart + countInSeconds - (offsetSeconds ?? 0)
+        endTimeRef.current = exerciseStart + (options.durationSeconds ?? Infinity)
 
         // Count-in clicks: bar 1's meter and beat length, always audible.
         countInOffsets.forEach((offset, i) => {
@@ -202,6 +227,7 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
       // Uniform path (no grid): unchanged.
       const beatDuration = 60 / bpm
       const exerciseStart = countInStart + (offsetSeconds == null ? countInBeats * beatDuration : -offsetSeconds)
+      endTimeRef.current = exerciseStart + (options.durationSeconds ?? Infinity)
 
       // Schedule count-in clicks
       for (let i = 0; i < (offsetSeconds == null ? countInBeats : 0); i++) {
@@ -248,7 +274,7 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
 
       return exerciseStart
     },
-    [bpm, timeSignature, countInBeats, grid, countInBars, scheduleClick]
+    [bpm, timeSignature, countInBeats, grid, countInBars, scheduleClick, options.offsetSeconds, options.durationSeconds, options.clickAnchors, options.clickStopSeconds]
   )
 
   const stopMetronome = useCallback(() => {

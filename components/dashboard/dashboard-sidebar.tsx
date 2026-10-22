@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { LearningIcon, LearningBrand } from '@/components/learning-mode/art'
 import Image from 'next/image'
 import { Settings } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { LearningModeToggle } from '@/components/learning-mode-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { ThemeToggle, RAIL_REVEAL } from '@/components/theme-toggle'
 import { useTranslation } from '@/components/language-provider'
@@ -41,7 +43,7 @@ function RailItem({ item, active, label }: { item: NavItemDef; active: boolean; 
       {active && (
         <span aria-hidden className="absolute -left-3 bottom-2.5 top-2.5 w-[3px] rounded-r-full bg-primary" />
       )}
-      <Icon className="h-5 w-5 shrink-0" />
+      <LearningIcon name={item.labelKey} icon={Icon} />
       <span className={cn('ml-[22px] truncate text-sm font-medium', RAIL_REVEAL)}>{label}</span>
     </Link>
   )
@@ -79,13 +81,13 @@ export function DashboardSidebar({
           aria-label={t('dashboard.nav.home')}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
         >
-          <Image src="/logo-solo-color.svg" alt="" width={32} height={24} priority className="h-6 w-8 object-contain" />
+          <LearningBrand><Image src="/logo-solo-color.svg" alt="" width={32} height={24} priority className="h-6 w-8 object-contain" /></LearningBrand>
         </Link>
       </div>
 
       {/* Groups. Each label row is 24px in both states: a hairline collapsed, the name expanded. */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {groups.map((group) => (
+        {groups.filter(group => group.key !== 'manage').map((group) => (
           <div key={group.key} className="flex flex-col gap-0.5">
             <div className="relative flex h-[34px] items-center px-2.5 pt-2.5">
               <span aria-hidden className={cn('absolute left-2 right-2 top-1/2 h-px bg-sidebar-border', HIDE_WHEN_OPEN)} />
@@ -106,8 +108,13 @@ export function DashboardSidebar({
       </div>
 
       {/* Footer: preferences and account. Every row is 40px in both states. */}
-      <div className="mt-2 flex flex-col gap-0.5 border-t border-sidebar-border pt-2">
+      <div className="mt-2 flex shrink-0 flex-col gap-0.5 border-t border-sidebar-border pt-2">
+        {groups.filter(group => group.key === 'manage').map(group => <div key={group.key} data-management-navigation>
+          <div className={cn('px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground', RAIL_REVEAL)}>{t('dashboard.nav.groups.manage')}</div>
+          {group.items.map(item => <RailItem key={item.href} item={item} active={isNavActive(pathname, item)} label={t(`dashboard.nav.${item.labelKey}`)} />)}
+        </div>)}
         <LanguageToggle variant="rail" />
+        <LearningModeToggle />
         <ThemeToggle variant="rail" />
         <RailItem item={{ href: '/dashboard/settings', icon: Settings, labelKey: 'settings' }} active={pathname.startsWith('/dashboard/settings')} label={t('dashboard.nav.settings')} />
         <Link

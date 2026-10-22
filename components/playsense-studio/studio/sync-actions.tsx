@@ -7,12 +7,16 @@ import { useStudioText } from '@/components/playsense-studio/studio/use-studio-t
 // re-analyze (+ its decode progress) and, for a graded part, the count-in /
 // pre-roll / "notes on a hit" readout. Rendered into the inspector portal.
 import type { ReactNode } from 'react';
+import type {ClickAnchor} from '@/lib/playsense-studio/click-anchors';
 import { AudioLines, Undo2 } from 'lucide-react';
 
 export interface SyncActionsProps {
   /** `PlaceScoreControl`, moved as-is — the caller keeps owning the import. */
   placeControl: ReactNode;
-  anchor?: { onSet: () => void };
+  anchor?: { onSet: () => void; onFirstBeat: () => void;
+    confirmed?:ClickAnchor[];pending?:number|null;onConfirm?:()=>void;onCancel?:()=>void;
+    onDelete?:(id:string)=>void;onSeek?:(seconds:number)=>void;
+  };
   autoPlaceUndo?: () => void;
   graded?: {
     countInBars: 1 | 2;
@@ -28,12 +32,12 @@ export interface SyncActionsProps {
 export function SyncActions(p: SyncActionsProps) {
   const st = useStudioText();
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-2.5" data-score-preserve-selection>
       {p.placeControl}
 
-      {/* The anchor can't conflict with anything, so unlike placement it needs
-          no arm/confirm step — one click sets it at the playhead. */}
+      {/* Each explicit confirmation adds a start without replacing prior anchors. */}
       {p.anchor && (
+        <>
         <button
           type="button"
           onClick={p.anchor.onSet}
@@ -42,6 +46,23 @@ export function SyncActions(p: SyncActionsProps) {
         >
           <AudioLines className="h-4 w-4" />
           {st("Anchor at playhead")}</button>
+        <button type="button" onClick={p.anchor.onFirstBeat} className="st-chip block">
+          <AudioLines className="h-4 w-4" />{st('Place anchor · first beat')}
+        </button>
+        {p.anchor.pending!=null&&<div className="rounded border border-primary/50 p-2 text-xs" role="group" aria-label={st('Confirm click anchor')}>
+          <p>{st('Start the first click here?')} <strong>{p.anchor.pending.toFixed(3)} s</strong></p>
+          <p>{st('Previous anchors will stay fixed.')}</p>
+          <div className="mt-2 flex gap-2"><button type="button" className="st-btn-primary" onClick={p.anchor.onConfirm}>{st('Confirm click anchor')}</button>
+          <button type="button" className="st-chip" onClick={p.anchor.onCancel}>{st('Cancel')}</button></div>
+        </div>}
+        {!!p.anchor.confirmed?.length&&<div className="flex flex-col gap-1" aria-label={st('Confirmed click anchors')}>
+          <span className="st-sec-label">{st('Confirmed click anchors')}</span>
+          {p.anchor.confirmed.map((a,i)=><div key={a.id} className="flex items-center gap-2">
+            <button type="button" className="st-chip" onClick={()=>p.anchor?.onSeek?.(a.seconds)}>{st('Anchor')} {i+1} · {a.seconds.toFixed(3)} s</button>
+            <button type="button" className="st-chip text-primary" aria-label={`${st('Delete anchor')} ${i+1}`} onClick={()=>p.anchor?.onDelete?.(a.id)}>{st('Delete')}</button>
+          </div>)}
+        </div>}
+        </>
       )}
 
       {p.autoPlaceUndo && (

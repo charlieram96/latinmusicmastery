@@ -3,7 +3,7 @@ import { useStudioText } from '@/components/playsense-studio/studio/use-studio-t
 
 
 // In-studio rhythm-highway PREVIEW. Shows the author the exact falling-notes view
-// the student gets — the SAME <GlassHighway> component — derived from the score
+// the student gets — the SAME <GlassHighway layoutScope="admin"> component — derived from the score
 // they're editing (scoreToExerciseDefinition), driven by an internal FIXED-BPM
 // clock (never a video clock). Purely visual: no mic, no grading, no audio-mode
 // prompt. The exercise re-derives from the live score while PAUSED so edits show;
@@ -141,9 +141,9 @@ export function HighwayPreview({
 
       {visible && <div id={previewId} className="relative flex min-h-[360px] overflow-hidden rounded-xl border border-border bg-card">
         {hasEvents ? (
-          <GlassHighway
+          <GlassHighway layoutScope="admin"
             exercise={exercise}
-            sessionState="playing"
+            sessionState={playing ? "playing" : "paused"}
             playheadProgress={progress}
             currentScore={0}
             currentCombo={0}

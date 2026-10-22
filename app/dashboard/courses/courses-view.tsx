@@ -1,5 +1,7 @@
 'use client'
 
+import { useLearningMode } from '@/components/learning-mode/store'
+import { SOLFEO_ID, solfeoPresentation } from '@/lib/solfeo/hybrid'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -30,8 +32,10 @@ interface CoursesViewProps {
   courses: BrowseCourse[]
 }
 
-export function CoursesView({ courses }: CoursesViewProps) {
+export function CoursesView({ courses: sourceCourses }: CoursesViewProps) {
   const { t, locale } = useTranslation()
+  const mode=useLearningMode()
+  const courses=useMemo(()=>sourceCourses.map(c=>c.id===SOLFEO_ID?{...c,...solfeoPresentation(mode==='kids',locale==='es')}:c),[sourceCourses,mode,locale])
   const params = useSearchParams()
   const base = 'dashboard.pages.courses'
 
@@ -262,7 +266,7 @@ export function CoursesView({ courses }: CoursesViewProps) {
           {filtered.map((c) => (
             <Link
               key={c.id}
-              href={`/dashboard/course/${c.slug || c.id}`}
+              href={c.href ?? `/dashboard/course/${c.slug || c.id}`}
               className="group -mx-3 flex items-center gap-4 rounded-lg px-3 py-3.5 transition-colors hover:bg-accent/40 sm:gap-5"
             >
               <CourseThumb src={c.thumbnailUrl} styleName={c.styleName} alt="" className="h-[60px] w-24" />

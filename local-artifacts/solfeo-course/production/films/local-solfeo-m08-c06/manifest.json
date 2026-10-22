@@ -1,0 +1,71 @@
+{
+  "classId": "local-solfeo-m08-c06",
+  "duration": 56.626917,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Allegretto, allegro, vivace y presto",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 16.564854,
+      "kind": "explanation",
+      "title": "Allegretto, allegro, vivace y presto",
+      "sourceTopic": "agogica-vocabulario",
+      "soundEvents": []
+    },
+    {
+      "start": 16.564854,
+      "end": 26.564854,
+      "kind": "photo",
+      "title": "Una referencia para el pulso",
+      "soundEvents": []
+    },
+    {
+      "start": 26.564854,
+      "end": 38.533792,
+      "kind": "explanation",
+      "title": "Allegretto, allegro, vivace y presto",
+      "sourceTopic": "agogica-vocabulario",
+      "soundEvents": []
+    },
+    {
+      "start": 38.533792,
+      "end": 50.605584,
+      "kind": "explanation",
+      "title": "Allegretto, allegro, vivace y presto",
+      "sourceTopic": "agogica-vocabulario",
+      "soundEvents": []
+    },
+    {
+      "start": 50.605584,
+      "end": 56.605584,
+      "kind": "completion",
+      "title": "¡Un paso más en tu música!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

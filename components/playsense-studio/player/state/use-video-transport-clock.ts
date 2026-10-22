@@ -4,8 +4,8 @@
 //
 // The clock follows an HTMLVideoElement: it listens to the video's events
 // (timeupdate/seeking/seeked/play/pause/ratechange/loadedmetadata/ended)
-// and RAF-interpolates between timeupdate ticks (which fire at ~4-5 Hz on
-// most browsers — too coarse for smooth cursor motion alone).
+// and samples the media clock on each animation frame. Wall-clock extrapolation
+// can run ahead of the picture during decoding delays or buffering.
 //
 // The video is the source of truth. play/pause/seek/setRate methods on the
 // returned clock mutate the video; the resulting events flow back into clock
@@ -62,12 +62,8 @@ export function useVideoTransportClock(
   const [loopB, setLoopBState] = useState<number | null>(null);
   const [loopEnabled, setLoopEnabledState] = useState(false);
 
-  // Anchor: wall-clock time + video time at the most recent video event.
-  // While playing, currentSeconds = anchorVideoSec + (now - anchorWall) * rate.
-  const anchorWallRef = useRef(0);
-  const anchorVideoRef = useRef(0);
+  // The actual media position owns cursor and loop timing, including stalls.
   const isPlayingRef = useRef(false);
-  const rateRef = useRef(1);
   const durationRef = useRef(0);
   const currentRef = useRef(0);
   const rafIdRef = useRef<number | null>(null);
@@ -78,8 +74,6 @@ export function useVideoTransportClock(
   const loopEnabledRef = useRef(false);
 
   const reanchor = useCallback((video: HTMLVideoElement) => {
-    anchorWallRef.current = performance.now();
-    anchorVideoRef.current = video.currentTime;
     currentRef.current = video.currentTime;
     setCurrentSeconds(video.currentTime);
   }, []);
@@ -91,9 +85,8 @@ export function useVideoTransportClock(
         rafIdRef.current = null;
         return;
       }
-      const elapsedSec = (performance.now() - anchorWallRef.current) / 1000;
-      const interpolated = anchorVideoRef.current + elapsedSec * rateRef.current;
-      const clamped = Math.min(interpolated, durationRef.current || interpolated);
+      const mediaSeconds = videoRef.current?.currentTime ?? currentRef.current;
+      const clamped = Math.min(mediaSeconds, durationRef.current || mediaSeconds);
 
       // Loop wrap. We do this BEFORE publishing the time so the cursor
       // never visibly overshoots. Pre-seek a hair before B isn't necessary
@@ -132,11 +125,12 @@ export function useVideoTransportClock(
   // Track the underlying element in state so the wiring effect re-runs when the
   // video mounts LATE — e.g. rendered through a React portal a render after the
   // hook's owner mounted (the studio inspector does exactly this). A no-dep
-  // effect polls the ref each commit; the updater bails when the element is
-  // unchanged, so no extra renders once it's bound.
+  // effect checks the ref each commit, but only schedules state when the
+  // element changes. Calling an updater even with the same value adds a
+  // passive render on each clock frame and can feed update-depth warnings.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   useEffect(() => {
-    setVideoEl((prev) => (prev === videoRef.current ? prev : videoRef.current));
+    if (videoEl !== videoRef.current) setVideoEl(videoRef.current);
   });
 
   // Wire video element events.
@@ -173,7 +167,6 @@ export function useVideoTransportClock(
       onEndedRef.current?.();
     };
     const onRateChange = () => {
-      rateRef.current = video.playbackRate;
       setPlaybackRateState(video.playbackRate);
       reanchor(video);
     };

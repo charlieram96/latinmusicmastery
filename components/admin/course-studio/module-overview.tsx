@@ -1,4 +1,7 @@
 'use client'
+import { ModuleCoverArt } from '@/components/learning-mode/module-cover-art'
+import { useLearningMode } from '@/components/learning-mode/store'
+import { FittedNavigationTitle } from '@/components/class-viewer/fitted-navigation-title'
 import { useTranslation } from '@/components/language-provider'
 import { pick } from '@/lib/i18n/localize'
 
@@ -22,6 +25,7 @@ interface ModuleOverviewProps {
 /** Center view shown when a module (not a class) is selected: its classes as
     cards plus an add-class affordance. Module fields are edited in the drawer. */
 export function ModuleOverview({ section, moduleIndex, onSelectClass, onAddClass }: ModuleOverviewProps) {
+  const mode = useLearningMode()
   const { locale } = useTranslation()
   const [addingClass, setAddingClass] = useState(false)
 
@@ -43,6 +47,7 @@ export function ModuleOverview({ section, moduleIndex, onSelectClass, onAddClass
         </p>
       </header>
 
+      {mode === 'kids' && <div className="mx-auto mt-5 max-w-sm"><ModuleCoverArt moduleId={section.id}/></div>}
       <div className="mt-6 space-y-2">
         {section.classes.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-warm-surface/50 px-6 py-8 text-center">
@@ -65,9 +70,7 @@ export function ModuleOverview({ section, moduleIndex, onSelectClass, onAddClass
                 {ci + 1}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] font-medium text-foreground">
-                  {pick(locale, cls.title, cls.title_es ?? '')}
-                </span>
+                <FittedNavigationTitle className="font-medium text-foreground" text={pick(locale, cls.title, cls.title_es ?? '')} />
                 <span className="block text-[11px] text-muted-foreground">
                   {cls.items.length} {cls.items.length === 1 ? 'item' : 'items'}
                 </span>

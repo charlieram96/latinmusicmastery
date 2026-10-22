@@ -22,14 +22,14 @@ describe('score model additions', () => {
       { kind: 'note', id: 'b', midi: 76, durationQN: 0.2, tuplet: { id: 't1', n: 5, m: 4 } },
       { kind: 'chord', id: 'c', durationQN: 1.05, notes: [{ midi: 64, spelling: { step: 'E', alter: 0 } }, { midi: 67 }] },
     ], { spans: [{ id: 's1', type: 'slur', from: 'a', to: 'b' }, { id: 's2', type: 'cresc', from: 'a', to: 'c' }] })
-    input.tracks[0].measures[0] = { ...input.tracks[0].measures[0], clef: 'alto', repeatStart: true, repeatEnd: true, volta: '1.', endBarline: 'double' }
+    input.tracks[0].measures[0] = { ...input.tracks[0].measures[0], clef: 'alto', repeatStart: true, repeatEnd: true, volta: '1.', endBarline: 'double', emptyText:{text:'Instructor hablando',fontSize:22} }
     expect(parseScoreDocument(JSON.parse(JSON.stringify(input)))).toEqual({ ...input, composer: 'LMM' })
   })
 
   it('rejects malformed new fields instead of passing them to the renderer', () => {
     expect(() => parseScoreDocument(score([{ kind: 'note', midi: 60, durationQN: 1, tuplet: { id: 't', n: 1, m: 1 } }]))).toThrow(ScoreDocumentValidationError)
     expect(() => parseScoreDocument(score([{ kind: 'note', midi: 60, durationQN: 1, dynamic: 'loud' as never }]))).toThrow(ScoreDocumentValidationError)
-    expect(() => parseScoreDocument(score([{ kind: 'note', midi: 60, durationQN: 1, dots: 3 as never }]))).toThrow(ScoreDocumentValidationError)
+    expect(() => parseScoreDocument(score([{ kind: 'note', midi: 60, durationQN: 1, dots: 4 as never }]))).toThrow(ScoreDocumentValidationError)
   })
 
   it('reads legacy fields through the accessors', () => {

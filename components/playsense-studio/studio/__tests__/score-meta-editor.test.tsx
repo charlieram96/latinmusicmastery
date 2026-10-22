@@ -3,6 +3,8 @@ import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ScoreMetaEditor } from '../score-meta-editor'
+import { editorReducer, type EditorState } from '@/lib/playsense-studio/editor-state'
+import { scoreMetronomeGrid } from '@/lib/playsense-studio/score-metronome-grid'
 import type { ScoreDocument, Track } from '@/components/playsense-studio/shared/score-model/types'
 
 const score = (initialTempo: number): ScoreDocument => ({
@@ -174,3 +176,15 @@ describe('compact meter and published author', () => {
     expect(dispatch).toHaveBeenCalledWith({type:'set-score-meta',composer:'New composer'})
   })
 })
+
+it('the shared sidebar applies its BPM to all bars and the playback click', () => {
+  const original = {...score(100), tempoMarksConfirmed:true, playbackTempoOverride:151, tracks:[{...track(),measures:[1,2,3].map(number=>({number,tempoChange:number===1?100:188,voices:[{number:1,events:[{kind:'rest' as const,durationQN:4}]}]}))}]};
+  let state:EditorState={score:original,past:[],future:[],isDirty:false};
+  act(()=>root.render(<ScoreMetaEditor score={state.score} dispatch={action=>{state=editorReducer(state,action)}}/>));
+  const input=host.querySelector<HTMLInputElement>('input[aria-label="Tempo (BPM)"]')!;
+  act(()=>input.focus());type(input,'120');key(input,'Enter');
+  const points=[0,12].map(qn=>({musicalPositionQN:qn,videoTimeSeconds:qn/2,measureNumber:null,beatInMeasure:null}));
+  expect(scoreMetronomeGrid(state.score,points,0,6)).toEqual(Array.from({length:12},(_,i)=>i/2));
+  expect(state.score.playbackTempoOverride).toBeUndefined();
+  expect(editorReducer(state,{type:'undo'}).score).toEqual(original);
+});

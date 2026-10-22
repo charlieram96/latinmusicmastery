@@ -33,14 +33,19 @@ export function FocusStage({
   kindLabel,
   title,
   onFinish,
+  reviewBeforeResults = false,
 }: {
   questions: QuizQuestion[]
   engine: QuizEngine
   kindLabel: string
   title?: string
   onFinish: () => void
+  reviewBeforeResults?: boolean
 }) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const es = locale === 'es'
+  const [phase, setPhase] = useState<'answering' | 'choice' | 'review'>('answering')
+  const reviewing = phase === 'review'
   const { bannerCorrect } = useAnswerLabels()
   const [prefs, setPrefs] = useQuizPrefs()
   const [index, setIndex] = useState(0)
@@ -66,15 +71,15 @@ export function FocusStage({
   }, [engine, q.id, isGraded, canCheck, state.streak, prefs.sound])
 
   const next = useCallback(() => {
-    if (isLast) onFinish()
+    if (isLast) { if (reviewBeforeResults) setPhase('choice'); else onFinish() }
     else setIndex((i) => i + 1)
-  }, [isLast, onFinish])
+  }, [isLast, onFinish, reviewBeforeResults])
 
   // Keyboard: 1-9 / a-h pick a choice, T / F for true-false, Enter checks then continues, arrows move.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       // a focused input component that consumed the key — the placement stage's Enter and arrows — opts out
-      if (e.defaultPrevented) return
+      if (e.defaultPrevented || phase === 'choice') return
       const target = e.target as HTMLElement | null
       const inField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
       const interactive = !!target?.closest?.('button, a, [role="button"], [role="radio"], select, [contenteditable="true"]')
@@ -89,7 +94,7 @@ export function FocusStage({
         return
       }
       if (inField) return
-      if (e.key === 'ArrowLeft' && index > 0) setIndex(index - 1)
+      if (e.key === 'ArrowLeft' && index > 0 && (!reviewBeforeResults || reviewing)) setIndex(index - 1)
       else if (e.key === 'ArrowRight' && isGraded) next()
       else if (!isGraded && (q.question_type === 'multiple_choice' || q.question_type === 'audio_choice')) {
         const choices = ((q.options ?? {}) as { choices?: { id: string }[] }).choices ?? []
@@ -102,7 +107,35 @@ export function FocusStage({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [q, isGraded, index, check, next, engine])
+  }, [q, isGraded, index, check, next, engine, phase, reviewBeforeResults, reviewing])
+
+  const resultLabel = es ? 'Ver calificación' : 'View grade'
+  const reviewControls = <div className="flex w-full flex-wrap items-center gap-3" data-question-review-controls>
+    <Button variant="ghost" disabled={index === 0} onClick={() => setIndex(i => i - 1)}><ArrowLeft className="h-4 w-4"/>{es ? 'Pregunta anterior' : 'Previous question'}</Button>
+    <span className="text-sm">{index + 1} / {questions.length}</span>
+    <Button variant="ghost" disabled={isLast} onClick={() => setIndex(i => i + 1)}>{es ? 'Pregunta siguiente' : 'Next question'}<ArrowRight className="h-4 w-4"/></Button>
+    <Button className="ml-auto" variant="chunky" onClick={onFinish}>{resultLabel}</Button>
+  </div>
+  const reviewMap = reviewing ? <div className="col-span-full w-full rounded-xl border p-4" data-question-review-map>
+    <p className="mb-3 font-semibold">{es ? 'Revisar respuestas · Elige cualquier pregunta' : 'Review answers · Choose any question'}</p>
+    <div className="flex flex-wrap gap-2">{questions.map((question, i) => <button key={question.id} type="button"
+      aria-label={es ? `Revisar pregunta ${i+1}` : `Review question ${i+1}`} aria-current={index === i ? 'step' : undefined}
+      onClick={() => setIndex(i)} className={cn('rounded-lg border px-3 py-2 font-semibold', index === i && 'border-primary bg-primary text-primary-foreground')}>
+      {i+1} {state.graded[question.id] >= 1 ? '✓' : '×'}
+    </button>)}</div>
+    <p className="mt-3 text-sm text-muted-foreground">{es ? 'Esta revisión conserva tus respuestas y su evaluación.' : 'This review keeps your submitted answers and their evaluation.'}</p>
+  </div> : null
+  if (phase === 'choice') {
+    const choices = <div className="flex w-full flex-wrap items-center justify-end gap-3">
+      <Button variant="outline" onClick={() => { setIndex(0); setPhase('review') }}>{es ? 'Revisar respuestas' : 'Review answers'}</Button>
+      <Button variant="chunky" onClick={onFinish}>{resultLabel}<ArrowRight className="h-4 w-4"/></Button>
+    </div>
+    return <div className="mx-auto grid min-h-[240px] max-w-3xl content-center gap-4 p-8 text-center" data-quiz-before-results>
+      <h2 className="text-2xl font-bold">{es ? 'Has respondido todas las preguntas' : 'You have answered every question'}</h2>
+      <p>{es ? 'Puedes revisar tus respuestas o continuar para ver tu calificación.' : 'Review your answers, or continue to see your grade.'}</p>
+      {frame && !frame.noClaim ? <LessonAction>{choices}</LessonAction> : choices}
+    </div>
+  }
 
   if (frame && !frame.noClaim) {
     const outcome = isGraded ? outcomeOf(score) : null
@@ -111,6 +144,7 @@ export function FocusStage({
     const correct = outcome === 'bad' ? bannerCorrect(q) : null
     return (
       <div className={cn(styles.lessonFocus, wideInput && styles.lessonFocusWide)}>
+        {reviewMap}
         <div data-quiz-question key={`q-${q.id}`} className={cn(styles.lessonQ, styles.rise)}>
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
@@ -135,28 +169,29 @@ export function FocusStage({
         </div>
         <div data-quiz-answers key={`a-${q.id}`} className={cn(styles.lessonA, styles.rise)}>
           <QuestionInput question={q} answer={answer} isGraded={isGraded} onChange={(v) => engine.setAnswer(q.id, v)} />
+          {reviewing && <FeedbackBanner score={score} explanation={q.explanation} correctAnswer={bannerCorrect(q)} />}
         </div>
-        <LessonAction tone={outcome === 'ok' ? 'success' : outcome === 'bad' ? 'danger' : 'neutral'}>
-          {isGraded ? (
+        <LessonAction tone={reviewing ? 'neutral' : outcome === 'ok' ? 'success' : outcome === 'bad' ? 'danger' : 'neutral'}>
+          {reviewing ? reviewControls : isGraded ? (
             <ActionMessage live icon={<FeedbackIcon className="h-5 w-5" strokeWidth={3} />}
               title={feedbackTitle(t, score)}
               detail={[correct ? `${t('dashboard.classViewer.quiz.feedback.correctAnswer')} ${correct}` : null, q.explanation].filter(Boolean).join(' · ') || undefined} />
           ) : (
             <div className="lx-msg">
-              <Button variant="ghost" disabled={index === 0} onClick={() => setIndex(index - 1)} className="rounded-xl">
+              {!reviewBeforeResults && <Button variant="ghost" disabled={index === 0} onClick={() => setIndex(index - 1)} className="rounded-xl">
                 <ArrowLeft className="h-4 w-4" /> {t('dashboard.pages.modules.previous')}
-              </Button>
+              </Button>}
             </div>
           )}
-          {!isGraded ? (
+          {!reviewing && (!isGraded ? (
             <Button variant="chunky" data-primary="" disabled={!canCheck} onClick={check}>
               {t('dashboard.classViewer.quiz.checkAnswer')}
             </Button>
           ) : (
             <Button variant={outcome === 'ok' ? 'chunky-success' : outcome === 'bad' ? 'chunky-danger' : 'chunky'} data-primary="" onClick={next}>
-              {isLast ? t('dashboard.classViewer.quiz.seeResults') : t('dashboard.classViewer.quiz.continue')} <ArrowRight className="h-4 w-4" />
+              {isLast && !reviewBeforeResults ? t('dashboard.classViewer.quiz.seeResults') : t('dashboard.classViewer.quiz.continue')} <ArrowRight className="h-4 w-4" />
             </Button>
-          )}
+          ))}
         </LessonAction>
       </div>
     )
@@ -166,6 +201,7 @@ export function FocusStage({
 
   return (
     <div className={styles.focus}>
+      {reviewMap}
       <div className={cn(styles.stageHead, 'flex flex-wrap items-center justify-between gap-3')}>
         <div className="grid gap-0.5">
           <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{kindLabel}</span>
@@ -204,9 +240,10 @@ export function FocusStage({
           </div>
 
           <div className="relative mt-6 flex items-center justify-between gap-3">
-            <Button variant="ghost" disabled={index === 0} onClick={() => setIndex(index - 1)} className="rounded-xl">
+            {reviewing ? reviewControls : <>
+            {!reviewBeforeResults && <Button variant="ghost" disabled={index === 0} onClick={() => setIndex(index - 1)} className="rounded-xl">
               <ArrowLeft className="h-4 w-4" /> {t('dashboard.pages.modules.previous')}
-            </Button>
+            </Button>}
             <span className={cn(styles.hint, 'items-center gap-1.5 text-xs text-muted-foreground')}>
               {(q.question_type === 'multiple_choice' || q.question_type === 'audio_choice') && !isGraded && (
                 <>
@@ -224,15 +261,16 @@ export function FocusStage({
               </Button>
             ) : (
               <Button size="lg" variant={continueVariant} onClick={next} className="rounded-xl px-7">
-                {isLast ? t('dashboard.classViewer.quiz.seeResults') : t('dashboard.classViewer.quiz.continue')} <ArrowRight className="h-4 w-4" />
+                {isLast && !reviewBeforeResults ? t('dashboard.classViewer.quiz.seeResults') : t('dashboard.classViewer.quiz.continue')} <ArrowRight className="h-4 w-4" />
               </Button>
             )}
+            </>}
           </div>
         </div>
       </div>
 
       <aside className={styles.map}>
-        <QuestionMap questions={questions} graded={state.graded} current={index} onJump={setIndex} />
+        {!reviewBeforeResults && <QuestionMap questions={questions} graded={state.graded} current={index} onJump={setIndex} />}
       </aside>
     </div>
   )

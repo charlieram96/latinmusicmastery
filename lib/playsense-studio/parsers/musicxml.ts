@@ -10,7 +10,7 @@
 //   - parts → tracks. Each part becomes one Track in our model. Each staff is retained as a grouped track, with up to two voices per staff and measure (<backup>
 //     starts the second voice; <forward> becomes a rest in its voice).
 //   - notes: pitch (step + octave + alter), rest, type (whole/half/etc.),
-//     dots (single and double), tuplets (bracketed or counted from
+//     dots (single, double and triple), tuplets (bracketed or counted from
 //     time-modification), ties (<tie type="start">), written spelling and
 //     courtesy accidentals, chord (siblings of <chord/> are merged into the
 //     prior note).
@@ -22,7 +22,7 @@
 //     (turned into score.spans, referencing event ids, and may cross
 //     barlines).
 //
-// Out of scope for v1: lyrics, voltas. If a MusicXML file uses those, we
+// Out of scope for v1: lyrics, multi-measure voltas. If a MusicXML file uses those, we
 // still import what we understand and ignore the rest — the renderer
 // doesn't support those features yet anyway.
 
@@ -226,7 +226,8 @@ export function parseMusicXmlString(
 // ---------------------------------------------------------------------------
 
 async function extractMxl(data: ArrayBuffer): Promise<string> {
-  const zip = await JSZip.loadAsync(data);
+  // Normalize cross-realm buffers (uploads and embedded preview contexts).
+  const zip = await JSZip.loadAsync(new Uint8Array(data));
   // Read the manifest to find the main score file.
   const containerFile = zip.file('META-INF/container.xml');
   if (!containerFile) {
@@ -258,6 +259,7 @@ function parsePartMeasures(
 ): { measures: Measure[]; spans: Span[] } {
   const midiCtx: NoteMidiContext = { instrument, instrumentGm };
   let timeSignature: [number, number] = initialTimeSignature;
+  let senzaMisura = false;
   let divisions = 1; // ticks per quarter, set by <attributes><divisions>
   const measureEls = Array.from(part.querySelectorAll(':scope > measure')) as Element[];
   const out: Measure[] = [];
@@ -273,7 +275,8 @@ function parsePartMeasures(
     const attrEl = m.querySelector(':scope > attributes');
     if (attrEl) {
       const ts = readTimeSignature(m);
-      if (ts) timeSignature = ts;
+      if (ts) { timeSignature = ts; senzaMisura = false; }
+      if (attrEl.querySelector("time > senza-misura")) senzaMisura = true;
       const div = attrEl.querySelector('divisions')?.textContent;
       if (div) {
         const n = Number(div);
@@ -350,12 +353,14 @@ function parsePartMeasures(
       const isRest = noteEl.querySelector(':scope > rest') !== null;
       const durationQN = Number(noteEl.querySelector(':scope > duration')?.textContent ?? '0') / divisions;
       const typeEl = noteEl.querySelector(':scope > type')?.textContent?.trim();
-      const dots = Math.min(2, noteEl.querySelectorAll(':scope > dot').length) as 0 | 1 | 2;
+      const dotCount = noteEl.querySelectorAll(':scope > dot').length;
+      if (dotCount > 3) throw new Error('MusicXML: more than three augmentation dots are not supported');
+      const dots = dotCount as 0 | 1 | 2 | 3;
       const tmEl = noteEl.querySelector(':scope > time-modification');
       const actual = Number(tmEl?.querySelector('actual-notes')?.textContent ?? 0);
       const normal = Number(tmEl?.querySelector('normal-notes')?.textContent ?? 0);
       const inTuplet = actual > 1 && normal > 0;
-      const dotFactor = dots === 2 ? 1.75 : dots === 1 ? 1.5 : 1;
+      const dotFactor = 2 - 2 ** -dots;
       // Prefer <type> (reliable across engravings); fall back to the tick length,
       // which already includes dots and tuplet scaling.
       const finalDurationQN = typeEl && TYPE_TO_QN[typeEl] !== undefined
@@ -414,7 +419,7 @@ function parsePartMeasures(
       const rhythm = {
         durationQN: finalDurationQN,
         dotted: dots === 1,
-        ...(dots === 2 ? { dots: 2 as const } : {}),
+        ...(dots > 1 ? { dots: dots as 2 | 3 } : {}),
         ...(tuplet ? { tuplet } : {}),
         ...(tuplet && tuplet.n === 3 && tuplet.m === 2 ? { triplet: true } : {}),
       };
@@ -450,8 +455,20 @@ function parsePartMeasures(
     const voices: Voice[] = voiceIds.length
       ? voiceIds.map((id, i) => ({ number: i + 1, events: byVoice.get(id)! }))
       : [{ number: 1, events: [] }];
+    const rightBar = m.querySelector(':scope > barline[location="right"], :scope > barline:not([location])');
+    const barStyle = rightBar?.querySelector('bar-style')?.textContent;
+    const ending = m.querySelector(':scope > barline > ending[type="start"]')?.getAttribute('number');
     out.push({
       number: idx + 1,
+      ...(m.querySelector(':scope > barline > repeat[direction="forward"]') ? { repeatStart: true } : {}),
+      ...(m.querySelector(':scope > barline > repeat[direction="backward"]') ? { repeatEnd: true } : {}),
+      ...(ending === '1' || ending === '2' ? { volta: `${ending}.` as '1.' | '2.' } : {}),
+      ...(barStyle === 'light-heavy' ? { endBarline: 'final' as const }
+        : barStyle === 'light-light' ? { endBarline: 'double' as const }
+        : barStyle === 'regular' ? { endBarline: 'single' as const } : {}),
+      ...(senzaMisura ? { senzaMisura: true } : {}),
+      ...(m.getAttribute('implicit') === 'yes' && !senzaMisura && voices.some(v => v.events.length)
+        ? { durationQN: Math.max(...voices.map(v => v.events.reduce((sum, e) => sum + e.durationQN, 0))) } : {}),
       clef: readStaffClef(m, targetStaff),
       timeSignature: m === measureEls[0] ? undefined : readTimeSignature(m) ?? undefined,
       tempoChange: tempoChange ?? undefined,

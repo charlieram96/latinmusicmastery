@@ -1,0 +1,829 @@
+{
+  "classId": "local-solfeo-m03-c14",
+  "title": {
+    "es": "3.14 · Inversión e intervalos compuestos",
+    "en": "3.14 · Inversion and compound intervals"
+  },
+  "videoUrl": "/local-course-assets/solfeo/films/local-solfeo-m03-c14-sync-v3.mp4",
+  "posterUrl": "/local-course-assets/solfeo/films/local-solfeo-m03-c14.png",
+  "duration": 202.842646,
+  "sections": [
+    {
+      "id": "local-solfeo-m03-c14-section-2",
+      "label": "Do-Mi: tercera mayor · Mi-Do: sexta menor",
+      "videoStartSeconds": 28.85075,
+      "videoEndSeconds": 41.461861,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Do-Mi: tercera mayor · Mi-Do: sexta menor",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 100,
+        "initialTimeSignature": [
+          4,
+          4
+        ],
+        "initialKeyFifths": 0,
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "senzaMisura": true,
+                "clef": "treble",
+                "keyFifths": 0,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x051f031a-1",
+                        "midi": 60,
+                        "durationQN": 4,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x051f031a-2",
+                        "midi": 64,
+                        "durationQN": 4,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x051f031a-3",
+                        "midi": 64,
+                        "durationQN": 4,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x051f031a-4",
+                        "midi": 72,
+                        "durationQN": 4,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "senzaMisura": true,
+              "clef": "treble",
+              "keyFifths": 0,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x051f031a-1",
+                      "midi": 60,
+                      "durationQN": 4,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x051f031a-2",
+                      "midi": 64,
+                      "durationQN": 4,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x051f031a-3",
+                      "midi": 64,
+                      "durationQN": 4,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x051f031a-4",
+                      "midi": 72,
+                      "durationQN": 4,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m03-c14-section-2-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m03-c14-section-2-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 29.85075,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 32.250750000000004,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8,
+            "videoTimeSeconds": 34.65075,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 12,
+            "videoTimeSeconds": 37.05075,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 16,
+            "videoTimeSeconds": 39.45075,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 29.85075
+    },
+    {
+      "id": "local-solfeo-m03-c14-section-3",
+      "label": "Do-Fa sostenido: cuarta aumentada · Fa sostenido-Do: quinta disminuida",
+      "videoStartSeconds": 41.461861,
+      "videoEndSeconds": 54.072972,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Do-Fa sostenido: cuarta aumentada · Fa sostenido-Do: quinta disminuida",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 100,
+        "initialTimeSignature": [
+          4,
+          4
+        ],
+        "initialKeyFifths": 0,
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "senzaMisura": true,
+                "clef": "treble",
+                "keyFifths": 0,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x56f36a74-1",
+                        "midi": 60,
+                        "durationQN": 4,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x56f36a74-2",
+                        "midi": 66,
+                        "durationQN": 4,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x56f36a74-3",
+                        "midi": 66,
+                        "durationQN": 4,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x56f36a74-4",
+                        "midi": 72,
+                        "durationQN": 4,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "senzaMisura": true,
+              "clef": "treble",
+              "keyFifths": 0,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x56f36a74-1",
+                      "midi": 60,
+                      "durationQN": 4,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x56f36a74-2",
+                      "midi": 66,
+                      "durationQN": 4,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x56f36a74-3",
+                      "midi": 66,
+                      "durationQN": 4,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x56f36a74-4",
+                      "midi": 72,
+                      "durationQN": 4,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m03-c14-section-3-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m03-c14-section-3-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 42.461861,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 44.861861,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8,
+            "videoTimeSeconds": 47.261860999999996,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 12,
+            "videoTimeSeconds": 49.661861,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 16,
+            "videoTimeSeconds": 52.061861,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 42.461861
+    },
+    {
+      "id": "local-solfeo-m03-c14-section-8",
+      "label": "Novena mayor",
+      "videoStartSeconds": 136.599089,
+      "videoEndSeconds": 148.599089,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Novena mayor",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 96,
+        "initialTimeSignature": [
+          4,
+          4
+        ],
+        "initialKeyFifths": 0,
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "clef": "treble",
+                "keyFifths": 0,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "id": "x8d21a49a-1",
+                        "durationQN": 4,
+                        "dotted": false,
+                        "kind": "chord",
+                        "notes": [
+                          {
+                            "midi": 60,
+                            "spelling": {
+                              "step": "C",
+                              "alter": 0
+                            }
+                          },
+                          {
+                            "midi": 74,
+                            "spelling": {
+                              "step": "D",
+                              "alter": 0
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "clef": "treble",
+              "keyFifths": 0,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "id": "x8d21a49a-1",
+                      "durationQN": 4,
+                      "dotted": false,
+                      "kind": "chord",
+                      "notes": [
+                        {
+                          "midi": 60,
+                          "spelling": {
+                            "step": "C",
+                            "alter": 0
+                          }
+                        },
+                        {
+                          "midi": 74,
+                          "spelling": {
+                            "step": "D",
+                            "alter": 0
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m03-c14-section-8-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m03-c14-section-8-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 137.599089,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 140.099089,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 137.599089
+    },
+    {
+      "id": "local-solfeo-m03-c14-section-10",
+      "label": "Décima menor",
+      "videoStartSeconds": 160.599089,
+      "videoEndSeconds": 172.599089,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Décima menor",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 96,
+        "initialTimeSignature": [
+          4,
+          4
+        ],
+        "initialKeyFifths": 0,
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "clef": "treble",
+                "keyFifths": 0,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "id": "x07964a15-1",
+                        "durationQN": 4,
+                        "dotted": false,
+                        "kind": "chord",
+                        "notes": [
+                          {
+                            "midi": 60,
+                            "spelling": {
+                              "step": "C",
+                              "alter": 0
+                            }
+                          },
+                          {
+                            "midi": 75,
+                            "spelling": {
+                              "step": "E",
+                              "alter": -1
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "clef": "treble",
+              "keyFifths": 0,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "id": "x07964a15-1",
+                      "durationQN": 4,
+                      "dotted": false,
+                      "kind": "chord",
+                      "notes": [
+                        {
+                          "midi": 60,
+                          "spelling": {
+                            "step": "C",
+                            "alter": 0
+                          }
+                        },
+                        {
+                          "midi": 75,
+                          "spelling": {
+                            "step": "E",
+                            "alter": -1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m03-c14-section-10-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m03-c14-section-10-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 161.599089,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 164.099089,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 161.599089
+    }
+  ],
+  "questions": [
+    {
+      "id": "local-solfeo-m03-c14-exercise-q1",
+      "class_item_id": "local-solfeo-m03-c14-exercise",
+      "order_index": 0,
+      "question": "Al invertir una tercera, ¿qué intervalo resulta?",
+      "question_es": "Al invertir una tercera, ¿qué intervalo resulta?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Una cuarta"
+          },
+          {
+            "id": "choice-1",
+            "text": "Una sexta"
+          },
+          {
+            "id": "choice-2",
+            "text": "Una quinta"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-1",
+      "explanation": "La respuesta es Una sexta.",
+      "explanation_es": "La respuesta es Una sexta.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m03-c14-exercise-q2",
+      "class_item_id": "local-solfeo-m03-c14-exercise",
+      "order_index": 1,
+      "question": "Al invertir un intervalo mayor simple, ¿qué cualidad resulta?",
+      "question_es": "Al invertir un intervalo mayor simple, ¿qué cualidad resulta?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Menor"
+          },
+          {
+            "id": "choice-1",
+            "text": "Mayor"
+          },
+          {
+            "id": "choice-2",
+            "text": "Justa"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-0",
+      "explanation": "La respuesta es Menor.",
+      "explanation_es": "La respuesta es Menor.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m03-c14-exercise-q3",
+      "class_item_id": "local-solfeo-m03-c14-exercise",
+      "order_index": 2,
+      "question": "En la notación alfabética, ¿cómo se lee C4?",
+      "question_es": "En la notación alfabética, ¿cómo se lee C4?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Sol 5"
+          },
+          {
+            "id": "choice-1",
+            "text": "Do 4"
+          },
+          {
+            "id": "choice-2",
+            "text": "Fa sostenido 4"
+          },
+          {
+            "id": "choice-3",
+            "text": "Si doble bemol 4"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-1",
+      "explanation": "La respuesta es Do 4.",
+      "explanation_es": "La respuesta es Do 4.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m03-c14-exercise-q4",
+      "class_item_id": "local-solfeo-m03-c14-exercise",
+      "order_index": 3,
+      "question": "¿Cuántos semitonos separan Do 4 y Mi 4?",
+      "question_es": "¿Cuántos semitonos separan Do 4 y Mi 4?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "6"
+          },
+          {
+            "id": "choice-1",
+            "text": "4"
+          },
+          {
+            "id": "choice-2",
+            "text": "5"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-1",
+      "explanation": "Se compara la altura sonora de ambas notas, conservando su escritura.",
+      "explanation_es": "Se compara la altura sonora de ambas notas, conservando su escritura.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    }
+  ],
+  "nextHref": "/solfeo-preview?class=local-solfeo-m03-c15",
+  "metronome": {
+    "trimInSeconds": 0,
+    "trimOutSeconds": null,
+    "bpm": 100,
+    "anchorSeconds": null,
+    "segments": [
+      {
+        "from": 149.599089,
+        "to": 150.79908899999998,
+        "bpm": 100
+      },
+      {
+        "from": 173.599089,
+        "to": 174.79908899999998,
+        "bpm": 100
+      }
+    ]
+  }
+}

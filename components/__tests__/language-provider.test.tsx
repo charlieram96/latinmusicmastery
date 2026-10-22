@@ -15,6 +15,7 @@ it('refreshes immediately despite a pending profile request and follows the serv
     act(() => root.render(<LanguageProvider initialLocale="en"><Control /></LanguageProvider>))
     act(() => host.querySelector('button')!.click())
     expect(refresh).toHaveBeenCalledOnce()
+    expect(host.textContent).toBe('es')
     expect(document.cookie).toContain('preferred_language=es')
     act(() => root.render(<LanguageProvider initialLocale="es"><Control /></LanguageProvider>))
     expect(host.textContent).toBe('es')

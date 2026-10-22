@@ -71,7 +71,7 @@ export interface BackingLanesProps {
   isPlaying: boolean;
   onSelect: (trackId: string) => void;
   /** Live during a drag — the parent holds the clip state. */
-  onClipChange: (trackId: string, next: Clip) => void;
+  onClipChange: (trackId: string, next: Clip, part?: ClipDragPart) => void;
   /** Pointer released. `moved` distinguishes a real drag from a plain click,
    *  which matters for both persistence and re-cueing the mixer. */
   onClipCommit: (trackId: string, part: ClipDragPart, moved: boolean) => void;
@@ -374,11 +374,11 @@ export function BackingLanes(props: BackingLanesProps) {
       const timeline = xToTime(localX(e));
       const t = clip.warp?.toMedia(timeline) ?? timeline;
       if (mode === 'move') {
-        onClipChangeRef.current(clip.trackId, moveClip(clip, bounds, clip.warp?.toMedia(maybeSnap(clip.warp.toTimeline(t - grabOffsetSeconds), e.shiftKey)) ?? maybeSnap(t - grabOffsetSeconds, e.shiftKey)));
+        onClipChangeRef.current(clip.trackId, moveClip(clip, bounds, clip.warp?.toMedia(maybeSnap(clip.warp.toTimeline(t - grabOffsetSeconds), e.shiftKey)) ?? maybeSnap(t - grabOffsetSeconds, e.shiftKey)), 'body');
       } else if (mode === 'trim-in') {
-        onClipChangeRef.current(clip.trackId, trimClipIn(clip, bounds, clip.warp?.toMedia(maybeSnap(timeline, e.shiftKey)) ?? maybeSnap(t, e.shiftKey)));
+        onClipChangeRef.current(clip.trackId, trimClipIn(clip, bounds, clip.warp?.toMedia(maybeSnap(timeline, e.shiftKey)) ?? maybeSnap(t, e.shiftKey)), 'in');
       } else if (mode === 'trim-out') {
-        onClipChangeRef.current(clip.trackId, trimClipOut(clip, bounds, clip.warp?.toMedia(maybeSnap(timeline, e.shiftKey)) ?? maybeSnap(t, e.shiftKey)));
+        onClipChangeRef.current(clip.trackId, trimClipOut(clip, bounds, clip.warp?.toMedia(maybeSnap(timeline, e.shiftKey)) ?? maybeSnap(t, e.shiftKey)), 'out');
       }
     };
 

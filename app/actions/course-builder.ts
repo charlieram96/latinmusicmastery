@@ -1,5 +1,9 @@
 'use server'
 
+import { applyLocalTimbalIntro } from '@/lib/courses/local-timbal-intro'
+
+import { usesLocalSolfeo, readLocalSolfeo, editLocalSolfeo, newLocalSolfeoId, localSection, localClass, localItem, orderLocal } from '@/lib/courses/local-solfeo-draft'
+import type { ClassItem } from '@/types/modules'
 import type { Database } from '@/types/database';
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
@@ -29,6 +33,7 @@ export interface CourseSettingsPatch {
 }
 
 export async function updateCourseSettings(courseId: string, patch: CourseSettingsPatch) {
+  if (await usesLocalSolfeo(courseId)) return { error: 'Este borrador es local. En esta etapa solo se editan nombres y orden; no se publica el curso.' }
   const supabase = await createClient()
 
   const { data: current, error: fetchError } = await supabase
@@ -191,6 +196,10 @@ export async function createSection(
   description?: string,
   es?: SectionTextPatch
 ) {
+  if (await usesLocalSolfeo(courseId)) return editLocalSolfeo(sections => {
+    const data = { id: newLocalSolfeoId(), course_id: courseId, title, description: description || null, title_es: es?.title_es ?? null, description_es: es?.description_es ?? null, order_index: sections.length, created_at: null, updated_at: null, classes: [] }
+    sections.push(data); return { data }
+  })
   const supabase = await createClient()
 
   const { data: existing } = await supabase
@@ -227,6 +236,10 @@ export async function updateSection(
   description?: string,
   es?: SectionTextPatch
 ) {
+  if (await usesLocalSolfeo(sectionId)) return editLocalSolfeo(sections => {
+    const data = localSection(sections, sectionId)
+    Object.assign(data, { title, description: description || null, ...es }); return { data }
+  })
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -248,6 +261,7 @@ export async function updateSection(
 }
 
 export async function deleteSection(sectionId: string) {
+  if (await usesLocalSolfeo(sectionId)) return editLocalSolfeo(sections => { const index = sections.indexOf(localSection(sections, sectionId)); sections.splice(index, 1); return { success: true } })
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -262,6 +276,7 @@ export async function deleteSection(sectionId: string) {
 }
 
 export async function reorderSections(courseId: string, sectionIds: string[]) {
+  if (await usesLocalSolfeo(courseId)) return editLocalSolfeo(sections => { orderLocal(sections, sectionIds); return { success: true } })
   const supabase = await createClient()
 
   const updates = sectionIds.map((id, index) =>
@@ -287,6 +302,11 @@ export async function createClass(
   description?: string,
   es?: { title_es?: string | null; description_es?: string | null }
 ) {
+  if (await usesLocalSolfeo(sectionId)) return editLocalSolfeo(sections => {
+    const parent = localSection(sections, sectionId)
+    const data = { id: newLocalSolfeoId(), section_id: sectionId, title, description: description || null, title_es: es?.title_es ?? null, description_es: es?.description_es ?? null, order_index: parent.classes.length, is_free: false, created_at: null, updated_at: null, items: [] }
+    parent.classes.push(data); return { data }
+  })
   const supabase = await createClient()
 
   const { data: existing } = await supabase
@@ -327,6 +347,7 @@ export async function updateClass(
     description_es?: string | null
   }
 ) {
+  if (await usesLocalSolfeo(classId)) return editLocalSolfeo(sections => { const data = localClass(sections, classId); Object.assign(data, updates); return { data } })
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -349,6 +370,7 @@ export async function updateClass(
 }
 
 export async function deleteClass(classId: string) {
+  if (await usesLocalSolfeo(classId)) return editLocalSolfeo(sections => { const cls = localClass(sections, classId); const parent = localSection(sections, cls.section_id); parent.classes.splice(parent.classes.indexOf(cls), 1); return { success: true } })
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -363,6 +385,7 @@ export async function deleteClass(classId: string) {
 }
 
 export async function reorderClasses(sectionId: string, classIds: string[]) {
+  if (await usesLocalSolfeo(sectionId)) return editLocalSolfeo(sections => { orderLocal(localSection(sections, sectionId).classes, classIds); return { success: true } })
   const supabase = await createClient()
 
   const updates = classIds.map((id, index) =>
@@ -383,6 +406,12 @@ export async function reorderClasses(sectionId: string, classIds: string[]) {
 // ============================================
 
 export async function createClassItem(classId: string, itemType: string, title: string) {
+  if (await usesLocalSolfeo(classId)) return editLocalSolfeo(sections => {
+    if (!['VIDEO','EXERCISE','QUIZ','JAM_SESSION'].includes(itemType)) throw new Error('Unknown class item type')
+    const parent = localClass(sections, classId)
+    const data: ClassItem = { id: newLocalSolfeoId(), class_id: classId, item_type: itemType, title, title_es: null, description: null, description_es: null, order_index: parent.items.length, rich_content: null, video_url: null, video_duration_seconds: null, soundslice_embed_url: null, subtitles: [], question: null, question_type: null, options: null, correct_answer: null, explanation: null, audio_url: null, bpm: null, key_signature: null, created_at: null, updated_at: null }
+    parent.items.push(data); return { data }
+  })
   const supabase = await createClient()
 
   const { data: existing } = await supabase
@@ -412,6 +441,15 @@ export async function createClassItem(classId: string, itemType: string, title: 
 }
 
 export async function updateClassItem(itemId: string, updates: Record<string, unknown>) {
+  if (await usesLocalSolfeo(itemId)) return editLocalSolfeo(sections => {
+    const data = localItem(sections, itemId)
+    const allowed = ['title','title_es','description','description_es','rich_content','video_url','video_duration_seconds','subtitles','soundslice_embed_url','audio_url','bpm','key_signature','quiz_settings']
+    if (Object.keys(updates).some(key => !allowed.includes(key))) throw new Error('Unsupported local class item field')
+    if (updates.audio_url && (typeof updates.audio_url !== 'string' || !updates.audio_url.startsWith('/local-course-assets/'))) throw new Error('Use local audio')
+    if (updates.video_url && (typeof updates.video_url !== 'string' || !updates.video_url.startsWith('/local-course-assets/'))) throw new Error('Use a local video')
+    if (updates.subtitles && (!Array.isArray(updates.subtitles) || updates.subtitles.some(t => !t.src?.startsWith('/local-course-assets/')))) throw new Error('Use local subtitles')
+    Object.assign(data, updates); return { data }
+  })
   const supabase = await createClient()
 
   // Remove undefined values
@@ -444,6 +482,7 @@ export async function updateClassItem(itemId: string, updates: Record<string, un
 }
 
 export async function deleteClassItem(itemId: string) {
+  if (await usesLocalSolfeo(itemId)) return editLocalSolfeo(sections => { const item = localItem(sections, itemId); const parent = localClass(sections, item.class_id); parent.items.splice(parent.items.indexOf(item), 1); return { success: true } })
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -458,6 +497,7 @@ export async function deleteClassItem(itemId: string) {
 }
 
 export async function reorderClassItems(classId: string, itemIds: string[]) {
+  if (await usesLocalSolfeo(classId)) return editLocalSolfeo(sections => { orderLocal(localClass(sections, classId).items, itemIds); return { success: true } })
   const supabase = await createClient()
 
   const updates = itemIds.map((id, index) =>
@@ -478,6 +518,7 @@ export async function reorderClassItems(classId: string, itemIds: string[]) {
 // ============================================
 
 export async function getCourseStructure(courseId: string) {
+  if (await usesLocalSolfeo(courseId)) return { data: (await readLocalSolfeo()).sections }
   const supabase = await createClient()
 
   const { data: sections, error } = await supabase
@@ -493,6 +534,8 @@ export async function getCourseStructure(courseId: string) {
     .order('order_index')
 
   if (error) return { error: error.message }
+
+  await applyLocalTimbalIntro(sections)
 
   // Sort nested arrays by order_index
   const sorted = sections?.map(section => ({

@@ -54,6 +54,21 @@ function relativeTimes(clicks: { time: number; downbeat: boolean }[], origin: nu
 }
 
 describe('useMetronome with a grid', () => {
+  it('shifts the student click phase without shifting the exercise clock', () => {
+    vi.useFakeTimers()
+    const grid:ExerciseGrid={measureStartSec:[0,2],measureStartQN:[0,4],secPerQN:[.5],beatQN:[1]}
+    const {result}=renderHook(()=>useMetronome({bpm:120,timeSignature:[4,4],grid,silent:false,offsetSeconds:.125}))
+    const {ctx,clicks}=fakeAudioContext()
+    let start=0
+    act(()=>{start=result.current.startMetronome(ctx)})
+    expect(start).toBeCloseTo(2.05)
+    clicks.length=0
+    ;(ctx as unknown as {currentTime:number}).currentTime=start+1.7
+    act(()=>vi.advanceTimersByTime(30))
+    expect(relativeTimes(clicks,start)).toEqual([.125,.625,1.125,1.625])
+    act(()=>result.current.stopMetronome())
+  })
+
   it('schedules a 2-bar count-in from gridCountIn, then exercise clicks from gridBeats', () => {
     vi.useFakeTimers()
     const { result } = renderHook(() =>
@@ -102,3 +117,41 @@ it('seeks directly into a grid without replaying earlier clicks or a count-in', 
   expect(clicks[0].time).toBeCloseTo(.05)
   act(() => result.current.stopMetronome())
 })
+
+it('plays each confirmed start exactly, keeps count-in separate, and seeks without restarting the phase',()=>{
+  vi.useFakeTimers()
+  const anchors=[{id:'a',seconds:.125},{id:'b',seconds:1.375}]
+  const grid:ExerciseGrid={measureStartSec:[0,2],measureStartQN:[0,4],secPerQN:[.5],beatQN:[1]}
+  const {result}=renderHook(()=>useMetronome({bpm:120,timeSignature:[4,4],grid,silent:false,clickAnchors:anchors,durationSeconds:2}))
+  const {ctx,clicks}=fakeAudioContext()
+  let start=0
+  act(()=>{start=result.current.startMetronome(ctx)})
+  expect(clicks.filter(c=>c.time<start)).toHaveLength(4)
+  clicks.length=0
+  ;(ctx as unknown as {currentTime:number}).currentTime=start+1.95
+  act(()=>vi.advanceTimersByTime(30))
+  expect(relativeTimes(clicks,start)).toEqual([.125,.625,1.125,1.375,1.875])
+  expect(relativeTimes(clicks.filter(c=>c.downbeat),start)).toEqual([.125,1.375])
+  act(()=>result.current.stopMetronome())
+  clicks.length=0
+  act(()=>{start=result.current.startMetronome(ctx,1.4)})
+  ;(ctx as unknown as {currentTime:number}).currentTime=start+1.95
+  act(()=>vi.advanceTimersByTime(30))
+  expect(relativeTimes(clicks,start)).toEqual([1.875])
+  act(()=>result.current.stopMetronome())
+})
+
+it('stops at final bars until the next anchor while preserving the manual mute switch',()=>{
+ vi.useFakeTimers();
+ const {result}=renderHook(()=>useMetronome({bpm:120,timeSignature:[4,4],grid:GRID,silent:false,clickAnchors:[{id:'a',seconds:0},{id:'b',seconds:3}],clickStopSeconds:[1,4],durationSeconds:6}));
+ const {ctx,clicks}=fakeAudioContext();let start=0;
+ act(()=>{start=result.current.startMetronome(ctx)});clicks.length=0;
+ ;(ctx as unknown as {currentTime:number}).currentTime=start+5;
+ act(()=>vi.advanceTimersByTime(30));
+ expect(relativeTimes(clicks,start)).toEqual([0,.5,3,3.5]);
+ act(()=>result.current.stopMetronome());
+ clicks.length=0;act(()=>{result.current.setSilent(true);start=result.current.startMetronome(ctx,0)});
+ ;(ctx as unknown as {currentTime:number}).currentTime=start+.6;
+ act(()=>vi.advanceTimersByTime(30));expect(clicks).toHaveLength(0);
+ act(()=>result.current.stopMetronome());
+});

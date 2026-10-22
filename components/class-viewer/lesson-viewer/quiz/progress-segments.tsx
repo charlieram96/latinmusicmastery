@@ -23,7 +23,7 @@ export function ProgressSegments({
           return (
             <div key={q.id} className="h-1.5 flex-1 overflow-hidden rounded-full bg-foreground/10">
               <div
-                className={cn('h-full origin-left rounded-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]', fill)}
+                className={cn('h-full origin-left rounded-full transition-transform duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]', fill)}
                 style={{ transform: fill ? 'scaleX(1)' : 'scaleX(0)' }}
               />
             </div>

@@ -27,6 +27,7 @@ export function HoverRail({ sections }: { sections: RailSection[] }) {
   const st = useStudioText();
   const [open, setOpen] = useState(false);
   const railRef = useRef<HTMLElement | null>(null);
+  const pointerInside = useRef(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cancelClose = () => {
@@ -49,12 +50,31 @@ export function HoverRail({ sections }: { sections: RailSection[] }) {
     cancelClose();
     closeTimer.current = setTimeout(() => {
       closeTimer.current = null;
+      if (pointerInside.current) return;
       // Typing in a rail field keeps it open after the pointer leaves.
       const active = document.activeElement;
       if (active && railRef.current?.contains(active) && !(active instanceof HTMLButtonElement)) return;
       setOpen(false);
     }, RAIL_CLOSE_DELAY_MS);
   };
+  // Native boundary events follow the actual panel DOM, including fields
+  // rendered into its portal slots. React mouseleave follows the component
+  // tree and can report a false exit when entering those portalled controls.
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const enter = () => { pointerInside.current = true; openNow(); };
+    const leave = () => { pointerInside.current = false; scheduleClose(); };
+    rail.addEventListener('mouseenter', enter);
+    rail.addEventListener('mouseleave', leave);
+    return () => {
+      rail.removeEventListener('mouseenter', enter);
+      rail.removeEventListener('mouseleave', leave);
+    };
+    // Handlers use refs and the stable state setter, not captured open state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const goTo = (id: string) => {
     openNow();
     document.getElementById(`st-rail-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -79,8 +99,6 @@ export function HoverRail({ sections }: { sections: RailSection[] }) {
       className={cn('st-hrail', open && 'is-open')}
       aria-label={st("Studio panels")}
       onKeyDown={e => { if(e.key==='Escape'){ e.stopPropagation(); closeNow(); } }}
-      onMouseEnter={openNow}
-      onMouseLeave={scheduleClose}
       onFocus={openNow}
       onBlur={(e) => {
         if (!railRef.current?.contains(e.relatedTarget as Node | null)) scheduleClose();

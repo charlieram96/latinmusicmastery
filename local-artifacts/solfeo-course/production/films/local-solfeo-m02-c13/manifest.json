@@ -1,0 +1,1650 @@
+{
+  "classId": "local-solfeo-m02-c13",
+  "duration": 247.582737,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Fórmulas melódicas y reducción proporcional",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 17.166667,
+      "kind": "explanation",
+      "title": "Fórmulas melódicas y reducción proporcional",
+      "sourceTopic": "formula-melodica-4",
+      "soundEvents": []
+    },
+    {
+      "start": 17.166667,
+      "end": 56.166667000000004,
+      "kind": "notation",
+      "title": "Do mayor · ascenso y descenso",
+      "sourceTopic": "formula-melodica-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Do mayor · ascenso y descenso",
+            "events": [
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "D4",
+                "dur": 1
+              },
+              {
+                "pitch": "E4",
+                "dur": 1
+              },
+              {
+                "pitch": "F4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "A4",
+                "dur": 1
+              },
+              {
+                "pitch": "B4",
+                "dur": 1
+              },
+              {
+                "pitch": "C5",
+                "dur": 1
+              },
+              {
+                "pitch": "B4",
+                "dur": 1
+              },
+              {
+                "pitch": "A4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "F4",
+                "dur": 1
+              },
+              {
+                "pitch": "E4",
+                "dur": 1
+              },
+              {
+                "pitch": "D4",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "formula-melodica-4",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-35"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 20.2,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 22.599999999999998,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 24.999999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 27.399999999999995,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 29.799999999999994,
+          "duration": 2.208000000000002,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 32.199999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 34.599999999999994,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 56.166667000000004,
+      "end": 69.166667,
+      "kind": "notation",
+      "title": "Frase medida · lectura y eco",
+      "sourceTopic": "formula-melodica-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Frase medida · lectura y eco",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "formula-melodica-4",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-35"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.75,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 5.375,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 6,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 2
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 6.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 2
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 7.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 2
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 7.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 8.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 3
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 9.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 9.75,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 3
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 10.375,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 69.166667,
+      "end": 82.166667,
+      "kind": "explanation",
+      "title": "Fórmulas melódicas y reducción proporcional",
+      "sourceTopic": "formula-melodica-4",
+      "soundEvents": []
+    },
+    {
+      "start": 82.166667,
+      "end": 93.33333400000001,
+      "kind": "explanation",
+      "title": "Fórmulas melódicas y reducción proporcional",
+      "sourceTopic": "formula-melodica-3",
+      "soundEvents": []
+    },
+    {
+      "start": 93.33333400000001,
+      "end": 132.333334,
+      "kind": "notation",
+      "title": "Do mayor · ascenso y descenso",
+      "sourceTopic": "formula-melodica-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Do mayor · ascenso y descenso",
+            "events": [
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "D4",
+                "dur": 1
+              },
+              {
+                "pitch": "E4",
+                "dur": 1
+              },
+              {
+                "pitch": "F4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "A4",
+                "dur": 1
+              },
+              {
+                "pitch": "B4",
+                "dur": 1
+              },
+              {
+                "pitch": "C5",
+                "dur": 1
+              },
+              {
+                "pitch": "B4",
+                "dur": 1
+              },
+              {
+                "pitch": "A4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "F4",
+                "dur": 1
+              },
+              {
+                "pitch": "E4",
+                "dur": 1
+              },
+              {
+                "pitch": "D4",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "formula-melodica-3",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-36"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 20.2,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 22.599999999999998,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 24.999999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 27.399999999999995,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 29.799999999999994,
+          "duration": 2.208000000000002,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 32.199999999999996,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 34.599999999999994,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 132.333334,
+      "end": 144.333334,
+      "kind": "notation",
+      "title": "Frase medida · lectura y eco",
+      "sourceTopic": "formula-melodica-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Frase medida · lectura y eco",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "formula-melodica-3",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-36"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.75,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5.375,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 6,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 2
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 6.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 7.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 3
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 7.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 144.333334,
+      "end": 157.333334,
+      "kind": "explanation",
+      "title": "Fórmulas melódicas y reducción proporcional",
+      "sourceTopic": "formula-melodica-3",
+      "soundEvents": []
+    },
+    {
+      "start": 157.333334,
+      "end": 175.116959,
+      "kind": "explanation",
+      "title": "Fórmulas melódicas y reducción proporcional",
+      "sourceTopic": "reduccion-proporcional",
+      "soundEvents": []
+    },
+    {
+      "start": 175.116959,
+      "end": 188.116959,
+      "kind": "notation",
+      "title": "Original · compases 1-4",
+      "sourceTopic": "reduccion-proporcional",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Original · compases 1-4",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                },
+                {
+                  "rest": true,
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "reduccion-proporcional",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-14"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 6,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 6.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 7.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 8.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 188.116959,
+      "end": 200.116959,
+      "kind": "notation",
+      "title": "Reducción proporcional · mismos sonidos y relaciones",
+      "sourceTopic": "reduccion-proporcional",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Reducción proporcional · mismos sonidos y relaciones",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "rest": true,
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "beams": [
+              [
+                1,
+                2
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "reduccion-proporcional",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-14"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.5,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.8125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.75,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 200.116959,
+      "end": 213.116959,
+      "kind": "notation",
+      "title": "Original · compases 5-8",
+      "sourceTopic": "reduccion-proporcional",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Original · compases 5-8",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "A4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 1
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "reduccion-proporcional",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-14"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 6,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 6.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 7.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 8.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 213.116959,
+      "end": 225.116959,
+      "kind": "notation",
+      "title": "Reducción proporcional · mismos sonidos y relaciones",
+      "sourceTopic": "reduccion-proporcional",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Reducción proporcional · mismos sonidos y relaciones",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                }
+              ],
+              [
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "beams": [
+              [
+                1,
+                2
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "reduccion-proporcional",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-14"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.5,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.8125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 225.116959,
+      "end": 241.561403,
+      "kind": "explanation",
+      "title": "Fórmulas melódicas y reducción proporcional",
+      "sourceTopic": "reduccion-proporcional",
+      "soundEvents": []
+    },
+    {
+      "start": 241.561403,
+      "end": 247.561403,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

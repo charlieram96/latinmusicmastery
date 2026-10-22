@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '@/components/language-provider'
+import { useLearningMode } from '@/components/learning-mode/store'
+import { TimbalAssemblyStage } from '@/components/learning-mode/timbal-assembly-stage'
 import { cn } from '@/lib/utils'
 import { FALLBACK_ASPECT, type Background } from '@/lib/quiz/composition'
 import { isPieceCorrect, type PiecePlacement, type PlacementPiece } from '@/lib/quiz/grading'
@@ -26,10 +28,11 @@ function PieceImage({ piece, label, fit = false, className }: { piece: Placement
 }
 
 /** Color fill plus positioned image layers. Shared with the admin canvas. */
-export function CompositionBackground({ background }: { background: Background }) {
+export function CompositionBackground({ background, musicStage = false, transparent = false }: { background: Background; musicStage?: boolean; transparent?: boolean }) {
   return (
     <>
-      <div className="absolute inset-0" style={{ background: background.color }} />
+      {!transparent && <div className="absolute inset-0" style={{ background: background.color }} />}
+      {musicStage && <TimbalAssemblyStage/>}
       {background.layers.map((l) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -149,6 +152,7 @@ export function PiecePlacementInput({
   maxHeight?: string
 }) {
   const { t, locale } = useTranslation()
+  const learningMode = useLearningMode()
   const [soundEnabled, setSoundEnabled] = useState(false)
   const [soundError, setSoundError] = useState(false)
   const [soundsLoading, setSoundsLoading] = useState(true)
@@ -156,6 +160,7 @@ export function PiecePlacementInput({
   const soundBuffers = useRef(new Map<string, AudioBuffer>())
   const playingSounds = useRef(new Set<AudioBufferSourceNode>())
   const soundAvailable = pieces.some(piece => timbalSoundKind(piece.label ?? '') !== null)
+  const kidsStage = learningMode === 'kids' && soundAvailable
   const stopSounds = () => {
     for (const source of playingSounds.current) { source.stop(); source.disconnect() }
     playingSounds.current.clear()
@@ -480,7 +485,8 @@ export function PiecePlacementInput({
   return (
     <div className={styles.ppRoot}>
       <div className={cn(styles.pp, soundAvailable && styles.ppWithSound)}>
-        <div className={styles.stageWrap}>
+        <div className={cn(styles.stageWrap, kidsStage && styles.kidsStageWrap)}>
+          {kidsStage && <TimbalAssemblyStage/>}
           <div
             ref={stageRef}
             tabIndex={0}
@@ -492,7 +498,7 @@ export function PiecePlacementInput({
             className={cn(styles.stage, 'ring-1 ring-inset ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold', drag?.live && drag.overStage && styles.stageOver, armed && !isGraded && styles.stageArmed)}
             style={stageStyle}
           >
-            <CompositionBackground background={background} />
+            <CompositionBackground background={background} transparent={kidsStage} />
       {soundAvailable && <div data-sound-controls className="absolute bottom-3 left-1/2 z-[60] flex -translate-x-1/2 flex-col items-center gap-1" onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
         <button type="button" title={locale === 'es' ? 'Toca las piezas colocadas. Desactiva para seguir armando.' : 'Tap placed pieces. Turn off to keep assembling.'} aria-pressed={soundEnabled} disabled={soundsLoading} onClick={() => void toggleSound()} className={cn('inline-flex items-center gap-2 whitespace-nowrap rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors', soundEnabled ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary')}>
           {soundEnabled ? <Volume2 aria-hidden className="h-4 w-4" /> : <VolumeX aria-hidden className="h-4 w-4" />}

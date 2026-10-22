@@ -1,3 +1,5 @@
+import { kidsEnabled, readKidsOutline } from '@/lib/solfeo-kids/local-course'
+import { localSolfeoThumbnail } from '@/lib/courses/local-solfeo-draft'
 import { getCourseInstrumentOptions } from '@/lib/courses/instrument-options'
 import { localizeCourse } from '@/lib/i18n/localize'
 import { courseInstrumentClassifications, matchesCourseInstrument } from '@/lib/courses/instrument-classification'
@@ -53,7 +55,11 @@ export default async function CoursesPage({ searchParams }: PageProps) {
   ])
   if (coursesError) throw coursesError
   if (countsError) throw countsError
-  for (const course of courseRows ?? []) localizeCourse(course, locale)
+  for (const course of courseRows ?? []) {
+    localizeCourse(course, locale)
+    course.thumbnail_url = await localSolfeoThumbnail(course.id, course.thumbnail_url)
+  }
+  const kids = await kidsEnabled() ? await readKidsOutline() : null
   const search = params.q?.trim().toLocaleLowerCase(locale)
   const courses = courseRows?.filter((course) =>
     (!params.instrument || matchesCourseInstrument(course.instrument, params.instrument, courseInstruments)) &&
@@ -101,6 +107,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
         <AdminSearch placeholder="Search courses..." />
       </div>
 
+      {kids && !params.style && (!params.instrument || params.instrument === 'Theoretical') && (!search || (locale==='es'?kids.title_es:kids.title).toLowerCase().includes(search)) && <Card className="mb-6 border-primary/30"><CardHeader><CardTitle>{locale==='es'?'Solfeo Aplicado':'Applied Solfege'}</CardTitle><p className="text-sm text-muted-foreground">{locale==='es'?'Local · 12 módulos · 149 clases · Curso híbrido · Clásico e infantil':'Local · 12 modules · 149 lessons · Hybrid course · Classic and kids'}</p></CardHeader><CardContent className="flex gap-4"><Button asChild><Link href="/admin/courses/solfeo-aplicado">{locale==='es'?'Vista de autor local':'Local author preview'}</Link></Button><Button variant="outline" asChild><Link href="/dashboard/course/solfeo-aplicado">{locale==='es'?'Vista del estudiante':'Student view'}</Link></Button></CardContent></Card>}
       {/* Instrument Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 mb-6 scrollbar-hide">
         <Link
@@ -151,7 +158,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
                     alt={course.title}
                     loading="lazy"
                     decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                    className={`absolute inset-0 w-full h-full ${course.thumbnail_url.startsWith('/local-course-assets/') ? 'object-contain bg-[#265b4d]' : 'object-cover transform group-hover:scale-105'} transition-transform duration-300`}
                   />
                 ) : (
                   <div className="w-full h-full bg-primary/10 flex items-center justify-center">

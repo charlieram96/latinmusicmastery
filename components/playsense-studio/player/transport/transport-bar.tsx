@@ -1,4 +1,6 @@
 'use client';
+import './classroom-transport.css';
+import { useLessonFrame } from '@/components/class-viewer/lesson-viewer/lesson-mode/lesson-frame';
 
 import { useTranslation } from '@/components/language-provider';
 import { studioText } from '@/lib/playsense-studio/i18n/text';
@@ -10,7 +12,7 @@ import { studioText } from '@/lib/playsense-studio/i18n/text';
 // span, with vertical markers at A and B. When loop is enabled but the user
 // scrubs outside the range, the wrap kicks in on the next RAF tick.
 
-import { Pause, Play, Repeat, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
+import { AudioLines, Pause, Play, Repeat, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
 import {
   useRef,
   useState,
@@ -25,7 +27,6 @@ import type { SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt';
 // stays distinct from the warm amber played-fill and reads clearly in both
 // light and dark themes (the transport sits on the page-themed card surface).
 const NOTATION_HUE = '150 58% 42%';
-const NOTATION_HUE_TEXT = '0 0% 100%';
 
 interface TransportBarProps {
   currentSeconds: number;
@@ -49,9 +50,13 @@ interface TransportBarProps {
   // A/B loop — endpoints are set by dragging on the staff. The transport
   // exposes the toggle + clear so the user can disarm/clear without
   // touching the staff.
+  onSetLoopA?: (seconds: number) => void;
+  onSetLoopB?: (seconds: number) => void;
   loopA: number | null;
   loopB: number | null;
   loopEnabled: boolean;
+  /** A practice clip must keep its authored bounds. */
+  loopLocked?: boolean;
   onToggleLoop: () => void;
   onClearLoop: () => void;
   /** The loop button's hint while no range is set; the Studio adds its L key. */
@@ -101,11 +106,14 @@ export function TransportBar({
   extra,
   metronomeControls,
   trailingControls,
+  onSetLoopA,
+  onSetLoopB,
   loopA,
   loopB,
   loopEnabled,
   onToggleLoop,
   onClearLoop,
+  loopLocked = false,
   loopHint = 'Drag on the staff to set a loop range',
   bpm,
   beatsPerMeasure,
@@ -123,6 +131,7 @@ export function TransportBar({
   activeSubtitleLang = 'off',
   onSubtitleLangChange,
 }: TransportBarProps) {
+  const lessonFrame = useLessonFrame();
   const { locale } = useTranslation();
   const st = (text: string) => studioText(text, locale);
   const [captionsOpen, setCaptionsOpen] = useState(false);
@@ -160,13 +169,19 @@ export function TransportBar({
   const scrubber = (
       <div
         ref={trackRef}
+        role="slider" tabIndex={0} aria-label={locale === 'es' ? 'Posición del video' : 'Video position'}
+        aria-valuemin={0} aria-valuemax={durationSeconds} aria-valuenow={currentSeconds}
+        onKeyDown={event => {
+          const target = event.key === 'Home' ? 0 : event.key === 'End' ? durationSeconds : event.key === 'ArrowRight' ? currentSeconds + 1 : event.key === 'ArrowLeft' ? currentSeconds - 1 : null;
+          if (target !== null) { event.preventDefault(); event.stopPropagation(); onSeek(Math.max(0, Math.min(durationSeconds, target))); }
+        }}
         onPointerDown={onTrackPointerDown}
         onPointerMove={onTrackPointerMove}
         onPointerUp={onTrackPointerUp}
         onPointerLeave={() => !scrubbing && setHoverPct(null)}
-        className="group/track relative flex h-[34px] cursor-pointer touch-none items-start"
+        className="group/track relative flex h-[18px] cursor-pointer touch-none items-center"
       >
-        <div className="relative mt-1 h-[11px] w-full overflow-visible rounded-full bg-foreground/30">
+        <div className="relative h-[4px] w-full overflow-visible rounded-full bg-foreground/30">
           {/* Loop range tint */}
           {loopAPct !== null && loopBPct !== null && loopBPct > loopAPct && (
             <div
@@ -218,38 +233,13 @@ export function TransportBar({
             </div>
           )}
 
-          {/* Notation tags — sit underneath the bar, left-aligned to the start
-              of each scored section, and jump there on click. */}
-          {sectionMarkers?.map((m, i) => {
-            const startPct = (m.startSeconds / safeDuration) * 100;
-            const label = m.label || 'Notation';
-            return (
-              <button
-                key={`sec-tag-${i}`}
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => onSeek(m.startSeconds)}
-                title={`Jump to ${label}`}
-                aria-label={`Jump to ${label}`}
-                className="absolute top-full z-20 mt-1 block max-w-[100px] truncate whitespace-nowrap rounded px-1 py-px text-[7px] font-bold uppercase leading-none tracking-[0.04em] transition-opacity hover:opacity-80"
-                style={{
-                  left: `${startPct}%`,
-                  background: `hsl(${NOTATION_HUE})`,
-                  color: `hsl(${NOTATION_HUE_TEXT})`,
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-
           {/* A / B markers */}
           {loopAPct !== null && <LoopMarker label="A" pct={loopAPct} />}
           {loopBPct !== null && <LoopMarker label="B" pct={loopBPct} />}
 
           {/* Playhead — vertical line */}
           <div
-            className="absolute top-1/2 z-30 h-[18px] w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow ring-1 ring-black/40 transition-transform group-hover/track:scale-y-110"
+            className="absolute top-1/2 z-30 h-[10px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow ring-1 ring-black/40 transition-transform group-hover/track:scale-y-110"
             style={{ left: `${playedPct}%` }}
           />
         </div>
@@ -280,12 +270,13 @@ export function TransportBar({
 
   const rest = (
     <>
-        {/* Loop control cluster — endpoints are set by dragging on the staff;
-            this row only toggles + clears + offers the metronome. */}
+        {/* Video and staff edit the same loop endpoints. */}
         <div className="flex items-center gap-1 sm:ml-2">
+          {onSetLoopA && <button type="button" className="st-iconbtn" aria-label={locale === 'es' ? 'Marcar inicio del loop (A)' : 'Set loop start (A)'} title={locale === 'es' ? 'Marcar inicio del loop (A)' : 'Set loop start (A)'} onClick={() => onSetLoopA(currentSeconds)} aria-pressed={loopA !== null}>A</button>}
+          {onSetLoopB && <button type="button" className="st-iconbtn" aria-label={locale === 'es' ? 'Marcar fin del loop (B)' : 'Set loop end (B)'} title={locale === 'es' ? 'Marcar fin del loop (B)' : 'Set loop end (B)'} disabled={loopA === null || currentSeconds <= loopA + .01} onClick={() => onSetLoopB(currentSeconds)} aria-pressed={loopB !== null}>B</button>}
           <button
             onClick={onToggleLoop}
-            disabled={loopA === null || loopB === null}
+            disabled={loopLocked || loopA === null || loopB === null}
             className="st-iconbtn"
             style={
               loopEnabled
@@ -297,7 +288,7 @@ export function TransportBar({
             }
             title={
               loopA === null || loopB === null
-                ? st(loopHint)
+                ? (onSetLoopA ? (locale === 'es' ? 'Marca A y B para repetir un fragmento' : 'Mark A and B to loop a segment') : st(loopHint))
                 : loopEnabled
                   ? st('Loop on')
                   : st('Loop off')
@@ -306,7 +297,7 @@ export function TransportBar({
           >
             <Repeat className="h-4 w-4" />
           </button>
-          {(loopA !== null || loopB !== null) && (
+          {!loopLocked && (loopA !== null || loopB !== null) && (
             <button onClick={onClearLoop} className="st-iconbtn" title={st('Clear loop')} aria-label={st('Clear loop')}>
               <X className="h-4 w-4" />
             </button>
@@ -368,6 +359,11 @@ export function TransportBar({
         )}
 
         {extra}
+        {onClickOnChange && <button type="button" data-score-preserve-selection
+          className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs ${clickOn?'border-primary bg-primary/15 text-primary':'border-border text-muted-foreground'}`}
+          aria-label={st(clickOn?'Turn metronome off':'Turn metronome on')} aria-pressed={clickOn}
+          title={st(clickOn?'Turn metronome off':'Turn metronome on')}
+          onClick={()=>onClickOnChange(!clickOn)}><AudioLines className="h-4 w-4"/><span>{st(clickOn?'On':'Off')}</span></button>}
         <ChronometerControl
           extra={metronomeControls}
           baseBpm={bpm}
@@ -381,6 +377,7 @@ export function TransportBar({
           clickVolume={clickVolume}
           onClickVolumeChange={onClickVolumeChange ?? (() => {})}
         />
+        {layout !== 'row' && lessonFrame?.registerTransport && !lessonFrame.noClaim && <div className="shrink-0" data-transport-actions ref={lessonFrame.registerTransport} />}
         {layout === 'row' && onClickVolumeChange && <input type="range" min="0" max="1" step="0.05" value={clickVolume} onChange={e=>onClickVolumeChange(Number(e.target.value))} aria-label={st('Metronome volume')} className="w-16 shrink-0 accent-primary" />}
 
         {/* Reference-video audio. Only rendered where something owns it. */}
@@ -417,7 +414,7 @@ export function TransportBar({
 
   if (layout === 'row') {
     return (
-      <div className="st-transport-row">
+      <div className="st-transport-row lmm-media-transport">
         {lead}
         <div className="st-transport-scrub">{scrubber}</div>
         {rest}
@@ -426,7 +423,7 @@ export function TransportBar({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="lmm-media-transport space-y-0">
       {scrubber}
       <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
         {lead}

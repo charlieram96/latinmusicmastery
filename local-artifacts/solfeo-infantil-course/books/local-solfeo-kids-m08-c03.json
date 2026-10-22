@@ -1,0 +1,1264 @@
+{
+  "id": "local-solfeo-kids-m08-c03",
+  "module": 8,
+  "number": 3,
+  "title": "8.3 · Tempo y agógica",
+  "sourceTopics": [
+    "agogica",
+    "agogica-vocabulario",
+    "agogica-cambios"
+  ],
+  "pages": [
+    {
+      "title": "8.3 · Tempo y agógica",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "El <b>tempo</b> establece la velocidad de referencia. La <b>agógica</b> comprende modificaciones expresivas del transcurso temporal. Ritardando (rit.) y rallentando (rall.) indican ralentización; accelerando (accel.), aceleración gradual. Sus diferencias de carácter dependen del contexto. [6]",
+          "_sourcePage": "agogica",
+          "pdfPage": 178,
+          "sourceBlock": 5
+        },
+        {
+          "type": "diagram",
+          "kind": "score",
+          "height": 291,
+          "rows": [
+            {
+              "title": "Ritardando: reducción gradual de velocidad",
+              "spans": [
+                {
+                  "text": "rit.",
+                  "from": 0,
+                  "to": 3
+                }
+              ],
+              "bars": [
+                [
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "E4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  }
+                ]
+              ],
+              "meter": "4/4",
+              "barStyles": {
+                "0": "final"
+              },
+              "space": 6.8,
+              "topOffset": 66
+            },
+            {
+              "title": "Accelerando: aumento gradual de velocidad",
+              "spans": [
+                {
+                  "text": "accel.",
+                  "from": 0,
+                  "to": 3
+                }
+              ],
+              "bars": [
+                [
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "E4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "G4",
+                    "dur": 4
+                  }
+                ]
+              ],
+              "meter": "4/4",
+              "barStyles": {
+                "0": "final"
+              },
+              "space": 6.8,
+              "topOffset": 66
+            },
+            {
+              "title": "Restablecimiento del tempo",
+              "bars": [
+                [
+                  {
+                    "pitch": "G4",
+                    "dur": 4,
+                    "mark": "a tempo"
+                  },
+                  {
+                    "pitch": "E4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  }
+                ]
+              ],
+              "meter": "4/4",
+              "barStyles": {
+                "0": "final"
+              },
+              "space": 6.8,
+              "topOffset": 66
+            }
+          ],
+          "rowHeight": 110,
+          "_sourcePage": "agogica",
+          "rowHeights": [
+            97,
+            97,
+            97
+          ],
+          "pdfPage": 179,
+          "sourceBlock": 0,
+          "vector": "31683fde576727fc"
+        },
+        {
+          "type": "p",
+          "text": "<b>A tempo</b> recupera la velocidad de referencia tras una modificación. <b>Tempo primo</b> restablece el tempo inicial. Largo, adagio, andante, moderato, allegro y presto orientan velocidad y carácter; no tienen límites universales de BPM. El rubato implica flexibilidad expresiva del tiempo.",
+          "_sourcePage": "agogica",
+          "pdfPage": 179,
+          "sourceBlock": 1
+        }
+      ]
+    },
+    {
+      "title": "Velocidad y carácter · términos italianos",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Estas indicaciones se escriben habitualmente en italiano. Su uso musical se consolidó en la tradición europea; por ejemplo, allegro pasó de expresar alegría a orientar también un movimiento rápido. Una palabra puede indicar carácter además de velocidad: el contexto y el metrónomo precisan su aplicación.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 3
+        },
+        {
+          "type": "h",
+          "text": "Movimientos lentos y moderados",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 4
+        },
+        {
+          "type": "p",
+          "text": "<b>Grave:</b> lento y solemne. <b>Largo:</b> amplio, espacioso. <b>Larghetto:</b> algo menos amplio. <b>Lento:</b> lento. <b>Adagio:</b> pausado, a gusto. <b>Andante:</b> movimiento cómodo, como al caminar. <b>Andantino:</b> matiz de andante cuya interpretación histórica varía; comprueba el contexto. <b>Moderato:</b> velocidad moderada; en español, moderado.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 5
+        },
+        {
+          "type": "h",
+          "text": "Movimientos vivos",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 6
+        },
+        {
+          "type": "p",
+          "text": "<b>Allegretto:</b> relativamente vivo, por lo general menos rápido que allegro; es su diminutivo. <b>Allegro:</b> rápido y animado, aunque literalmente significa alegre. <b>Allegro moderato:</b> rápido con moderación. <b>Vivace o vivo:</b> vivaz y enérgico. <b>Presto:</b> muy rápido. <b>Prestissimo:</b> extremadamente rápido.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 7
+        },
+        {
+          "type": "h",
+          "text": "Cómo combinar las palabras",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 180,
+          "sourceBlock": 0
+        },
+        {
+          "type": "p",
+          "text": "<b>Molto:</b> mucho; <b>poco:</b> poco; <b>ma non troppo:</b> pero no demasiado; <b>con moto:</b> con movimiento; <b>cantabile:</b> de manera cantada; <b>dolce:</b> dulce. Allegro ma non troppo pide rapidez sin exceso. Cantabile describe el fraseo, no una cifra de BPM.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 180,
+          "sourceBlock": 1
+        },
+        {
+          "type": "p",
+          "text": "No memorices límites universales de BPM para estas palabras. Lee la figura metronómica: negra = 72 y blanca = 72 no producen la misma duración. Estudia lentamente y alcanza después el carácter y la velocidad de la obra.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 180,
+          "sourceBlock": 2
+        },
+        {
+          "type": "small",
+          "text": "Fuentes: <link href=\"https://www.trinitycollege.com/resource/?id=785\">Trinity College London · Musical terms</link>; <link href=\"https://www.treccani.it/enciclopedia/allegro-e-allegretto_(Enciclopedia-Italiana)/\">Treccani · Allegro e allegretto</link>.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 180,
+          "sourceBlock": 3
+        }
+      ]
+    },
+    {
+      "title": "Cambiar y recuperar el tempo",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "<b>Ritardando</b> (rit. o ritard.) viene del italiano ritardare: retardar. <b>Rallentando</b> (rall.) procede de rallentare: ralentizar. Ambos suelen pedir una disminución gradual de velocidad. «Retardando» y «ralentando» son aproximaciones españolas; en la partitura se encuentran las formas italianas.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 5
+        },
+        {
+          "type": "p",
+          "text": "<b>Accelerando</b> (accel.): acelerar progresivamente. <b>Ritenuto</b> (riten.): contenido o retenido, normalmente una contención más inmediata. <b>Più mosso:</b> más movimiento; <b>meno mosso:</b> menos movimiento. <b>A tempo:</b> recuperar la velocidad anterior a la modificación. <b>Tempo primo:</b> recuperar la velocidad inicial.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 6
+        },
+        {
+          "type": "p",
+          "text": "<b>Poco a poco:</b> gradualmente. <b>Rubato:</b> flexibilidad expresiva del tiempo. Estas indicaciones no cambian la fracción escrita de las figuras. Un crescendo aumenta intensidad; un accelerando aumenta velocidad: practica cada cambio por separado.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 7
+        },
+        {
+          "type": "diagram",
+          "kind": "score",
+          "height": 101,
+          "rows": [
+            {
+              "title": "Frase: tempo inicial, ralentización y recuperación",
+              "meter": "4/4",
+              "bars": [
+                [
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "E4",
+                    "dur": 2
+                  }
+                ],
+                [
+                  {
+                    "pitch": "F4",
+                    "dur": 2
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 2
+                  }
+                ],
+                [
+                  {
+                    "pitch": "E4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "B3",
+                    "dur": 2
+                  }
+                ],
+                [
+                  {
+                    "pitch": "C4",
+                    "dur": 1
+                  }
+                ]
+              ],
+              "tempo": "Andante · negra = 66",
+              "spans": [
+                {
+                  "text": "rall.",
+                  "from": 3,
+                  "to": 4
+                }
+              ],
+              "barStyles": {
+                "3": "final"
+              },
+              "space": 6.8,
+              "topOffset": 66
+            }
+          ],
+          "rowHeight": 135,
+          "_sourcePage": "agogica-cambios",
+          "rowHeights": [
+            101
+          ],
+          "pdfPage": 180,
+          "sourceBlock": 8,
+          "vector": "2b187454eebca5e2"
+        },
+        {
+          "type": "p",
+          "text": "Canta el primer compás a la velocidad inicial, reduce gradualmente durante el segundo y vuelve al tempo inicial al comenzar el tercero. Escribe «a tempo» sobre esa entrada antes de interpretar.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 9
+        },
+        {
+          "type": "small",
+          "text": "Fuentes: <link href=\"https://www.trinitycollege.com/resource/?id=785\">Trinity College London · Musical terms</link>; <link href=\"https://www.treccani.it/vocabolario/ritardando/\">Treccani · Ritardando</link>.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 10
+        }
+      ]
+    }
+  ],
+  "practice": [
+    {
+      "title": "8.3 · Tempo y agógica",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Practica los ejemplos de esta lección: escucha, identifica sus elementos y repítelos respetando las indicaciones del manual.",
+          "authoredPractice": true
+        },
+        {
+          "type": "p",
+          "text": "El <b>tempo</b> establece la velocidad de referencia. La <b>agógica</b> comprende modificaciones expresivas del transcurso temporal. Ritardando (rit.) y rallentando (rall.) indican ralentización; accelerando (accel.), aceleración gradual. Sus diferencias de carácter dependen del contexto. [6]",
+          "_sourcePage": "agogica",
+          "pdfPage": 178,
+          "sourceBlock": 5
+        },
+        {
+          "type": "diagram",
+          "kind": "score",
+          "height": 291,
+          "rows": [
+            {
+              "title": "Ritardando: reducción gradual de velocidad",
+              "spans": [
+                {
+                  "text": "rit.",
+                  "from": 0,
+                  "to": 3
+                }
+              ],
+              "bars": [
+                [
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "E4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  }
+                ]
+              ],
+              "meter": "4/4",
+              "barStyles": {
+                "0": "final"
+              },
+              "space": 6.8,
+              "topOffset": 66
+            },
+            {
+              "title": "Accelerando: aumento gradual de velocidad",
+              "spans": [
+                {
+                  "text": "accel.",
+                  "from": 0,
+                  "to": 3
+                }
+              ],
+              "bars": [
+                [
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "E4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "G4",
+                    "dur": 4
+                  }
+                ]
+              ],
+              "meter": "4/4",
+              "barStyles": {
+                "0": "final"
+              },
+              "space": 6.8,
+              "topOffset": 66
+            },
+            {
+              "title": "Restablecimiento del tempo",
+              "bars": [
+                [
+                  {
+                    "pitch": "G4",
+                    "dur": 4,
+                    "mark": "a tempo"
+                  },
+                  {
+                    "pitch": "E4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  }
+                ]
+              ],
+              "meter": "4/4",
+              "barStyles": {
+                "0": "final"
+              },
+              "space": 6.8,
+              "topOffset": 66
+            }
+          ],
+          "rowHeight": 110,
+          "_sourcePage": "agogica",
+          "rowHeights": [
+            97,
+            97,
+            97
+          ],
+          "pdfPage": 179,
+          "sourceBlock": 0,
+          "vector": "31683fde576727fc"
+        },
+        {
+          "type": "p",
+          "text": "<b>A tempo</b> recupera la velocidad de referencia tras una modificación. <b>Tempo primo</b> restablece el tempo inicial. Largo, adagio, andante, moderato, allegro y presto orientan velocidad y carácter; no tienen límites universales de BPM. El rubato implica flexibilidad expresiva del tiempo.",
+          "_sourcePage": "agogica",
+          "pdfPage": 179,
+          "sourceBlock": 1
+        }
+      ]
+    },
+    {
+      "title": "Velocidad y carácter · términos italianos",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Estas indicaciones se escriben habitualmente en italiano. Su uso musical se consolidó en la tradición europea; por ejemplo, allegro pasó de expresar alegría a orientar también un movimiento rápido. Una palabra puede indicar carácter además de velocidad: el contexto y el metrónomo precisan su aplicación.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 3
+        },
+        {
+          "type": "h",
+          "text": "Movimientos lentos y moderados",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 4
+        },
+        {
+          "type": "p",
+          "text": "<b>Grave:</b> lento y solemne. <b>Largo:</b> amplio, espacioso. <b>Larghetto:</b> algo menos amplio. <b>Lento:</b> lento. <b>Adagio:</b> pausado, a gusto. <b>Andante:</b> movimiento cómodo, como al caminar. <b>Andantino:</b> matiz de andante cuya interpretación histórica varía; comprueba el contexto. <b>Moderato:</b> velocidad moderada; en español, moderado.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 5
+        },
+        {
+          "type": "h",
+          "text": "Movimientos vivos",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 6
+        },
+        {
+          "type": "p",
+          "text": "<b>Allegretto:</b> relativamente vivo, por lo general menos rápido que allegro; es su diminutivo. <b>Allegro:</b> rápido y animado, aunque literalmente significa alegre. <b>Allegro moderato:</b> rápido con moderación. <b>Vivace o vivo:</b> vivaz y enérgico. <b>Presto:</b> muy rápido. <b>Prestissimo:</b> extremadamente rápido.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 179,
+          "sourceBlock": 7
+        },
+        {
+          "type": "h",
+          "text": "Cómo combinar las palabras",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 180,
+          "sourceBlock": 0
+        },
+        {
+          "type": "p",
+          "text": "<b>Molto:</b> mucho; <b>poco:</b> poco; <b>ma non troppo:</b> pero no demasiado; <b>con moto:</b> con movimiento; <b>cantabile:</b> de manera cantada; <b>dolce:</b> dulce. Allegro ma non troppo pide rapidez sin exceso. Cantabile describe el fraseo, no una cifra de BPM.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 180,
+          "sourceBlock": 1
+        },
+        {
+          "type": "p",
+          "text": "No memorices límites universales de BPM para estas palabras. Lee la figura metronómica: negra = 72 y blanca = 72 no producen la misma duración. Estudia lentamente y alcanza después el carácter y la velocidad de la obra.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 180,
+          "sourceBlock": 2
+        },
+        {
+          "type": "small",
+          "text": "Fuentes: <link href=\"https://www.trinitycollege.com/resource/?id=785\">Trinity College London · Musical terms</link>; <link href=\"https://www.treccani.it/enciclopedia/allegro-e-allegretto_(Enciclopedia-Italiana)/\">Treccani · Allegro e allegretto</link>.",
+          "_sourcePage": "agogica-vocabulario",
+          "pdfPage": 180,
+          "sourceBlock": 3
+        }
+      ]
+    },
+    {
+      "title": "Cambiar y recuperar el tempo",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "<b>Ritardando</b> (rit. o ritard.) viene del italiano ritardare: retardar. <b>Rallentando</b> (rall.) procede de rallentare: ralentizar. Ambos suelen pedir una disminución gradual de velocidad. «Retardando» y «ralentando» son aproximaciones españolas; en la partitura se encuentran las formas italianas.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 5
+        },
+        {
+          "type": "p",
+          "text": "<b>Accelerando</b> (accel.): acelerar progresivamente. <b>Ritenuto</b> (riten.): contenido o retenido, normalmente una contención más inmediata. <b>Più mosso:</b> más movimiento; <b>meno mosso:</b> menos movimiento. <b>A tempo:</b> recuperar la velocidad anterior a la modificación. <b>Tempo primo:</b> recuperar la velocidad inicial.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 6
+        },
+        {
+          "type": "p",
+          "text": "<b>Poco a poco:</b> gradualmente. <b>Rubato:</b> flexibilidad expresiva del tiempo. Estas indicaciones no cambian la fracción escrita de las figuras. Un crescendo aumenta intensidad; un accelerando aumenta velocidad: practica cada cambio por separado.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 7
+        },
+        {
+          "type": "diagram",
+          "kind": "score",
+          "height": 101,
+          "rows": [
+            {
+              "title": "Frase: tempo inicial, ralentización y recuperación",
+              "meter": "4/4",
+              "bars": [
+                [
+                  {
+                    "pitch": "C4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "E4",
+                    "dur": 2
+                  }
+                ],
+                [
+                  {
+                    "pitch": "F4",
+                    "dur": 2
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 2
+                  }
+                ],
+                [
+                  {
+                    "pitch": "E4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "D4",
+                    "dur": 4
+                  },
+                  {
+                    "pitch": "B3",
+                    "dur": 2
+                  }
+                ],
+                [
+                  {
+                    "pitch": "C4",
+                    "dur": 1
+                  }
+                ]
+              ],
+              "tempo": "Andante · negra = 66",
+              "spans": [
+                {
+                  "text": "rall.",
+                  "from": 3,
+                  "to": 4
+                }
+              ],
+              "barStyles": {
+                "3": "final"
+              },
+              "space": 6.8,
+              "topOffset": 66
+            }
+          ],
+          "rowHeight": 135,
+          "_sourcePage": "agogica-cambios",
+          "rowHeights": [
+            101
+          ],
+          "pdfPage": 180,
+          "sourceBlock": 8,
+          "vector": "2b187454eebca5e2"
+        },
+        {
+          "type": "p",
+          "text": "Canta el primer compás a la velocidad inicial, reduce gradualmente durante el segundo y vuelve al tempo inicial al comenzar el tercero. Escribe «a tempo» sobre esa entrada antes de interpretar.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 9
+        },
+        {
+          "type": "small",
+          "text": "Fuentes: <link href=\"https://www.trinitycollege.com/resource/?id=785\">Trinity College London · Musical terms</link>; <link href=\"https://www.treccani.it/vocabolario/ritardando/\">Treccani · Ritardando</link>.",
+          "_sourcePage": "agogica-cambios",
+          "pdfPage": 180,
+          "sourceBlock": 10
+        }
+      ]
+    }
+  ],
+  "vectors": {
+    "31683fde576727fc": {
+      "width": 595.28,
+      "height": 315,
+      "svg": "<g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"40\" y=\"-294\" transform=\"scale(1,-1)\" fill=\"#265b4d\" font-family=\"Arial,sans-serif\" font-size=\"9\" font-weight=\"700\">Ritardando: reducción gradual de velocidad</text></g><line x1=\"40\" y1=\"237.0\" x2=\"555.28\" y2=\"237.0\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"243.8\" x2=\"555.28\" y2=\"243.8\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"250.6\" x2=\"555.28\" y2=\"250.6\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"257.4\" x2=\"555.28\" y2=\"257.4\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"264.2\" x2=\"555.28\" y2=\"264.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><path d=\"M376 415 C375.3333333333333 421.0 375.3333333333333 425.0 376 427 C377.3333333333333 429.0 379.3333333333333 431.3333333333333 382 434 C437.3333333333333 484.6666666666667 482.6666666666667 541.6666666666666 518 605 C552.6666666666666 668.3333333333334 570.6666666666666 738.3333333333334 572 815 C572.0 859.0 566.3333333333334 901.3333333333334 555 942 C543.6666666666666 982.0 527.6666666666666 1017.3333333333334 507 1048 C499.0 1060.0 490.0 1071.0 480 1081 C469.3333333333333 1091.6666666666667 461.0 1097.3333333333333 455 1098 C447.6666666666667 1097.3333333333333 437.6666666666667 1092.0 425 1082 C412.3333333333333 1072.0 400.6666666666667 1061.3333333333333 390 1050 C353.3333333333333 1008.0 327.6666666666667 959.0 313 903 C298.3333333333333 847.0 291.3333333333333 792.3333333333334 292 739 C292.0 709.6666666666666 293.3333333333333 680.3333333333334 296 651 C299.3333333333333 621.6666666666666 302.6666666666667 596.3333333333334 306 575 C307.3333333333333 569.6666666666666 307.6666666666667 565.3333333333334 307 562 C306.3333333333333 559.3333333333334 303.0 555.6666666666666 297 551 C221.66666666666669 492.3333333333333 154.33333333333334 425.3333333333333 95 350 C35.0 274.6666666666667 3.3333333333333335 187.0 0 87 C0.0 -3.0 30.0 -81.33333333333333 90 -148 C150.0 -214.0 241.33333333333331 -248.66666666666666 364 -252 C376.0 -252.0 388.0 -251.33333333333334 400 -250 C412.0 -249.33333333333334 423.0 -248.0 433 -246 C438.3333333333333 -244.66666666666666 442.0 -244.33333333333334 444 -245 C446.0 -245.66666666666666 447.3333333333333 -249.0 448 -255 C454.6666666666667 -289.6666666666667 460.6666666666667 -325.6666666666667 466 -363 C471.3333333333333 -400.3333333333333 474.3333333333333 -431.3333333333333 475 -456 C472.3333333333333 -527.3333333333334 453.3333333333333 -573.3333333333334 418 -594 C382.6666666666667 -614.6666666666666 348.6666666666667 -624.0 316 -622 C289.3333333333333 -621.3333333333334 269.3333333333333 -618.0 256 -612 C242.66666666666666 -606.0 236.0 -599.6666666666666 236 -593 C236.0 -589.6666666666666 238.33333333333334 -586.6666666666666 243 -584 C248.33333333333334 -582.0 256.6666666666667 -579.3333333333334 268 -576 C284.6666666666667 -572.0 299.6666666666667 -562.3333333333334 313 -547 C327.0 -532.3333333333334 334.3333333333333 -510.6666666666667 335 -482 C335.0 -454.0 326.6666666666667 -430.0 310 -410 C293.3333333333333 -390.6666666666667 269.6666666666667 -380.6666666666667 239 -380 C205.0 -380.6666666666667 178.66666666666666 -392.0 160 -414 C141.33333333333334 -436.0 132.0 -463.0 132 -495 C130.66666666666666 -530.3333333333334 143.33333333333334 -565.6666666666666 170 -601 C197.33333333333334 -636.3333333333334 248.0 -655.3333333333334 322 -658 C359.3333333333333 -660.0 400.6666666666667 -648.0 446 -622 C490.6666666666667 -595.3333333333334 515.0 -540.6666666666666 519 -458 C518.3333333333334 -428.0 515.0 -393.0 509 -353 C502.3333333333333 -313.0 496.0 -276.6666666666667 490 -244 C488.6666666666667 -238.66666666666666 489.0 -235.0 491 -233 C492.3333333333333 -231.66666666666666 496.3333333333333 -229.66666666666666 503 -227 C554.3333333333334 -206.33333333333334 595.0 -175.66666666666666 625 -135 C655.0 -94.33333333333334 670.3333333333334 -45.666666666666664 671 11 C670.3333333333334 77.0 648.6666666666666 133.33333333333334 606 180 C563.3333333333334 226.0 504.6666666666667 250.0 430 252 C417.3333333333333 251.33333333333334 409.6666666666667 252.0 407 254 C403.6666666666667 256.0 401.6666666666667 261.3333333333333 401 270 Z M470 943 C486.6666666666667 943.0 500.6666666666667 936.3333333333334 512 923 C523.3333333333334 909.0 529.3333333333334 888.3333333333334 530 861 C528.0 805.6666666666666 509.0 755.3333333333334 473 710 C437.0 665.3333333333334 398.0 625.6666666666666 356 591 C352.6666666666667 587.6666666666666 350.0 586.6666666666666 348 588 C345.3333333333333 588.6666666666666 343.6666666666667 592.3333333333334 343 599 C341.0 612.3333333333334 339.6666666666667 627.0 339 643 C337.6666666666667 659.0 337.0 675.0 337 691 C339.0 769.6666666666666 353.6666666666667 831.3333333333334 381 876 C408.3333333333333 920.0 438.0 942.3333333333334 470 943 Z M361 262 C363.0 253.33333333333334 363.0 247.66666666666666 361 245 C359.6666666666667 243.0 354.6666666666667 240.66666666666666 346 238 C301.3333333333333 222.0 266.3333333333333 196.66666666666666 241 162 C215.0 126.66666666666666 201.66666666666666 87.33333333333334 201 44 C201.66666666666666 -1.3333333333333357 212.33333333333334 -39.33333333333333 233 -70 C253.66666666666666 -100.0 281.3333333333333 -121.0 316 -133 C320.0 -134.33333333333334 324.6666666666667 -135.66666666666666 330 -137 C334.6666666666667 -138.33333333333334 339.0 -139.0 343 -139 C347.0 -139.0 350.0 -138.0 352 -136 C354.0 -134.0 355.0 -131.33333333333334 355 -128 C355.0 -124.66666666666667 353.3333333333333 -122.0 350 -120 C347.3333333333333 -118.0 344.0 -116.33333333333333 340 -115 C318.6666666666667 -105.66666666666667 301.3333333333333 -91.33333333333333 288 -72 C275.3333333333333 -52.66666666666667 268.6666666666667 -31.333333333333332 268 -8 C268.6666666666667 20.666666666666668 277.6666666666667 45.33333333333333 295 66 C313.0 86.0 337.3333333333333 100.33333333333333 368 109 C376.0 111.0 381.0 111.66666666666667 383 111 C385.6666666666667 109.66666666666667 387.3333333333333 106.33333333333333 388 101 L438 -197 C439.3333333333333 -202.33333333333334 439.0 -205.66666666666666 437 -207 C435.6666666666667 -208.33333333333334 431.3333333333333 -209.66666666666666 424 -211 C416.0 -212.33333333333334 407.3333333333333 -213.66666666666666 398 -215 C388.0 -215.66666666666666 378.0 -216.0 368 -216 C279.3333333333333 -214.66666666666666 209.33333333333334 -192.66666666666666 158 -150 C107.33333333333334 -107.33333333333334 81.33333333333333 -50.66666666666667 80 20 C78.66666666666667 49.33333333333333 83.66666666666667 83.66666666666666 95 123 C107.0 161.66666666666666 133.0 204.66666666666666 173 252 C203.0 284.6666666666667 230.0 312.0 254 334 C278.6666666666667 355.3333333333333 302.6666666666667 375.3333333333333 326 394 C330.6666666666667 398.0 334.0 399.6666666666667 336 399 C338.0 398.3333333333333 339.3333333333333 395.3333333333333 340 390 Z M430 103 C428.6666666666667 109.0 428.6666666666667 113.0 430 115 C431.3333333333333 117.0 435.0 117.66666666666667 441 117 C482.3333333333333 112.33333333333333 517.0 95.33333333333333 545 66 C573.0 36.0 587.6666666666666 -1.3333333333333357 589 -46 C588.3333333333334 -78.0 579.6666666666666 -106.0 563 -130 C546.3333333333334 -154.66666666666666 523.6666666666666 -174.0 495 -188 C489.0 -191.33333333333334 485.0 -192.66666666666666 483 -192 C481.0 -191.33333333333334 479.6666666666667 -188.0 479 -182 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 47.0 71.19999999999999)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.55\"/><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"77.7454345703125\" y=\"-252.045\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"15.299999999999999\" font-weight=\"700\">4</text></g><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"77.7454345703125\" y=\"-238.44500000000002\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"15.299999999999999\" font-weight=\"700\">4</text></g><g class=\"manual-note\" style=\"--note-order:0\"><line x1=\"115.0\" y1=\"230.2\" x2=\"133.0\" y2=\"230.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 119.0 84.80000000000001)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"126.888\" y1=\"231.2\" x2=\"126.888\" y2=\"254.0\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:1\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 225.32 81.4)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"233.208\" y1=\"234.6\" x2=\"233.208\" y2=\"257.4\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:2\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 331.64 78.0)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"339.52799999999996\" y1=\"238.0\" x2=\"339.52799999999996\" y2=\"260.8\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:3\"><line x1=\"433.96\" y1=\"230.2\" x2=\"451.96\" y2=\"230.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 437.96 84.80000000000001)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"445.84799999999996\" y1=\"231.2\" x2=\"445.84799999999996\" y2=\"254.0\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><line x1=\"555.28\" y1=\"237\" x2=\"555.28\" y2=\"264.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.6\"/><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"119.0\" y=\"-279.2\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"9\" font-weight=\"700\">rit.</text></g><line x1=\"137.50048828125\" y1=\"282.2\" x2=\"447.96\" y2=\"282.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><line x1=\"550.28\" y1=\"237\" x2=\"550.28\" y2=\"264.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><line x1=\"555.28\" y1=\"237\" x2=\"555.28\" y2=\"264.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"2\"/><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"40\" y=\"-197\" transform=\"scale(1,-1)\" fill=\"#265b4d\" font-family=\"Arial,sans-serif\" font-size=\"9\" font-weight=\"700\">Accelerando: aumento gradual de velocidad</text></g><line x1=\"40\" y1=\"140.0\" x2=\"555.28\" y2=\"140.0\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"146.8\" x2=\"555.28\" y2=\"146.8\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"153.6\" x2=\"555.28\" y2=\"153.6\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"160.4\" x2=\"555.28\" y2=\"160.4\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"167.2\" x2=\"555.28\" y2=\"167.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><path d=\"M376 415 C375.3333333333333 421.0 375.3333333333333 425.0 376 427 C377.3333333333333 429.0 379.3333333333333 431.3333333333333 382 434 C437.3333333333333 484.6666666666667 482.6666666666667 541.6666666666666 518 605 C552.6666666666666 668.3333333333334 570.6666666666666 738.3333333333334 572 815 C572.0 859.0 566.3333333333334 901.3333333333334 555 942 C543.6666666666666 982.0 527.6666666666666 1017.3333333333334 507 1048 C499.0 1060.0 490.0 1071.0 480 1081 C469.3333333333333 1091.6666666666667 461.0 1097.3333333333333 455 1098 C447.6666666666667 1097.3333333333333 437.6666666666667 1092.0 425 1082 C412.3333333333333 1072.0 400.6666666666667 1061.3333333333333 390 1050 C353.3333333333333 1008.0 327.6666666666667 959.0 313 903 C298.3333333333333 847.0 291.3333333333333 792.3333333333334 292 739 C292.0 709.6666666666666 293.3333333333333 680.3333333333334 296 651 C299.3333333333333 621.6666666666666 302.6666666666667 596.3333333333334 306 575 C307.3333333333333 569.6666666666666 307.6666666666667 565.3333333333334 307 562 C306.3333333333333 559.3333333333334 303.0 555.6666666666666 297 551 C221.66666666666669 492.3333333333333 154.33333333333334 425.3333333333333 95 350 C35.0 274.6666666666667 3.3333333333333335 187.0 0 87 C0.0 -3.0 30.0 -81.33333333333333 90 -148 C150.0 -214.0 241.33333333333331 -248.66666666666666 364 -252 C376.0 -252.0 388.0 -251.33333333333334 400 -250 C412.0 -249.33333333333334 423.0 -248.0 433 -246 C438.3333333333333 -244.66666666666666 442.0 -244.33333333333334 444 -245 C446.0 -245.66666666666666 447.3333333333333 -249.0 448 -255 C454.6666666666667 -289.6666666666667 460.6666666666667 -325.6666666666667 466 -363 C471.3333333333333 -400.3333333333333 474.3333333333333 -431.3333333333333 475 -456 C472.3333333333333 -527.3333333333334 453.3333333333333 -573.3333333333334 418 -594 C382.6666666666667 -614.6666666666666 348.6666666666667 -624.0 316 -622 C289.3333333333333 -621.3333333333334 269.3333333333333 -618.0 256 -612 C242.66666666666666 -606.0 236.0 -599.6666666666666 236 -593 C236.0 -589.6666666666666 238.33333333333334 -586.6666666666666 243 -584 C248.33333333333334 -582.0 256.6666666666667 -579.3333333333334 268 -576 C284.6666666666667 -572.0 299.6666666666667 -562.3333333333334 313 -547 C327.0 -532.3333333333334 334.3333333333333 -510.6666666666667 335 -482 C335.0 -454.0 326.6666666666667 -430.0 310 -410 C293.3333333333333 -390.6666666666667 269.6666666666667 -380.6666666666667 239 -380 C205.0 -380.6666666666667 178.66666666666666 -392.0 160 -414 C141.33333333333334 -436.0 132.0 -463.0 132 -495 C130.66666666666666 -530.3333333333334 143.33333333333334 -565.6666666666666 170 -601 C197.33333333333334 -636.3333333333334 248.0 -655.3333333333334 322 -658 C359.3333333333333 -660.0 400.6666666666667 -648.0 446 -622 C490.6666666666667 -595.3333333333334 515.0 -540.6666666666666 519 -458 C518.3333333333334 -428.0 515.0 -393.0 509 -353 C502.3333333333333 -313.0 496.0 -276.6666666666667 490 -244 C488.6666666666667 -238.66666666666666 489.0 -235.0 491 -233 C492.3333333333333 -231.66666666666666 496.3333333333333 -229.66666666666666 503 -227 C554.3333333333334 -206.33333333333334 595.0 -175.66666666666666 625 -135 C655.0 -94.33333333333334 670.3333333333334 -45.666666666666664 671 11 C670.3333333333334 77.0 648.6666666666666 133.33333333333334 606 180 C563.3333333333334 226.0 504.6666666666667 250.0 430 252 C417.3333333333333 251.33333333333334 409.6666666666667 252.0 407 254 C403.6666666666667 256.0 401.6666666666667 261.3333333333333 401 270 Z M470 943 C486.6666666666667 943.0 500.6666666666667 936.3333333333334 512 923 C523.3333333333334 909.0 529.3333333333334 888.3333333333334 530 861 C528.0 805.6666666666666 509.0 755.3333333333334 473 710 C437.0 665.3333333333334 398.0 625.6666666666666 356 591 C352.6666666666667 587.6666666666666 350.0 586.6666666666666 348 588 C345.3333333333333 588.6666666666666 343.6666666666667 592.3333333333334 343 599 C341.0 612.3333333333334 339.6666666666667 627.0 339 643 C337.6666666666667 659.0 337.0 675.0 337 691 C339.0 769.6666666666666 353.6666666666667 831.3333333333334 381 876 C408.3333333333333 920.0 438.0 942.3333333333334 470 943 Z M361 262 C363.0 253.33333333333334 363.0 247.66666666666666 361 245 C359.6666666666667 243.0 354.6666666666667 240.66666666666666 346 238 C301.3333333333333 222.0 266.3333333333333 196.66666666666666 241 162 C215.0 126.66666666666666 201.66666666666666 87.33333333333334 201 44 C201.66666666666666 -1.3333333333333357 212.33333333333334 -39.33333333333333 233 -70 C253.66666666666666 -100.0 281.3333333333333 -121.0 316 -133 C320.0 -134.33333333333334 324.6666666666667 -135.66666666666666 330 -137 C334.6666666666667 -138.33333333333334 339.0 -139.0 343 -139 C347.0 -139.0 350.0 -138.0 352 -136 C354.0 -134.0 355.0 -131.33333333333334 355 -128 C355.0 -124.66666666666667 353.3333333333333 -122.0 350 -120 C347.3333333333333 -118.0 344.0 -116.33333333333333 340 -115 C318.6666666666667 -105.66666666666667 301.3333333333333 -91.33333333333333 288 -72 C275.3333333333333 -52.66666666666667 268.6666666666667 -31.333333333333332 268 -8 C268.6666666666667 20.666666666666668 277.6666666666667 45.33333333333333 295 66 C313.0 86.0 337.3333333333333 100.33333333333333 368 109 C376.0 111.0 381.0 111.66666666666667 383 111 C385.6666666666667 109.66666666666667 387.3333333333333 106.33333333333333 388 101 L438 -197 C439.3333333333333 -202.33333333333334 439.0 -205.66666666666666 437 -207 C435.6666666666667 -208.33333333333334 431.3333333333333 -209.66666666666666 424 -211 C416.0 -212.33333333333334 407.3333333333333 -213.66666666666666 398 -215 C388.0 -215.66666666666666 378.0 -216.0 368 -216 C279.3333333333333 -214.66666666666666 209.33333333333334 -192.66666666666666 158 -150 C107.33333333333334 -107.33333333333334 81.33333333333333 -50.66666666666667 80 20 C78.66666666666667 49.33333333333333 83.66666666666667 83.66666666666666 95 123 C107.0 161.66666666666666 133.0 204.66666666666666 173 252 C203.0 284.6666666666667 230.0 312.0 254 334 C278.6666666666667 355.3333333333333 302.6666666666667 375.3333333333333 326 394 C330.6666666666667 398.0 334.0 399.6666666666667 336 399 C338.0 398.3333333333333 339.3333333333333 395.3333333333333 340 390 Z M430 103 C428.6666666666667 109.0 428.6666666666667 113.0 430 115 C431.3333333333333 117.0 435.0 117.66666666666667 441 117 C482.3333333333333 112.33333333333333 517.0 95.33333333333333 545 66 C573.0 36.0 587.6666666666666 -1.3333333333333357 589 -46 C588.3333333333334 -78.0 579.6666666666666 -106.0 563 -130 C546.3333333333334 -154.66666666666666 523.6666666666666 -174.0 495 -188 C489.0 -191.33333333333334 485.0 -192.66666666666666 483 -192 C481.0 -191.33333333333334 479.6666666666667 -188.0 479 -182 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 47.0 168.2)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.55\"/><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"77.7454345703125\" y=\"-155.04500000000002\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"15.299999999999999\" font-weight=\"700\">4</text></g><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"77.7454345703125\" y=\"-141.44500000000002\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"15.299999999999999\" font-weight=\"700\">4</text></g><g class=\"manual-note\" style=\"--note-order:4\"><line x1=\"115.0\" y1=\"133.2\" x2=\"133.0\" y2=\"133.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 119.0 181.8)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"126.888\" y1=\"134.2\" x2=\"126.888\" y2=\"157.0\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:5\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 225.32 178.4)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"233.208\" y1=\"137.6\" x2=\"233.208\" y2=\"160.4\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:6\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 331.64 175.0)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"339.52799999999996\" y1=\"141.0\" x2=\"339.52799999999996\" y2=\"163.8\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:7\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 437.96 168.2)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"445.84799999999996\" y1=\"147.8\" x2=\"445.84799999999996\" y2=\"170.60000000000002\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><line x1=\"555.28\" y1=\"140\" x2=\"555.28\" y2=\"167.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.6\"/><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"119.0\" y=\"-182.2\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"9\" font-weight=\"700\">accel.</text></g><line x1=\"151.0224609375\" y1=\"185.2\" x2=\"447.96\" y2=\"185.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><line x1=\"550.28\" y1=\"140\" x2=\"550.28\" y2=\"167.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><line x1=\"555.28\" y1=\"140\" x2=\"555.28\" y2=\"167.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"2\"/><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"40\" y=\"-100\" transform=\"scale(1,-1)\" fill=\"#265b4d\" font-family=\"Arial,sans-serif\" font-size=\"9\" font-weight=\"700\">Restablecimiento del tempo</text></g><line x1=\"40\" y1=\"43.0\" x2=\"555.28\" y2=\"43.0\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"49.8\" x2=\"555.28\" y2=\"49.8\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"56.6\" x2=\"555.28\" y2=\"56.6\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"63.4\" x2=\"555.28\" y2=\"63.4\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"70.2\" x2=\"555.28\" y2=\"70.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><path d=\"M376 415 C375.3333333333333 421.0 375.3333333333333 425.0 376 427 C377.3333333333333 429.0 379.3333333333333 431.3333333333333 382 434 C437.3333333333333 484.6666666666667 482.6666666666667 541.6666666666666 518 605 C552.6666666666666 668.3333333333334 570.6666666666666 738.3333333333334 572 815 C572.0 859.0 566.3333333333334 901.3333333333334 555 942 C543.6666666666666 982.0 527.6666666666666 1017.3333333333334 507 1048 C499.0 1060.0 490.0 1071.0 480 1081 C469.3333333333333 1091.6666666666667 461.0 1097.3333333333333 455 1098 C447.6666666666667 1097.3333333333333 437.6666666666667 1092.0 425 1082 C412.3333333333333 1072.0 400.6666666666667 1061.3333333333333 390 1050 C353.3333333333333 1008.0 327.6666666666667 959.0 313 903 C298.3333333333333 847.0 291.3333333333333 792.3333333333334 292 739 C292.0 709.6666666666666 293.3333333333333 680.3333333333334 296 651 C299.3333333333333 621.6666666666666 302.6666666666667 596.3333333333334 306 575 C307.3333333333333 569.6666666666666 307.6666666666667 565.3333333333334 307 562 C306.3333333333333 559.3333333333334 303.0 555.6666666666666 297 551 C221.66666666666669 492.3333333333333 154.33333333333334 425.3333333333333 95 350 C35.0 274.6666666666667 3.3333333333333335 187.0 0 87 C0.0 -3.0 30.0 -81.33333333333333 90 -148 C150.0 -214.0 241.33333333333331 -248.66666666666666 364 -252 C376.0 -252.0 388.0 -251.33333333333334 400 -250 C412.0 -249.33333333333334 423.0 -248.0 433 -246 C438.3333333333333 -244.66666666666666 442.0 -244.33333333333334 444 -245 C446.0 -245.66666666666666 447.3333333333333 -249.0 448 -255 C454.6666666666667 -289.6666666666667 460.6666666666667 -325.6666666666667 466 -363 C471.3333333333333 -400.3333333333333 474.3333333333333 -431.3333333333333 475 -456 C472.3333333333333 -527.3333333333334 453.3333333333333 -573.3333333333334 418 -594 C382.6666666666667 -614.6666666666666 348.6666666666667 -624.0 316 -622 C289.3333333333333 -621.3333333333334 269.3333333333333 -618.0 256 -612 C242.66666666666666 -606.0 236.0 -599.6666666666666 236 -593 C236.0 -589.6666666666666 238.33333333333334 -586.6666666666666 243 -584 C248.33333333333334 -582.0 256.6666666666667 -579.3333333333334 268 -576 C284.6666666666667 -572.0 299.6666666666667 -562.3333333333334 313 -547 C327.0 -532.3333333333334 334.3333333333333 -510.6666666666667 335 -482 C335.0 -454.0 326.6666666666667 -430.0 310 -410 C293.3333333333333 -390.6666666666667 269.6666666666667 -380.6666666666667 239 -380 C205.0 -380.6666666666667 178.66666666666666 -392.0 160 -414 C141.33333333333334 -436.0 132.0 -463.0 132 -495 C130.66666666666666 -530.3333333333334 143.33333333333334 -565.6666666666666 170 -601 C197.33333333333334 -636.3333333333334 248.0 -655.3333333333334 322 -658 C359.3333333333333 -660.0 400.6666666666667 -648.0 446 -622 C490.6666666666667 -595.3333333333334 515.0 -540.6666666666666 519 -458 C518.3333333333334 -428.0 515.0 -393.0 509 -353 C502.3333333333333 -313.0 496.0 -276.6666666666667 490 -244 C488.6666666666667 -238.66666666666666 489.0 -235.0 491 -233 C492.3333333333333 -231.66666666666666 496.3333333333333 -229.66666666666666 503 -227 C554.3333333333334 -206.33333333333334 595.0 -175.66666666666666 625 -135 C655.0 -94.33333333333334 670.3333333333334 -45.666666666666664 671 11 C670.3333333333334 77.0 648.6666666666666 133.33333333333334 606 180 C563.3333333333334 226.0 504.6666666666667 250.0 430 252 C417.3333333333333 251.33333333333334 409.6666666666667 252.0 407 254 C403.6666666666667 256.0 401.6666666666667 261.3333333333333 401 270 Z M470 943 C486.6666666666667 943.0 500.6666666666667 936.3333333333334 512 923 C523.3333333333334 909.0 529.3333333333334 888.3333333333334 530 861 C528.0 805.6666666666666 509.0 755.3333333333334 473 710 C437.0 665.3333333333334 398.0 625.6666666666666 356 591 C352.6666666666667 587.6666666666666 350.0 586.6666666666666 348 588 C345.3333333333333 588.6666666666666 343.6666666666667 592.3333333333334 343 599 C341.0 612.3333333333334 339.6666666666667 627.0 339 643 C337.6666666666667 659.0 337.0 675.0 337 691 C339.0 769.6666666666666 353.6666666666667 831.3333333333334 381 876 C408.3333333333333 920.0 438.0 942.3333333333334 470 943 Z M361 262 C363.0 253.33333333333334 363.0 247.66666666666666 361 245 C359.6666666666667 243.0 354.6666666666667 240.66666666666666 346 238 C301.3333333333333 222.0 266.3333333333333 196.66666666666666 241 162 C215.0 126.66666666666666 201.66666666666666 87.33333333333334 201 44 C201.66666666666666 -1.3333333333333357 212.33333333333334 -39.33333333333333 233 -70 C253.66666666666666 -100.0 281.3333333333333 -121.0 316 -133 C320.0 -134.33333333333334 324.6666666666667 -135.66666666666666 330 -137 C334.6666666666667 -138.33333333333334 339.0 -139.0 343 -139 C347.0 -139.0 350.0 -138.0 352 -136 C354.0 -134.0 355.0 -131.33333333333334 355 -128 C355.0 -124.66666666666667 353.3333333333333 -122.0 350 -120 C347.3333333333333 -118.0 344.0 -116.33333333333333 340 -115 C318.6666666666667 -105.66666666666667 301.3333333333333 -91.33333333333333 288 -72 C275.3333333333333 -52.66666666666667 268.6666666666667 -31.333333333333332 268 -8 C268.6666666666667 20.666666666666668 277.6666666666667 45.33333333333333 295 66 C313.0 86.0 337.3333333333333 100.33333333333333 368 109 C376.0 111.0 381.0 111.66666666666667 383 111 C385.6666666666667 109.66666666666667 387.3333333333333 106.33333333333333 388 101 L438 -197 C439.3333333333333 -202.33333333333334 439.0 -205.66666666666666 437 -207 C435.6666666666667 -208.33333333333334 431.3333333333333 -209.66666666666666 424 -211 C416.0 -212.33333333333334 407.3333333333333 -213.66666666666666 398 -215 C388.0 -215.66666666666666 378.0 -216.0 368 -216 C279.3333333333333 -214.66666666666666 209.33333333333334 -192.66666666666666 158 -150 C107.33333333333334 -107.33333333333334 81.33333333333333 -50.66666666666667 80 20 C78.66666666666667 49.33333333333333 83.66666666666667 83.66666666666666 95 123 C107.0 161.66666666666666 133.0 204.66666666666666 173 252 C203.0 284.6666666666667 230.0 312.0 254 334 C278.6666666666667 355.3333333333333 302.6666666666667 375.3333333333333 326 394 C330.6666666666667 398.0 334.0 399.6666666666667 336 399 C338.0 398.3333333333333 339.3333333333333 395.3333333333333 340 390 Z M430 103 C428.6666666666667 109.0 428.6666666666667 113.0 430 115 C431.3333333333333 117.0 435.0 117.66666666666667 441 117 C482.3333333333333 112.33333333333333 517.0 95.33333333333333 545 66 C573.0 36.0 587.6666666666666 -1.3333333333333357 589 -46 C588.3333333333334 -78.0 579.6666666666666 -106.0 563 -130 C546.3333333333334 -154.66666666666666 523.6666666666666 -174.0 495 -188 C489.0 -191.33333333333334 485.0 -192.66666666666666 483 -192 C481.0 -191.33333333333334 479.6666666666667 -188.0 479 -182 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 47.0 265.2)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.55\"/><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"77.7454345703125\" y=\"-58.045\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"15.299999999999999\" font-weight=\"700\">4</text></g><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"77.7454345703125\" y=\"-44.445\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"15.299999999999999\" font-weight=\"700\">4</text></g><g class=\"manual-note\" style=\"--note-order:8\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 119.0 265.2)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"126.888\" y1=\"50.8\" x2=\"126.888\" y2=\"73.6\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\"><text x=\"119.0\" y=\"-84.2\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"9\" font-weight=\"700\">a tempo</text></g><g class=\"manual-note\" style=\"--note-order:9\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 225.32 272.0)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"233.208\" y1=\"44.0\" x2=\"233.208\" y2=\"66.8\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:10\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 331.64 275.4)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"339.52799999999996\" y1=\"40.6\" x2=\"339.52799999999996\" y2=\"63.400000000000006\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:11\"><line x1=\"433.96\" y1=\"36.2\" x2=\"451.96\" y2=\"36.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 437.96 278.8)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"445.84799999999996\" y1=\"37.2\" x2=\"445.84799999999996\" y2=\"60.0\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><line x1=\"555.28\" y1=\"43\" x2=\"555.28\" y2=\"70.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.6\"/><line x1=\"550.28\" y1=\"43\" x2=\"550.28\" y2=\"70.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><line x1=\"555.28\" y1=\"43\" x2=\"555.28\" y2=\"70.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 315.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"2\"/>",
+      "notes": [
+        {
+          "pitch": "C4",
+          "x": 123,
+          "y": 84.80000000000001,
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "x": 229.32,
+          "y": 81.4,
+          "dur": 4
+        },
+        {
+          "pitch": "E4",
+          "x": 335.64,
+          "y": 78,
+          "dur": 4
+        },
+        {
+          "pitch": "C4",
+          "x": 441.96,
+          "y": 84.80000000000001,
+          "dur": 4
+        },
+        {
+          "pitch": "C4",
+          "x": 123,
+          "y": 181.8,
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "x": 229.32,
+          "y": 178.4,
+          "dur": 4
+        },
+        {
+          "pitch": "E4",
+          "x": 335.64,
+          "y": 175,
+          "dur": 4
+        },
+        {
+          "pitch": "G4",
+          "x": 441.96,
+          "y": 168.2,
+          "dur": 4
+        },
+        {
+          "pitch": "G4",
+          "x": 123,
+          "y": 265.2,
+          "dur": 4
+        },
+        {
+          "pitch": "E4",
+          "x": 229.32,
+          "y": 272,
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "x": 335.64,
+          "y": 275.4,
+          "dur": 4
+        },
+        {
+          "pitch": "C4",
+          "x": 441.96,
+          "y": 278.8,
+          "dur": 4
+        }
+      ],
+      "kind": "score",
+      "audio": {
+        "events": [
+          {
+            "frequency": 261.6255653005986,
+            "start": 0,
+            "duration": 0.552,
+            "gain": 0.17,
+            "visualIndex": 0,
+            "pitch": "C4"
+          },
+          {
+            "frequency": 293.6647679174076,
+            "start": 0.6,
+            "duration": 0.5914285714285715,
+            "gain": 0.17,
+            "visualIndex": 1,
+            "pitch": "D4"
+          },
+          {
+            "frequency": 329.6275569128699,
+            "start": 1.2428571428571429,
+            "duration": 0.6369230769230769,
+            "gain": 0.17,
+            "visualIndex": 2,
+            "pitch": "E4"
+          },
+          {
+            "frequency": 261.6255653005986,
+            "start": 1.9351648351648352,
+            "duration": 0.6900000000000003,
+            "gain": 0.17,
+            "visualIndex": 3,
+            "pitch": "C4"
+          },
+          {
+            "frequency": 261.6255653005986,
+            "start": 2.6851648351648354,
+            "duration": 0.5520000000000002,
+            "gain": 0.17,
+            "visualIndex": 4,
+            "pitch": "C4"
+          },
+          {
+            "frequency": 293.6647679174076,
+            "start": 3.2851648351648355,
+            "duration": 0.5175000000000001,
+            "gain": 0.17,
+            "visualIndex": 5,
+            "pitch": "D4"
+          },
+          {
+            "frequency": 329.6275569128699,
+            "start": 3.8476648351648355,
+            "duration": 0.4870588235294121,
+            "gain": 0.17,
+            "visualIndex": 6,
+            "pitch": "E4"
+          },
+          {
+            "frequency": 391.99543598174927,
+            "start": 4.377076599870718,
+            "duration": 0.46,
+            "gain": 0.17,
+            "visualIndex": 7,
+            "pitch": "G4"
+          },
+          {
+            "frequency": 391.99543598174927,
+            "start": 4.877076599870718,
+            "duration": 0.5519999999999997,
+            "gain": 0.17,
+            "visualIndex": 8,
+            "pitch": "G4"
+          },
+          {
+            "frequency": 329.6275569128699,
+            "start": 5.477076599870718,
+            "duration": 0.5519999999999997,
+            "gain": 0.17,
+            "visualIndex": 9,
+            "pitch": "E4"
+          },
+          {
+            "frequency": 293.6647679174076,
+            "start": 6.0770765998707175,
+            "duration": 0.5519999999999997,
+            "gain": 0.17,
+            "visualIndex": 10,
+            "pitch": "D4"
+          },
+          {
+            "frequency": 261.6255653005986,
+            "start": 6.677076599870717,
+            "duration": 0.5519999999999997,
+            "gain": 0.17,
+            "visualIndex": 11,
+            "pitch": "C4"
+          }
+        ],
+        "stops": [
+          2.6851648351648354,
+          4.877076599870718,
+          7.277076599870717
+        ],
+        "pulses": [
+          {
+            "start": 0,
+            "beat": 1,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.6,
+            "bar": 0
+          },
+          {
+            "start": 0.6,
+            "beat": 2,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.6428571428571429,
+            "bar": 0
+          },
+          {
+            "start": 1.2428571428571429,
+            "beat": 3,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.6923076923076923,
+            "bar": 0
+          },
+          {
+            "start": 1.9351648351648352,
+            "beat": 4,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.75,
+            "bar": 0
+          },
+          {
+            "start": 2.6851648351648354,
+            "beat": 1,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.6,
+            "bar": 0
+          },
+          {
+            "start": 3.2851648351648355,
+            "beat": 2,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.5625,
+            "bar": 0
+          },
+          {
+            "start": 3.8476648351648355,
+            "beat": 3,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.5294117647058824,
+            "bar": 0
+          },
+          {
+            "start": 4.377076599870718,
+            "beat": 4,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.5,
+            "bar": 0
+          },
+          {
+            "start": 4.877076599870718,
+            "beat": 1,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.6,
+            "bar": 0
+          },
+          {
+            "start": 5.477076599870718,
+            "beat": 2,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.6,
+            "bar": 0
+          },
+          {
+            "start": 6.0770765998707175,
+            "beat": 3,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.6,
+            "bar": 0
+          },
+          {
+            "start": 6.677076599870717,
+            "beat": 4,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.6,
+            "bar": 0
+          }
+        ],
+        "duration": 7.277076599870717,
+        "bpm": 100
+      }
+    },
+    "2b187454eebca5e2": {
+      "width": 595.28,
+      "height": 125,
+      "svg": "<g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\"><text x=\"40\" y=\"-104\" transform=\"scale(1,-1)\" fill=\"#265b4d\" font-family=\"Arial,sans-serif\" font-size=\"9\" font-weight=\"700\">Frase: tempo inicial, ralentización y recuperación</text></g><line x1=\"40\" y1=\"47.0\" x2=\"555.28\" y2=\"47.0\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"53.8\" x2=\"555.28\" y2=\"53.8\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"60.6\" x2=\"555.28\" y2=\"60.6\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"67.4\" x2=\"555.28\" y2=\"67.4\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><line x1=\"40\" y1=\"74.2\" x2=\"555.28\" y2=\"74.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#686d67\" stroke-width=\"0.55\"/><path d=\"M376 415 C375.3333333333333 421.0 375.3333333333333 425.0 376 427 C377.3333333333333 429.0 379.3333333333333 431.3333333333333 382 434 C437.3333333333333 484.6666666666667 482.6666666666667 541.6666666666666 518 605 C552.6666666666666 668.3333333333334 570.6666666666666 738.3333333333334 572 815 C572.0 859.0 566.3333333333334 901.3333333333334 555 942 C543.6666666666666 982.0 527.6666666666666 1017.3333333333334 507 1048 C499.0 1060.0 490.0 1071.0 480 1081 C469.3333333333333 1091.6666666666667 461.0 1097.3333333333333 455 1098 C447.6666666666667 1097.3333333333333 437.6666666666667 1092.0 425 1082 C412.3333333333333 1072.0 400.6666666666667 1061.3333333333333 390 1050 C353.3333333333333 1008.0 327.6666666666667 959.0 313 903 C298.3333333333333 847.0 291.3333333333333 792.3333333333334 292 739 C292.0 709.6666666666666 293.3333333333333 680.3333333333334 296 651 C299.3333333333333 621.6666666666666 302.6666666666667 596.3333333333334 306 575 C307.3333333333333 569.6666666666666 307.6666666666667 565.3333333333334 307 562 C306.3333333333333 559.3333333333334 303.0 555.6666666666666 297 551 C221.66666666666669 492.3333333333333 154.33333333333334 425.3333333333333 95 350 C35.0 274.6666666666667 3.3333333333333335 187.0 0 87 C0.0 -3.0 30.0 -81.33333333333333 90 -148 C150.0 -214.0 241.33333333333331 -248.66666666666666 364 -252 C376.0 -252.0 388.0 -251.33333333333334 400 -250 C412.0 -249.33333333333334 423.0 -248.0 433 -246 C438.3333333333333 -244.66666666666666 442.0 -244.33333333333334 444 -245 C446.0 -245.66666666666666 447.3333333333333 -249.0 448 -255 C454.6666666666667 -289.6666666666667 460.6666666666667 -325.6666666666667 466 -363 C471.3333333333333 -400.3333333333333 474.3333333333333 -431.3333333333333 475 -456 C472.3333333333333 -527.3333333333334 453.3333333333333 -573.3333333333334 418 -594 C382.6666666666667 -614.6666666666666 348.6666666666667 -624.0 316 -622 C289.3333333333333 -621.3333333333334 269.3333333333333 -618.0 256 -612 C242.66666666666666 -606.0 236.0 -599.6666666666666 236 -593 C236.0 -589.6666666666666 238.33333333333334 -586.6666666666666 243 -584 C248.33333333333334 -582.0 256.6666666666667 -579.3333333333334 268 -576 C284.6666666666667 -572.0 299.6666666666667 -562.3333333333334 313 -547 C327.0 -532.3333333333334 334.3333333333333 -510.6666666666667 335 -482 C335.0 -454.0 326.6666666666667 -430.0 310 -410 C293.3333333333333 -390.6666666666667 269.6666666666667 -380.6666666666667 239 -380 C205.0 -380.6666666666667 178.66666666666666 -392.0 160 -414 C141.33333333333334 -436.0 132.0 -463.0 132 -495 C130.66666666666666 -530.3333333333334 143.33333333333334 -565.6666666666666 170 -601 C197.33333333333334 -636.3333333333334 248.0 -655.3333333333334 322 -658 C359.3333333333333 -660.0 400.6666666666667 -648.0 446 -622 C490.6666666666667 -595.3333333333334 515.0 -540.6666666666666 519 -458 C518.3333333333334 -428.0 515.0 -393.0 509 -353 C502.3333333333333 -313.0 496.0 -276.6666666666667 490 -244 C488.6666666666667 -238.66666666666666 489.0 -235.0 491 -233 C492.3333333333333 -231.66666666666666 496.3333333333333 -229.66666666666666 503 -227 C554.3333333333334 -206.33333333333334 595.0 -175.66666666666666 625 -135 C655.0 -94.33333333333334 670.3333333333334 -45.666666666666664 671 11 C670.3333333333334 77.0 648.6666666666666 133.33333333333334 606 180 C563.3333333333334 226.0 504.6666666666667 250.0 430 252 C417.3333333333333 251.33333333333334 409.6666666666667 252.0 407 254 C403.6666666666667 256.0 401.6666666666667 261.3333333333333 401 270 Z M470 943 C486.6666666666667 943.0 500.6666666666667 936.3333333333334 512 923 C523.3333333333334 909.0 529.3333333333334 888.3333333333334 530 861 C528.0 805.6666666666666 509.0 755.3333333333334 473 710 C437.0 665.3333333333334 398.0 625.6666666666666 356 591 C352.6666666666667 587.6666666666666 350.0 586.6666666666666 348 588 C345.3333333333333 588.6666666666666 343.6666666666667 592.3333333333334 343 599 C341.0 612.3333333333334 339.6666666666667 627.0 339 643 C337.6666666666667 659.0 337.0 675.0 337 691 C339.0 769.6666666666666 353.6666666666667 831.3333333333334 381 876 C408.3333333333333 920.0 438.0 942.3333333333334 470 943 Z M361 262 C363.0 253.33333333333334 363.0 247.66666666666666 361 245 C359.6666666666667 243.0 354.6666666666667 240.66666666666666 346 238 C301.3333333333333 222.0 266.3333333333333 196.66666666666666 241 162 C215.0 126.66666666666666 201.66666666666666 87.33333333333334 201 44 C201.66666666666666 -1.3333333333333357 212.33333333333334 -39.33333333333333 233 -70 C253.66666666666666 -100.0 281.3333333333333 -121.0 316 -133 C320.0 -134.33333333333334 324.6666666666667 -135.66666666666666 330 -137 C334.6666666666667 -138.33333333333334 339.0 -139.0 343 -139 C347.0 -139.0 350.0 -138.0 352 -136 C354.0 -134.0 355.0 -131.33333333333334 355 -128 C355.0 -124.66666666666667 353.3333333333333 -122.0 350 -120 C347.3333333333333 -118.0 344.0 -116.33333333333333 340 -115 C318.6666666666667 -105.66666666666667 301.3333333333333 -91.33333333333333 288 -72 C275.3333333333333 -52.66666666666667 268.6666666666667 -31.333333333333332 268 -8 C268.6666666666667 20.666666666666668 277.6666666666667 45.33333333333333 295 66 C313.0 86.0 337.3333333333333 100.33333333333333 368 109 C376.0 111.0 381.0 111.66666666666667 383 111 C385.6666666666667 109.66666666666667 387.3333333333333 106.33333333333333 388 101 L438 -197 C439.3333333333333 -202.33333333333334 439.0 -205.66666666666666 437 -207 C435.6666666666667 -208.33333333333334 431.3333333333333 -209.66666666666666 424 -211 C416.0 -212.33333333333334 407.3333333333333 -213.66666666666666 398 -215 C388.0 -215.66666666666666 378.0 -216.0 368 -216 C279.3333333333333 -214.66666666666666 209.33333333333334 -192.66666666666666 158 -150 C107.33333333333334 -107.33333333333334 81.33333333333333 -50.66666666666667 80 20 C78.66666666666667 49.33333333333333 83.66666666666667 83.66666666666666 95 123 C107.0 161.66666666666666 133.0 204.66666666666666 173 252 C203.0 284.6666666666667 230.0 312.0 254 334 C278.6666666666667 355.3333333333333 302.6666666666667 375.3333333333333 326 394 C330.6666666666667 398.0 334.0 399.6666666666667 336 399 C338.0 398.3333333333333 339.3333333333333 395.3333333333333 340 390 Z M430 103 C428.6666666666667 109.0 428.6666666666667 113.0 430 115 C431.3333333333333 117.0 435.0 117.66666666666667 441 117 C482.3333333333333 112.33333333333333 517.0 95.33333333333333 545 66 C573.0 36.0 587.6666666666666 -1.3333333333333357 589 -46 C588.3333333333334 -78.0 579.6666666666666 -106.0 563 -130 C546.3333333333334 -154.66666666666666 523.6666666666666 -174.0 495 -188 C489.0 -191.33333333333334 485.0 -192.66666666666666 483 -192 C481.0 -191.33333333333334 479.6666666666667 -188.0 479 -182 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 47.0 71.2)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.55\"/><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\"><text x=\"77.7454345703125\" y=\"-62.04500000000001\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"15.299999999999999\" font-weight=\"700\">4</text></g><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\"><text x=\"77.7454345703125\" y=\"-48.445\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"15.299999999999999\" font-weight=\"700\">4</text></g><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\"><text x=\"100\" y=\"-88.2\" transform=\"scale(1,-1)\" fill=\"#686d67\" font-family=\"Arial,sans-serif\" font-size=\"8\" font-weight=\"400\">Andante · negra = 66</text></g><g class=\"manual-note\" style=\"--note-order:0\"><line x1=\"115.0\" y1=\"40.2\" x2=\"133.0\" y2=\"40.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 119.0 84.8)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"126.888\" y1=\"41.2\" x2=\"126.888\" y2=\"64.0\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:1\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 142.20499999999998 81.4)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"150.093\" y1=\"44.6\" x2=\"150.093\" y2=\"67.4\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:2\"><path d=\"M97 -125 C177.66666666666669 -120.33333333333333 231.33333333333334 -96.66666666666666 258 -54 C284.6666666666667 -11.333333333333336 297.0 20.666666666666668 295 42 C294.3333333333333 68.0 285.0 88.33333333333333 267 103 C249.0 117.66666666666667 225.33333333333334 125.0 196 125 C122.66666666666667 121.0 71.33333333333333 99.66666666666666 42 61 C12.666666666666668 22.333333333333336 -1.3333333333333333 -12.0 0 -42 C0.6666666666666666 -68.66666666666667 10.0 -89.0 28 -103 C46.0 -117.66666666666667 69.0 -125.0 97 -125 Z M75 -87 C64.33333333333333 -87.0 56.0 -84.66666666666667 50 -80 C43.333333333333336 -75.33333333333333 38.333333333333336 -70.0 35 -64 C33.666666666666664 -60.666666666666664 32.333333333333336 -57.333333333333336 31 -54 C29.666666666666668 -50.666666666666664 29.0 -47.333333333333336 29 -44 C34.333333333333336 -17.333333333333332 60.333333333333336 10.0 107 38 C154.33333333333334 66.66666666666667 192.33333333333334 82.0 221 84 C230.33333333333334 84.0 238.0 82.0 244 78 C250.0 74.0 254.66666666666666 69.0 258 63 C259.3333333333333 60.333333333333336 260.6666666666667 57.333333333333336 262 54 C263.3333333333333 50.666666666666664 264.0 47.333333333333336 264 44 C259.3333333333333 20.0 234.0 -7.333333333333332 188 -38 C141.33333333333334 -68.0 103.66666666666667 -84.33333333333333 75 -87 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 165.41 78.0)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"173.298\" y1=\"48.0\" x2=\"173.298\" y2=\"70.8\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><line x1=\"222.82\" y1=\"47\" x2=\"222.82\" y2=\"74.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.6\"/><g class=\"manual-note\" style=\"--note-order:3\"><path d=\"M97 -125 C177.66666666666669 -120.33333333333333 231.33333333333334 -96.66666666666666 258 -54 C284.6666666666667 -11.333333333333336 297.0 20.666666666666668 295 42 C294.3333333333333 68.0 285.0 88.33333333333333 267 103 C249.0 117.66666666666667 225.33333333333334 125.0 196 125 C122.66666666666667 121.0 71.33333333333333 99.66666666666666 42 61 C12.666666666666668 22.333333333333336 -1.3333333333333333 -12.0 0 -42 C0.6666666666666666 -68.66666666666667 10.0 -89.0 28 -103 C46.0 -117.66666666666667 69.0 -125.0 97 -125 Z M75 -87 C64.33333333333333 -87.0 56.0 -84.66666666666667 50 -80 C43.333333333333336 -75.33333333333333 38.333333333333336 -70.0 35 -64 C33.666666666666664 -60.666666666666664 32.333333333333336 -57.333333333333336 31 -54 C29.666666666666668 -50.666666666666664 29.0 -47.333333333333336 29 -44 C34.333333333333336 -17.333333333333332 60.333333333333336 10.0 107 38 C154.33333333333334 66.66666666666667 192.33333333333334 82.0 221 84 C230.33333333333334 84.0 238.0 82.0 244 78 C250.0 74.0 254.66666666666666 69.0 258 63 C259.3333333333333 60.333333333333336 260.6666666666667 57.333333333333336 262 54 C263.3333333333333 50.666666666666664 264.0 47.333333333333336 264 44 C259.3333333333333 20.0 234.0 -7.333333333333332 188 -38 C141.33333333333334 -68.0 103.66666666666667 -84.33333333333333 75 -87 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 229.82 74.6)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"237.708\" y1=\"51.4\" x2=\"237.708\" y2=\"74.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:4\"><path d=\"M97 -125 C177.66666666666669 -120.33333333333333 231.33333333333334 -96.66666666666666 258 -54 C284.6666666666667 -11.333333333333336 297.0 20.666666666666668 295 42 C294.3333333333333 68.0 285.0 88.33333333333333 267 103 C249.0 117.66666666666667 225.33333333333334 125.0 196 125 C122.66666666666667 121.0 71.33333333333333 99.66666666666666 42 61 C12.666666666666668 22.333333333333336 -1.3333333333333333 -12.0 0 -42 C0.6666666666666666 -68.66666666666667 10.0 -89.0 28 -103 C46.0 -117.66666666666667 69.0 -125.0 97 -125 Z M75 -87 C64.33333333333333 -87.0 56.0 -84.66666666666667 50 -80 C43.333333333333336 -75.33333333333333 38.333333333333336 -70.0 35 -64 C33.666666666666664 -60.666666666666664 32.333333333333336 -57.333333333333336 31 -54 C29.666666666666668 -50.666666666666664 29.0 -47.333333333333336 29 -44 C34.333333333333336 -17.333333333333332 60.333333333333336 10.0 107 38 C154.33333333333334 66.66666666666667 192.33333333333334 82.0 221 84 C230.33333333333334 84.0 238.0 82.0 244 78 C250.0 74.0 254.66666666666666 69.0 258 63 C259.3333333333333 60.333333333333336 260.6666666666667 57.333333333333336 262 54 C263.3333333333333 50.666666666666664 264.0 47.333333333333336 264 44 C259.3333333333333 20.0 234.0 -7.333333333333332 188 -38 C141.33333333333334 -68.0 103.66666666666667 -84.33333333333333 75 -87 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 276.23 81.4)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"284.118\" y1=\"44.6\" x2=\"284.118\" y2=\"67.4\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><line x1=\"333.64\" y1=\"47\" x2=\"333.64\" y2=\"74.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.6\"/><g class=\"manual-note\" style=\"--note-order:5\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 340.64 78.0)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"348.52799999999996\" y1=\"48.0\" x2=\"348.52799999999996\" y2=\"70.8\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:6\"><path d=\"M97 -125 C144.33333333333334 -123.66666666666667 188.33333333333334 -106.33333333333334 229 -73 C270.3333333333333 -40.333333333333336 292.3333333333333 -2.0 295 42 C294.3333333333333 68.0 285.3333333333333 88.33333333333333 268 103 C250.0 117.66666666666667 226.66666666666666 125.0 198 125 C141.33333333333334 123.66666666666667 94.66666666666666 106.66666666666666 58 74 C20.666666666666664 41.333333333333336 1.3333333333333333 2.6666666666666643 0 -42 C0.6666666666666666 -68.0 10.0 -88.33333333333333 28 -103 C46.66666666666667 -117.66666666666667 69.66666666666667 -125.0 97 -125 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 363.84499999999997 81.4)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"371.73299999999995\" y1=\"44.6\" x2=\"371.73299999999995\" y2=\"67.4\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><g class=\"manual-note\" style=\"--note-order:7\"><line x1=\"383.04999999999995\" y1=\"40.2\" x2=\"401.04999999999995\" y2=\"40.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><path d=\"M97 -125 C177.66666666666669 -120.33333333333333 231.33333333333334 -96.66666666666666 258 -54 C284.6666666666667 -11.333333333333336 297.0 20.666666666666668 295 42 C294.3333333333333 68.0 285.0 88.33333333333333 267 103 C249.0 117.66666666666667 225.33333333333334 125.0 196 125 C122.66666666666667 121.0 71.33333333333333 99.66666666666666 42 61 C12.666666666666668 22.333333333333336 -1.3333333333333333 -12.0 0 -42 C0.6666666666666666 -68.66666666666667 10.0 -89.0 28 -103 C46.0 -117.66666666666667 69.0 -125.0 97 -125 Z M75 -87 C64.33333333333333 -87.0 56.0 -84.66666666666667 50 -80 C43.333333333333336 -75.33333333333333 38.333333333333336 -70.0 35 -64 C33.666666666666664 -60.666666666666664 32.333333333333336 -57.333333333333336 31 -54 C29.666666666666668 -50.666666666666664 29.0 -47.333333333333336 29 -44 C34.333333333333336 -17.333333333333332 60.333333333333336 10.0 107 38 C154.33333333333334 66.66666666666667 192.33333333333334 82.0 221 84 C230.33333333333334 84.0 238.0 82.0 244 78 C250.0 74.0 254.66666666666666 69.0 258 63 C259.3333333333333 60.333333333333336 260.6666666666667 57.333333333333336 262 54 C263.3333333333333 50.666666666666664 264.0 47.333333333333336 264 44 C259.3333333333333 20.0 234.0 -7.333333333333332 188 -38 C141.33333333333334 -68.0 103.66666666666667 -84.33333333333333 75 -87 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 387.04999999999995 88.2)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/><line x1=\"394.93799999999993\" y1=\"37.8\" x2=\"394.93799999999993\" y2=\"60.599999999999994\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/></g><line x1=\"444.46\" y1=\"47\" x2=\"444.46\" y2=\"74.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.6\"/><g class=\"manual-note\" style=\"--note-order:8\"><line x1=\"447.46\" y1=\"40.2\" x2=\"465.46\" y2=\"40.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><path d=\"M216 125 C148.66666666666669 124.33333333333333 96.0 112.33333333333333 58 89 C20.0 65.66666666666667 0.6666666666666666 36.666666666666664 0 2 C-0.6666666666666666 -32.666666666666664 15.0 -62.33333333333333 47 -87 C79.0 -111.0 132.0 -123.66666666666667 206 -125 C286.6666666666667 -124.33333333333333 343.3333333333333 -112.0 376 -88 C408.0 -64.0 423.3333333333333 -34.0 422 2 C419.3333333333333 38.0 396.6666666666667 67.33333333333333 354 90 C311.3333333333333 112.66666666666667 265.3333333333333 124.33333333333333 216 125 Z M111 63 C117.0 79.66666666666667 127.66666666666667 90.66666666666667 143 96 C158.33333333333334 101.33333333333333 174.0 103.66666666666667 190 103 C225.33333333333334 101.0 254.66666666666666 86.33333333333333 278 59 C301.3333333333333 31.0 313.3333333333333 1.0 314 -31 C314.0 -47.0 310.3333333333333 -61.0 303 -73 C296.3333333333333 -85.0 284.6666666666667 -93.33333333333333 268 -98 C262.6666666666667 -99.33333333333333 257.6666666666667 -100.33333333333333 253 -101 C247.66666666666666 -101.66666666666667 242.33333333333334 -102.0 237 -102 C218.33333333333334 -101.33333333333333 200.66666666666666 -96.0 184 -86 C167.33333333333334 -76.66666666666667 153.66666666666666 -64.66666666666667 143 -50 C133.0 -38.0 124.66666666666667 -24.333333333333336 118 -9 C111.33333333333333 7.0 108.0 23.0 108 39 C108.0 47.0 109.0 55.0 111 63 Z\" transform=\"matrix(0.0272 -0.0 0.0 -0.0272 451.46 84.8)\" fill=\"#252723\" stroke=\"none\" stroke-width=\"0.7\"/></g><line x1=\"555.28\" y1=\"47\" x2=\"555.28\" y2=\"74.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.6\"/><g transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\"><text x=\"229.82\" y=\"-104.2\" transform=\"scale(1,-1)\" fill=\"#252723\" font-family=\"Arial,sans-serif\" font-size=\"9\" font-weight=\"700\">rall.</text></g><line x1=\"252.82927734375\" y1=\"107.2\" x2=\"286.23\" y2=\"107.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><line x1=\"550.28\" y1=\"47\" x2=\"550.28\" y2=\"74.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"0.7\"/><line x1=\"555.28\" y1=\"47\" x2=\"555.28\" y2=\"74.2\" transform=\"matrix(1.0 -0.0 0.0 -1.0 0.0 125.0)\" fill=\"none\" stroke=\"#252723\" stroke-width=\"2\"/>",
+      "notes": [
+        {
+          "pitch": "C4",
+          "x": 123,
+          "y": 84.8,
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "x": 146.20499999999998,
+          "y": 81.4,
+          "dur": 4
+        },
+        {
+          "pitch": "E4",
+          "x": 169.41,
+          "y": 78,
+          "dur": 2
+        },
+        {
+          "pitch": "F4",
+          "x": 233.82,
+          "y": 74.6,
+          "dur": 2
+        },
+        {
+          "pitch": "D4",
+          "x": 280.23,
+          "y": 81.4,
+          "dur": 2
+        },
+        {
+          "pitch": "E4",
+          "x": 344.64,
+          "y": 78,
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "x": 367.84499999999997,
+          "y": 81.4,
+          "dur": 4
+        },
+        {
+          "pitch": "B3",
+          "x": 391.04999999999995,
+          "y": 88.2,
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "x": 455.46,
+          "y": 84.8,
+          "dur": 1
+        }
+      ],
+      "kind": "score",
+      "audio": {
+        "events": [
+          {
+            "frequency": 261.6255653005986,
+            "start": 0,
+            "duration": 0.8363636363636364,
+            "gain": 0.17,
+            "visualIndex": 0,
+            "pitch": "C4"
+          },
+          {
+            "frequency": 293.6647679174076,
+            "start": 0.9090909090909091,
+            "duration": 0.8363636363636364,
+            "gain": 0.17,
+            "visualIndex": 1,
+            "pitch": "D4"
+          },
+          {
+            "frequency": 329.6275569128699,
+            "start": 1.8181818181818181,
+            "duration": 1.6727272727272728,
+            "gain": 0.17,
+            "visualIndex": 2,
+            "pitch": "E4"
+          },
+          {
+            "frequency": 349.2282314330039,
+            "start": 3.6363636363636362,
+            "duration": 1.6727272727272726,
+            "gain": 0.17,
+            "visualIndex": 3,
+            "pitch": "F4"
+          },
+          {
+            "frequency": 293.6647679174076,
+            "start": 5.454545454545454,
+            "duration": 2.090909090909091,
+            "gain": 0.17,
+            "visualIndex": 4,
+            "pitch": "D4"
+          },
+          {
+            "frequency": 329.6275569128699,
+            "start": 7.727272727272727,
+            "duration": 0.8363636363636356,
+            "gain": 0.17,
+            "visualIndex": 5,
+            "pitch": "E4"
+          },
+          {
+            "frequency": 293.6647679174076,
+            "start": 8.636363636363635,
+            "duration": 0.8363636363636356,
+            "gain": 0.17,
+            "visualIndex": 6,
+            "pitch": "D4"
+          },
+          {
+            "frequency": 246.94165062806206,
+            "start": 9.545454545454543,
+            "duration": 1.6727272727272728,
+            "gain": 0.17,
+            "visualIndex": 7,
+            "pitch": "B3"
+          },
+          {
+            "frequency": 261.6255653005986,
+            "start": 11.363636363636362,
+            "duration": 3.3454545454545457,
+            "gain": 0.17,
+            "visualIndex": 8,
+            "pitch": "C4"
+          }
+        ],
+        "stops": [
+          14.999999999999998
+        ],
+        "pulses": [
+          {
+            "start": 0,
+            "beat": 1,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 0
+          },
+          {
+            "start": 0.9090909090909091,
+            "beat": 2,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 0
+          },
+          {
+            "start": 1.8181818181818181,
+            "beat": 3,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 0
+          },
+          {
+            "start": 2.727272727272727,
+            "beat": 4,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 0
+          },
+          {
+            "start": 3.6363636363636362,
+            "beat": 1,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 1
+          },
+          {
+            "start": 4.545454545454545,
+            "beat": 2,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 1
+          },
+          {
+            "start": 5.454545454545454,
+            "beat": 3,
+            "beatsPerBar": 4,
+            "beatSeconds": 1.1363636363636362,
+            "bar": 1
+          },
+          {
+            "start": 6.59090909090909,
+            "beat": 4,
+            "beatsPerBar": 4,
+            "beatSeconds": 1.1363636363636362,
+            "bar": 1
+          },
+          {
+            "start": 7.727272727272727,
+            "beat": 1,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 2
+          },
+          {
+            "start": 8.636363636363635,
+            "beat": 2,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 2
+          },
+          {
+            "start": 9.545454545454543,
+            "beat": 3,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 2
+          },
+          {
+            "start": 10.454545454545451,
+            "beat": 4,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 2
+          },
+          {
+            "start": 11.363636363636362,
+            "beat": 1,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 3
+          },
+          {
+            "start": 12.27272727272727,
+            "beat": 2,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 3
+          },
+          {
+            "start": 13.18181818181818,
+            "beat": 3,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 3
+          },
+          {
+            "start": 14.090909090909088,
+            "beat": 4,
+            "beatsPerBar": 4,
+            "beatSeconds": 0.9090909090909091,
+            "bar": 3
+          }
+        ],
+        "duration": 14.999999999999998,
+        "bpm": 66
+      }
+    }
+  },
+  "sourcePages": [
+    178,
+    179,
+    180
+  ],
+  "nextHref": "/dashboard/course/solfeo-infantil-aplicado?class=local-solfeo-kids-m08-c04",
+  "sourceHash": "db21665cbce56fba1e94872821c9453398de11addabc13ffad14c84f1441bbdb",
+  "questions": [
+    {
+      "question_es": "Completa la afirmación del manual: «El ____ establece la velocidad de referencia.»",
+      "question_en": "Complete the manual statement: “____ establishes the reference speed.”",
+      "choices": [
+        {
+          "es": "ut, re, mi, fa, sol, la",
+          "en": "ut, re, mi, fa, sol, la"
+        },
+        {
+          "es": "tempo",
+          "en": "Tempo"
+        },
+        {
+          "es": "agógica",
+          "en": "Agogic expression"
+        },
+        {
+          "es": "solfeo",
+          "en": "solfege"
+        }
+      ],
+      "correct": 1,
+      "explanation_es": "El tempo establece la velocidad de referencia. La agógica comprende modificaciones expresivas del transcurso temporal. Ritardando (rit.) y rallentando (rall.) indican ralentización; accelerando (accel.), aceleración gradual. Sus diferencias de carácter dependen del contexto. [6]",
+      "explanation_en": "Tempo establishes the reference speed. Agogic expression encompasses expressive modifications to the flow of time. Ritardando (rit.) and rallentando (rall.) indicate slowing down; accelerando (accel.), gradual speeding up. Their differences in character depend on context. [6]",
+      "sourcePage": 178,
+      "evidence": "El tempo establece la velocidad de referencia. La agógica comprende modificaciones expresivas del transcurso temporal. Ritardando (rit.) y rallentando (rall.) indican ralentización; accelerando (accel.), aceleración gradual. Sus diferencias de carácter dependen del contexto. [6]"
+    },
+    {
+      "question_es": "Escucha primero Do4 como referencia. ¿Qué nota suena después?",
+      "question_en": "Listen to C4 as a reference. Which note sounds next?",
+      "choices": [
+        {
+          "es": "Do4",
+          "en": "C4"
+        },
+        {
+          "es": "Re4",
+          "en": "D4"
+        },
+        {
+          "es": "Mi4",
+          "en": "E4"
+        },
+        {
+          "es": "Fa4",
+          "en": "F4"
+        }
+      ],
+      "correct": 0,
+      "explanation_es": "Suena Do4. La altura procede del ejemplo del manual.",
+      "explanation_en": "The note is C4. Its pitch comes from the manual example.",
+      "sourcePage": 179,
+      "evidence": "C4",
+      "audio_url": "/local-course-assets/course-quiz/local-solfeo-m08-c03.wav"
+    }
+  ]
+}

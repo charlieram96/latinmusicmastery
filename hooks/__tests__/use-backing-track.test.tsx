@@ -35,8 +35,8 @@ const tracks: PlacedBackingTrack[] = [
 
 let hook: ReturnType<typeof useBackingTrack>
 let root: Root
-function Harness({ mix }: { mix: BackingMix }) {
-  const value = useBackingTrack({ tracks, mix })
+function Harness({ mix, loopDurationSeconds, playbackRate }: { mix: BackingMix; loopDurationSeconds?: number; playbackRate?: number }) {
+  const value = useBackingTrack({ tracks, mix, loopDurationSeconds, playbackRate })
   useLayoutEffect(() => { hook = value }, [value])
   return null
 }
@@ -63,4 +63,12 @@ it('applies the student mix on top of the authored level, and ramps it live', as
   expect(ctx.gains[2].gain.setTargetAtTime).toHaveBeenLastCalledWith(0.25, 0, expect.any(Number))
   // Muting never reschedules: the same two sources keep running.
   expect(ctx.sources).toHaveLength(2)
+})
+
+it('trims accompaniment to the musical end, including playback rate', async () => {
+  await act(async () => { root.render(<Harness mix={{}} loopDurationSeconds={1} playbackRate={2} />) })
+  const ctx = fakeContext()
+  act(() => { hook.startPlayback(ctx as unknown as AudioContext, 1) })
+  expect(ctx.sources).toHaveLength(2)
+  for (const source of ctx.sources) expect(source.start).toHaveBeenCalledWith(1, 0, 2)
 })

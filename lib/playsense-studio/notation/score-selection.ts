@@ -21,7 +21,7 @@ type SelectionBox = {left:number;top:number;width:number;height:number};
 const selectionAnchors = new WeakMap<Set<string>, string>();
 const selectionBoxes = new WeakMap<HTMLElement, SelectionBox>();
 
-export function installScoreSelection(surface: HTMLElement, hits: ScoreHit[], selected: Set<string>, change: (hits: ScoreHit[]) => void, options: { measureHeaderHeight?: number; onInput?: (hit: ScoreHit, line: number) => boolean } = {}) {
+export function installScoreSelection(surface: HTMLElement, hits: ScoreHit[], selected: Set<string>, change: (hits: ScoreHit[]) => void, options: { measureHeaderHeight?: number; onInput?: (hit: ScoreHit, line: number) => boolean; onOpen?: (hit: ScoreHit) => void } = {}) {
   const controls = new Map<string, HTMLButtonElement>();
   const highlights = new Map<string, HTMLDivElement[]>();
   const paint = () => controls.forEach((b, id) => {
@@ -58,6 +58,12 @@ export function installScoreSelection(surface: HTMLElement, hits: ScoreHit[], se
       if (e.detail !== 0) return;
       selectionBoxes.delete(surface); marquee.style.display = 'none';
       selectHit(hit,e.shiftKey,e.metaKey); report();
+    });
+    b.addEventListener('dblclick', e => {
+      if (!options.onOpen) return;
+      e.preventDefault(); e.stopPropagation();
+      selectHit(hit, false, false); report();
+      options.onOpen(hit);
     });
     const regions=hit.highlightRegions ?? (hit.highlightHeight ? [{y:hit.y,height:hit.highlightHeight}] : []);
     const areas=regions.map(region => {

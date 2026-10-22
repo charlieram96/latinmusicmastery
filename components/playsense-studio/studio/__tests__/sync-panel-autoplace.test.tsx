@@ -43,6 +43,8 @@ vi.mock('@/components/playsense-studio/studio/score-import-dialog', () => ({
 }));
 vi.mock('@/components/playsense-studio/player/state/use-video-click-track', () => ({ useVideoClickTrack: () => {} }));
 
+vi.mock('@/components/playsense-studio/shared/use-audio-source', () => { const settings = {selected: 'original', offsetSeconds: 0}; return {useAudioSource: (_item: string, _part: string, video: string) => ({loaded: true, sourceUrl: video, settings}), useSelectedAudio: () => ''} });
+
 import { SyncPanel } from '../sync-panel';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 

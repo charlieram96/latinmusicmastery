@@ -90,6 +90,7 @@ export function CourseSettingsEditor({
           <Label className="text-xs"><AdminText text={"Thumbnail"} /></Label>
           <CourseThumbnailUpload
             compact
+            readOnly={settings.is_local_draft}
             courseId={settings.id}
             currentImageUrl={settings.thumbnail_url}
             onImageUploaded={(url) => {

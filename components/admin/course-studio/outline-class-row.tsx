@@ -1,4 +1,5 @@
 'use client'
+import { FittedNavigationTitle } from '@/components/class-viewer/fitted-navigation-title'
 import { useTranslation } from '@/components/language-provider'
 import { pick } from '@/lib/i18n/localize'
 
@@ -34,7 +35,7 @@ export function OutlineClassRow({ cls, index, selected, onSelect }: OutlineClass
         type="button"
         onClick={onSelect}
         className={cn(
-          'flex w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-1.5 text-left transition-colors',
+          'flex h-12 w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-1.5 text-left transition-colors',
           selected
             ? 'bg-primary/10 text-primary'
             : 'text-foreground/70 hover:bg-foreground/[0.045] hover:text-foreground'
@@ -48,9 +49,7 @@ export function OutlineClassRow({ cls, index, selected, onSelect }: OutlineClass
         >
           {index + 1}
         </span>
-        <span className={cn('min-w-0 flex-1 truncate text-[13px]', selected && 'font-medium')}>
-          {pick(locale, cls.title, cls.title_es ?? '')}
-        </span>
+        <FittedNavigationTitle text={pick(locale, cls.title, cls.title_es ?? '')} className={cn('min-w-0 flex-1', selected && 'font-medium')} />
         {cls.is_free && (
           <Unlock className="h-3 w-3 flex-shrink-0 text-gold" aria-label="Free preview" />
         )}

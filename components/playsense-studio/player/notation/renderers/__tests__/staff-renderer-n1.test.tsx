@@ -204,7 +204,7 @@ describe('note states for every voice (minors)', () => {
     draw({ score: rests, currentMs: 1200 })
     expect(states().slice(0, 3)).toEqual(['played', 'played', 'active'])
   })
-  it('does not dim played notes twice inside a faded past row', async () => {
+  it('keeps played notes and names fully visible inside past rows', async () => {
     const { readFileSync } = await import('node:fs')
     const css = readFileSync('components/playsense-studio/player/notation/renderers/staff-renderer.css', 'utf8')
     expect(css).toMatch(/\[data-row-state=past\] \[data-score-note\]\[data-note-state=played\][^{]*\{ opacity:1; \}/)
@@ -335,3 +335,49 @@ describe('mounting mid-piece (minors)', () => {
     }
   })
 })
+
+
+it('follows every whole note in an unmetered study before entering the video interlude', () => {
+  const score = scale({initialTempo:100}, () => [60,64,67,71,72,60].map(midi => ({kind:'note', midi, durationQN:4})))
+  score.tracks[0].measures = [{...score.tracks[0].measures[0], senzaMisura:true}]
+  draw({score, currentMs:13200, trailingGapMs:10000})
+  expect(states()).toEqual(['played','played','played','played','played','active'])
+  expect(host.querySelector('.ps-notation-interlude[data-state="active"]')).toBeNull()
+  draw({score, currentMs:15000, trailingGapMs:10000})
+  expect(host.querySelector('.ps-notation-interlude[data-state="active"]')).not.toBeNull()
+})
+
+describe('classroom scaled pointer coordinates', () => {
+  it('seeks to the same musical position under parent scaling in either row', () => {
+    const onSeek = vi.fn();
+    draw({ onSeek });
+    const content = host.querySelector<HTMLElement>('.ps-staff-content')!;
+    const width = parseFloat(content.style.width), height = parseFloat(content.style.height);
+    for (const rowFraction of [.15, .55]) {
+      const results: unknown[] = [];
+      for (const factor of [1, 1.16, .8]) {
+        vi.spyOn(content, 'getBoundingClientRect').mockReturnValue({left:100,top:50,width:width*factor,height:height*factor} as DOMRect);
+        const coords = {bubbles:true,clientX:100+width*.65*factor,clientY:50+height*rowFraction*factor};
+        act(() => {
+          content.dispatchEvent(new MouseEvent('pointerdown',coords));
+          content.dispatchEvent(new MouseEvent('pointerup',coords));
+        });
+        results.push(onSeek.mock.calls.at(-1)?.[0]);
+      }
+      expect(results[0]).toBeDefined();
+      expect((results[1] as {qn:number}).qn).toBeCloseTo((results[0] as {qn:number}).qn,8);
+      expect((results[2] as {qn:number}).qn).toBeCloseTo((results[0] as {qn:number}).qn,8);
+    }
+  });
+});
+it('seeks to the numbered downbeat in a later wrapped row', () => {
+  const onSeek=vi.fn(); draw({onSeek, zoom:.5, helpers:{and:'&',noteNames:'letters'}});
+  const content=host.querySelector<HTMLElement>('.ps-staff-content')!;
+  const labels=[...host.querySelectorAll<HTMLElement>('.ps-staff-count')].filter(e=>e.textContent==='1');
+  expect(labels.length).toBeGreaterThan(1);
+  const width=parseFloat(content.style.width),height=parseFloat(content.style.height);
+  vi.spyOn(content,'getBoundingClientRect').mockReturnValue({left:100,top:50,width:width*1.16,height:height*1.16} as DOMRect);
+  const label=labels[1]; const coords={bubbles:true,clientX:100+parseFloat(label.style.left)*1.16,clientY:50+(parseFloat(label.style.top)+5)*1.16};
+  act(()=>{content.dispatchEvent(new MouseEvent('pointerdown',coords));content.dispatchEvent(new MouseEvent('pointerup',coords));});
+  expect(onSeek.mock.calls.at(-1)?.[0].qn).toBeCloseTo(4,5);
+});

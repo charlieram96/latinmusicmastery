@@ -101,3 +101,23 @@ it.each([undefined, 20])('uses Shift for musical ranges across rows and Command 
   click('n2',{metaKey:true});expect([...selected]).toEqual(['n1','n3','n4']);
  }finally{clean();surface.remove();}
 });
+
+it.each(['toolbar', 'palette', 'measure-controls', 'popover'])('preserves the score selection while pressing shared %s controls', kind => {
+  const surface=document.createElement('div');
+  const panel=document.createElement('div');
+  if(kind==='toolbar') panel.setAttribute('role','toolbar');
+  else panel.setAttribute('data-score-preserve-selection','');
+  const control=document.createElement('button');
+  const icon=document.createElement('span');
+  control.append(icon); panel.append(control); document.body.append(surface,panel);
+  const hit:ScoreHit={id:'m:0:0',kind:'measure',track:0,measure:0,x:0,y:0,width:100,height:40};
+  const selected=new Set([hit.id]), change=vi.fn();
+  const cleanup=installScoreSelection(surface,[hit],selected,change);
+  try {
+    icon.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0}));
+    expect([...selected]).toEqual([hit.id]);
+    expect(change).not.toHaveBeenCalled();
+    document.body.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0}));
+    expect(selected.size).toBe(0);
+  } finally {cleanup();surface.remove();panel.remove();}
+});

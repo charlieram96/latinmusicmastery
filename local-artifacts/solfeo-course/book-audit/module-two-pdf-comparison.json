@@ -1,0 +1,612 @@
+[
+  {
+    "page": 25,
+    "text": "El <b>pulso</b> es la referencia periódica que permite organizar el tiempo musical. El <b>ritmo</b> resulta de la sucesión y relación de duraciones, silencios y acentos. El <b>tempo</b> indica la velocidad del pulso.",
+    "matches": true
+  },
+  {
+    "page": 25,
+    "text": "BPM significa pulsaciones por minuto. La indicación <b>negra = 60</b> asigna un segundo a cada negra. Negra = 120 asigna medio segundo. Debe indicarse la figura de referencia: un mismo número de BPM no produce la misma duración si el pulso es una blanca o una negra.",
+    "matches": true
+  },
+  {
+    "page": 25,
+    "text": "Si la negra recibe el pulso, su duración en milisegundos es <b>60 000 ÷ BPM</b>. La corchea dura la mitad; la blanca, el doble. La intensidad no cambia el valor de una figura.",
+    "matches": true
+  },
+  {
+    "page": 25,
+    "text": "Ejercicios",
+    "matches": true
+  },
+  {
+    "page": 25,
+    "text": "Marca cuatro pulsos regulares. En la segunda serie, sostén el primer sonido durante dos pulsos, emite el siguiente en el tercero y guarda silencio en el cuarto.",
+    "matches": true
+  },
+  {
+    "page": 25,
+    "text": "El <b>compás</b> organiza los pulsos en grupos. Una línea divisoria separa un compás del siguiente. La cifra inicial establece su capacidad mediante dos números superpuestos: numerador y denominador.",
+    "matches": true
+  },
+  {
+    "page": 25,
+    "text": "En <b>4/4</b>, el denominador 4 representa la negra y el numerador 4 indica una capacidad de cuatro negras. No exige cuatro ataques: pueden escribirse una redonda, dos blancas u otras combinaciones equivalentes.",
+    "matches": true
+  },
+  {
+    "page": 25,
+    "text": "Los denominadores representan fracciones de redonda: <b>1 = redonda, 2 = blanca, 4 = negra, 8 = corchea, 16 = semicorchea</b>. La suma de notas y silencios debe completar la capacidad indicada, salvo casos específicos como la anacrusa.",
+    "matches": true
+  },
+  {
+    "page": 26,
+    "text": "Ejercicios",
+    "matches": true
+  },
+  {
+    "page": 26,
+    "text": "1. Suma los valores de cada compás del ejemplo.<br/>2. Escribe tres combinaciones diferentes que completen 4/4.<br/>3. Explica por qué ocho corcheas caben en un compás de 4/4.",
+    "matches": true
+  },
+  {
+    "page": 26,
+    "text": "Primero compara los valores de las figuras y sus silencios. Con la negra como unidad de tiempo: blanca = dos pulsos; blanca con puntillo = tres; redonda = cuatro. El puntillo añade la mitad del valor original, también a los silencios.",
+    "matches": true
+  },
+  {
+    "page": 26,
+    "text": "<b>Posición:</b> el silencio de blanca se apoya sobre la tercera línea. El de redonda cuelga de la cuarta. Su posición no se invierte según el compás.",
+    "matches": true
+  },
+  {
+    "page": 26,
+    "text": "<b>Convención distinta:</b> cuando todo un compás queda en silencio, el signo de redonda centrado puede representar ese compás completo, también en 2/4 y 3/4, sin puntillo. En ese uso se cuenta lo que indica el compás. Los ejemplos de arriba muestran equivalencias de duración para aprender las figuras; no invalidan la convención del silencio de compás.",
+    "matches": true
+  },
+  {
+    "page": 26,
+    "text": "Fuentes: <link href=\"https://www.musictheory.net/lessons/13\">musictheory.net · Rest Duration</link>; <link href=\"https://lilypond.org/doc/v2.23/Documentation/notation/writing-rests\">LilyPond · Full measure rests</link>.",
+    "matches": true
+  },
+  {
+    "page": 26,
+    "text": "En <b>4/4, con la negra como unidad de tiempo</b>, cada ejemplo ocupa cuatro pulsos. La columna izquierda representa sonidos; la derecha, silencios de la misma duración. Una redonda equivale a dos blancas, cuatro negras u ocho corcheas. La misma relación se cumple entre sus silencios.",
+    "matches": true
+  },
+  {
+    "page": 27,
+    "text": "Lee cada fila manteniendo cuatro pulsos regulares. En la columna de figuras, produce los sonidos; en la de silencios, conserva el pulso sin producirlos. El silencio tiene duración: el conteo continúa.",
+    "matches": true
+  },
+  {
+    "page": 27,
+    "text": "Los ejemplos son rítmicos; la línea auxiliar sirve de referencia gráfica y no asigna una altura. En la última fila, cada pareja de corcheas ocupa un pulso.",
+    "matches": true
+  },
+  {
+    "page": 27,
+    "text": "Tomando la <b>negra como un pulso</b>, una redonda dura cuatro pulsos; una blanca, dos; una negra, uno. Dos corcheas completan un pulso. Sus silencios tienen los mismos valores. Los ejemplos siguientes muestran valores aislados, no compases completos.",
+    "matches": true
+  },
+  {
+    "page": 28,
+    "text": "Los números señalan los pulsos. En las corcheas, <b>1</b> señala el comienzo del pulso y <b>y</b>, su segunda mitad: «uno-y». Mantén el mismo intervalo entre pulsos, tanto al sonar como al guardar silencio.",
+    "matches": true
+  },
+  {
+    "page": 28,
+    "text": "Práctica",
+    "matches": true
+  },
+  {
+    "page": 28,
+    "text": "1. Sostén un sonido durante cuatro pulsos y guarda después un silencio de cuatro pulsos.<br/>2. Alterna dos pulsos de sonido y dos de silencio.<br/>3. Alterna una corchea de sonido y una de silencio dentro de un pulso. Repite cuatro veces sin interrumpir el conteo.",
+    "matches": true
+  },
+  {
+    "page": 28,
+    "text": "En 4/4, una redonda dura cuatro pulsos de negra. Ataca una sola vez y cuenta 1-2-3-4. La barra divisoria separa los compases; no añade un silencio.",
+    "matches": true
+  },
+  {
+    "page": 29,
+    "text": "Cómo estudiar",
+    "matches": true
+  },
+  {
+    "page": 29,
+    "text": "Marca el pulso con un movimiento pequeño. Respeta la duración de cada sonido y de cada silencio. Escucha la tónica antes de cantar; al terminar, comprueba que no has añadido ni perdido pulsos.",
+    "matches": true
+  },
+  {
+    "page": 29,
+    "text": "Variación: cambia la dirección de la melodía conservando las figuras. Las terceras, cuartas y quintas con preparación y salto directo se trabajan en el módulo 3.",
+    "matches": true
+  },
+  {
+    "page": 29,
+    "text": "El silencio también se cuenta. No acortes el compás silencioso: prepara mentalmente la nota de entrada mientras mantienes los cuatro pulsos.",
+    "matches": true
+  },
+  {
+    "page": 29,
+    "text": "Cómo estudiar",
+    "matches": true
+  },
+  {
+    "page": 29,
+    "text": "Marca el pulso con un movimiento pequeño. Respeta la duración de cada sonido y de cada silencio. Escucha la tónica antes de cantar; al terminar, comprueba que no has añadido ni perdido pulsos.",
+    "matches": true
+  },
+  {
+    "page": 29,
+    "text": "Variación: cambia la dirección de la melodía conservando las figuras. Las terceras, cuartas y quintas con preparación y salto directo se trabajan en el módulo 3.",
+    "matches": true
+  },
+  {
+    "page": 30,
+    "text": "Cada blanca ocupa dos pulsos de negra. Ataca en 1 y en 3: 1-2 / 3-4. La negra sigue siendo la unidad de tiempo.",
+    "matches": true
+  },
+  {
+    "page": 30,
+    "text": "Cómo estudiar",
+    "matches": true
+  },
+  {
+    "page": 30,
+    "text": "Marca el pulso con un movimiento pequeño. Respeta la duración de cada sonido y de cada silencio. Escucha la tónica antes de cantar; al terminar, comprueba que no has añadido ni perdido pulsos.",
+    "matches": true
+  },
+  {
+    "page": 30,
+    "text": "Variación: cambia la dirección de la melodía conservando las figuras. Las terceras, cuartas y quintas con preparación y salto directo se trabajan en el módulo 3.",
+    "matches": true
+  },
+  {
+    "page": 30,
+    "text": "Una ligadura de prolongación une notas de igual altura: suma sus duraciones y suprime el segundo ataque. Redonda ligada a blanca = seis pulsos. Una ligadura de fraseo puede unir alturas diferentes y no suma los valores.",
+    "matches": true
+  },
+  {
+    "page": 30,
+    "text": "Cómo estudiar",
+    "matches": true
+  },
+  {
+    "page": 30,
+    "text": "Marca el pulso con un movimiento pequeño. Respeta la duración de cada sonido y de cada silencio. Escucha la tónica antes de cantar; al terminar, comprueba que no has añadido ni perdido pulsos.",
+    "matches": true
+  },
+  {
+    "page": 31,
+    "text": "Variación: cambia la dirección de la melodía conservando las figuras. Las terceras, cuartas y quintas con preparación y salto directo se trabajan en el módulo 3.",
+    "matches": true
+  },
+  {
+    "page": 31,
+    "text": "El silencio de blanca dura dos pulsos y se apoya sobre una línea; el de redonda cuelga de ella. Distingue duración y posición del signo.",
+    "matches": true
+  },
+  {
+    "page": 31,
+    "text": "Cómo estudiar",
+    "matches": true
+  },
+  {
+    "page": 31,
+    "text": "Marca el pulso con un movimiento pequeño. Respeta la duración de cada sonido y de cada silencio. Escucha la tónica antes de cantar; al terminar, comprueba que no has añadido ni perdido pulsos.",
+    "matches": true
+  },
+  {
+    "page": 31,
+    "text": "Variación: cambia la dirección de la melodía conservando las figuras. Las terceras, cuartas y quintas con preparación y salto directo se trabajan en el módulo 3.",
+    "matches": true
+  },
+  {
+    "page": 31,
+    "text": "Una negra dura un pulso; cuatro negras completan 4/4. Lee primero sin cantar y después entona. Mantén la misma velocidad cuando alternes negras, blancas y silencios.",
+    "matches": true
+  },
+  {
+    "page": 32,
+    "text": "Cómo estudiar",
+    "matches": true
+  },
+  {
+    "page": 32,
+    "text": "Marca el pulso con un movimiento pequeño. Respeta la duración de cada sonido y de cada silencio. Escucha la tónica antes de cantar; al terminar, comprueba que no has añadido ni perdido pulsos.",
+    "matches": true
+  },
+  {
+    "page": 32,
+    "text": "Variación: cambia la dirección de la melodía conservando las figuras. Las terceras, cuartas y quintas con preparación y salto directo se trabajan en el módulo 3.",
+    "matches": true
+  },
+  {
+    "page": 32,
+    "text": "Reducir proporcionalmente una frase significa dividir todas sus duraciones por el mismo factor. Aquí blancas pasan a negras, negras a corcheas y redondas a blancas; 4/4 pasa a 2/4. Conserva la melodía y su proporción rítmica.",
+    "matches": true
+  },
+  {
+    "page": 32,
+    "text": "Para conservar la duración sonora, compara original con negra = 60 y reducción con corchea = 60. Si eliges negra = 60 en ambas versiones, la reducción dura la mitad. Los silencios también se reducen.",
+    "matches": true
+  },
+  {
+    "page": 32,
+    "text": "La <b>unidad de compás</b> equivale a la duración total de un compás. La <b>unidad de tiempo</b> equivale a un pulso. La <b>unidad de subdivisión</b> equivale a una de las partes iguales en que se divide ese pulso.",
+    "matches": true
+  },
+  {
+    "page": 33,
+    "text": "El puntillo añade la mitad del valor de la figura: la blanca con puntillo equivale a tres negras. En los compases simples, el pulso se divide en dos partes iguales. En los compuestos, se divide en tres; por ello el denominador no identifica siempre la unidad de tiempo.",
+    "matches": true
+  },
+  {
+    "page": 33,
+    "text": "Cada columna representa un compás completo: 2/4, 3/4 o 4/4. En los tres, la unidad de tiempo es la negra. De arriba abajo se muestran la figura que ocupa todo el compás, sus tiempos, su división en corcheas y su subdivisión en semicorcheas.",
+    "matches": true
+  },
+  {
+    "page": 34,
+    "text": "<b>2/4:</b> una blanca ocupa el compás y equivale a dos negras.<br/><b>3/4:</b> una blanca con puntillo ocupa el compás y equivale a tres negras.<br/><b>4/4:</b> una redonda ocupa el compás y equivale a cuatro negras.",
+    "matches": true
+  },
+  {
+    "page": 34,
+    "text": "Cada tiempo se divide en dos corcheas y, después, en cuatro semicorcheas. Dentro de una columna, todas las filas tienen la misma duración total. Las barras de unión agrupan las corcheas y semicorcheas por tiempos.",
+    "matches": true
+  },
+  {
+    "page": 34,
+    "text": "Lee cada columna de arriba abajo. Después compara las columnas: cambia el número de tiempos del compás, pero se conserva la negra como unidad de tiempo.",
+    "matches": true
+  },
+  {
+    "page": 34,
+    "text": "El compás 2/4 contiene 2 tiempos de negra. Cada corchea ocupa medio tiempo. Una blanca equivale a los dos tiempos del compás. Cuenta un pulso por cada negra y conserva esa referencia cuando cambian las figuras.",
+    "matches": true
+  },
+  {
+    "page": 35,
+    "text": "Percute la unidad de tiempo con una mano y nombra las notas con sus duraciones. Compara los dos compases de cada línea: cambia el recorrido de las alturas, pero ambos conservan la misma duración.",
+    "matches": true
+  },
+  {
+    "page": 35,
+    "text": "El compás 3/4 contiene 3 tiempos de negra. Cada corchea ocupa medio tiempo. Una blanca con puntillo equivale a los tres tiempos del compás. Cuenta un pulso por cada negra y conserva esa referencia cuando cambian las figuras.",
+    "matches": true
+  },
+  {
+    "page": 36,
+    "text": "Percute la unidad de tiempo con una mano y nombra las notas con sus duraciones. Compara los dos compases de cada línea: cambia el recorrido de las alturas, pero ambos conservan la misma duración.",
+    "matches": true
+  },
+  {
+    "page": 36,
+    "text": "El compás 4/4 contiene 4 tiempos de negra. Cada corchea ocupa medio tiempo. Una redonda equivale a los cuatro tiempos del compás. Cuenta un pulso por cada negra y conserva esa referencia cuando cambian las figuras.",
+    "matches": true
+  },
+  {
+    "page": 36,
+    "text": "Percute la unidad de tiempo con una mano y nombra las notas con sus duraciones. Compara los dos compases de cada línea: cambia el recorrido de las alturas, pero ambos conservan la misma duración.",
+    "matches": true
+  },
+  {
+    "page": 36,
+    "text": "<b>C = 4/4:</b> compasillo, cuatro tiempos de negra. <b>C atravesada = 2/2:</b> compás partido o alla breve, dos tiempos de blanca. Ambos contienen una redonda por compás; cambia la unidad de tiempo. C no equivale a 2/4.",
+    "matches": true
+  },
+  {
+    "page": 37,
+    "text": "De dónde procede el signo",
+    "matches": true
+  },
+  {
+    "page": 37,
+    "text": "El antecedente está en la notación mensural medieval, desarrollada en los siglos XIII y XIV. El círculo representaba el tempus perfectum, de división ternaria; el círculo abierto, parecido a una C, el tempus imperfectum, de división binaria. No nació como inicial de «compasillo» ni simplemente como un óvalo que perdió una parte. Aquellos signos expresaban relaciones entre figuras, no exactamente nuestros compases modernos.",
+    "matches": true
+  },
+  {
+    "page": 37,
+    "text": "La forma atravesada se relaciona con la disminución de los valores en esa tradición. Hoy 2/2 permite sentir dos pulsos amplios y leer con más fluidez ciertos pasajes rápidos; no significa automáticamente tocar al doble de velocidad. Compara siempre la figura y el número de la indicación metronómica.",
+    "matches": true
+  },
+  {
+    "page": 37,
+    "text": "Referencia histórica: <link href=\"https://lilypond.org/doc/v2.23/Documentation/music-glossary/mensuration-sign\">LilyPond · Mensuration sign</link>.",
+    "matches": true
+  },
+  {
+    "page": 37,
+    "text": "Cada redonda ocupa un compás completo de 4/4. Reconoce primero la posición y el nombre de cada nota; después, cuenta cuatro pulsos por compás. Para entonar, escucha una referencia de do4 y conserva cada sonido hasta el siguiente compás.",
+    "matches": true
+  },
+  {
+    "page": 38,
+    "text": "Ejercicios",
+    "matches": true
+  },
+  {
+    "page": 38,
+    "text": "1. Nombra las notas sin cantarlas.<br/>2. Entona las tres líneas con una referencia inicial.<br/>3. Escribe cuatro redondas que asciendan desde sol4.",
+    "matches": true
+  },
+  {
+    "page": 38,
+    "text": "En 4/4, una blanca ocupa dos pulsos y una negra, uno. Los silencios mantienen el transcurso del compás: el pulso continúa aunque no se produzca sonido.",
+    "matches": true
+  },
+  {
+    "page": 39,
+    "text": "Ejercicios",
+    "matches": true
+  },
+  {
+    "page": 39,
+    "text": "Percute primero el ritmo de cada línea sobre una sola altura. Después nombra las notas con sus duraciones y, finalmente, entónalas. Mantén los silencios completos.",
+    "matches": true
+  },
+  {
+    "page": 39,
+    "text": "El compás de 2/4 contiene 2 pulsos de negra. Su organización es binario. La mano derecha marca los tiempos mediante un recorrido de 2 movimientos: <b>abajo y arriba</b>.",
+    "matches": true
+  },
+  {
+    "page": 39,
+    "text": "El primer tiempo coincide con el gesto descendente: <b>downbeat</b>. El último movimiento prepara el regreso al primer tiempo. Los puntos numerados representan la llegada de cada gesto, no una pausa. El dibujo simplifica la trayectoria; el movimiento real es continuo.",
+    "matches": true
+  },
+  {
+    "page": 39,
+    "text": "El primer tiempo tiene mayor jerarquía métrica. Esta organización no obliga a tocar siempre más fuerte cada primer tiempo.",
+    "matches": true
+  },
+  {
+    "page": 39,
+    "text": "El compás de 3/4 contiene 3 pulsos de negra. Su organización es ternario. La mano derecha marca los tiempos mediante un recorrido de 3 movimientos: <b>abajo, derecha y arriba</b>.",
+    "matches": true
+  },
+  {
+    "page": 40,
+    "text": "El primer tiempo coincide con el gesto descendente: <b>downbeat</b>. El último movimiento prepara el regreso al primer tiempo. Los puntos numerados representan la llegada de cada gesto, no una pausa. El dibujo simplifica la trayectoria; el movimiento real es continuo.",
+    "matches": true
+  },
+  {
+    "page": 40,
+    "text": "El primer tiempo tiene mayor jerarquía métrica. Esta organización no obliga a tocar siempre más fuerte cada primer tiempo.",
+    "matches": true
+  },
+  {
+    "page": 40,
+    "text": "El compás de 4/4 contiene 4 pulsos de negra. Su organización es cuaternario. La mano derecha marca los tiempos mediante un recorrido de 4 movimientos: <b>abajo, izquierda, derecha y arriba</b>.",
+    "matches": true
+  },
+  {
+    "page": 41,
+    "text": "El primer tiempo coincide con el gesto descendente: <b>downbeat</b>. El último movimiento prepara el regreso al primer tiempo. Los puntos numerados representan la llegada de cada gesto, no una pausa. El dibujo simplifica la trayectoria; el movimiento real es continuo.",
+    "matches": true
+  },
+  {
+    "page": 41,
+    "text": "En 4/4, el tercer tiempo tiene un apoyo secundario; el primero conserva la referencia principal.",
+    "matches": true
+  },
+  {
+    "page": 41,
+    "text": "Completa cada compás de 4/4 con la duración que falta. Puedes combinar notas y silencios. Escribe las respuestas en los pentagramas y comprueba la suma antes de ejecutarlas.",
+    "matches": true
+  },
+  {
+    "page": 41,
+    "text": "<b>A.</b> Una blanca y una negra: añade una figura.<br/><b>B.</b> Tres negras: añade un silencio.<br/><b>C.</b> Una blanca: añade dos figuras iguales.<br/><b>D.</b> Un silencio de blanca: completa el compás con negras.",
+    "matches": true
+  },
+  {
+    "page": 42,
+    "text": "Lectura y entonación",
+    "matches": true
+  },
+  {
+    "page": 42,
+    "text": "Respuestas posibles: A, negra; B, silencio de negra; C, dos negras; D, dos negras.",
+    "matches": true
+  },
+  {
+    "page": 42,
+    "text": "Percute las duraciones. Nombra después las notas y entona la frase. Conserva los silencios y relaciona los motivos que se repiten. Los números indican compases escritos.",
+    "matches": true
+  },
+  {
+    "page": 43,
+    "text": "Escribe una variación de los compases 1-2 que mantenga la misma capacidad métrica.",
+    "matches": true
+  },
+  {
+    "page": 43,
+    "text": "Canta primero las notas intermedias. Repite después solo la nota inicial y la de llegada. La preparación ayuda a reconocer el intervalo; la segunda ejecución comprueba su audición interior.",
+    "matches": true
+  },
+  {
+    "page": 44,
+    "text": "Invierte la dirección de cada ejercicio. Escribe una respuesta de cuatro compases que utilice esos intervalos y termine en la tónica. Evalúa por separado afinación, ritmo y continuidad.",
+    "matches": true
+  },
+  {
+    "page": 44,
+    "text": "Percute sobre una sola altura. Cada línea reúne dos fórmulas enlazadas en un ejercicio de cuatro compases. Las barras interiores son sencillas; la barra final cierra el ejercicio. Cuenta cada pulso, también durante los silencios. Alterna lectura individual, eco del docente y dictado al piano.",
+    "matches": true
+  },
+  {
+    "page": 45,
+    "text": "En 4/4 cuenta 1-2-3-4; en 3/4, 1-2-3. Para corcheas subdivide cada pulso en «número-y». Una barra de unión agrupa figuras; una barra divisoria separa compases.",
+    "matches": true
+  },
+  {
+    "page": 45,
+    "text": "Percute sobre una sola altura. Cada línea reúne dos fórmulas enlazadas en un ejercicio de cuatro compases. Las barras interiores son sencillas; la barra final cierra el ejercicio. Cuenta cada pulso, también durante los silencios. Alterna lectura individual, eco del docente y dictado al piano.",
+    "matches": true
+  },
+  {
+    "page": 46,
+    "text": "En 4/4 cuenta 1-2-3-4; en 3/4, 1-2-3. Para corcheas subdivide cada pulso en «número-y». Una barra de unión agrupa figuras; una barra divisoria separa compases.",
+    "matches": true
+  },
+  {
+    "page": 46,
+    "text": "Percute sobre una sola altura. Cada línea reúne dos fórmulas enlazadas en un ejercicio de cuatro compases. Las barras interiores son sencillas; la barra final cierra el ejercicio. Cuenta cada pulso, también durante los silencios. Alterna lectura individual, eco del docente y dictado al piano.",
+    "matches": true
+  },
+  {
+    "page": 47,
+    "text": "En 4/4 cuenta 1-2-3-4; en 3/4, 1-2-3. Para corcheas subdivide cada pulso en «número-y». Una barra de unión agrupa figuras; una barra divisoria separa compases.",
+    "matches": true
+  },
+  {
+    "page": 47,
+    "text": "Percute sobre una sola altura. Cada línea reúne dos fórmulas enlazadas en un ejercicio de cuatro compases. Las barras interiores son sencillas; la barra final cierra el ejercicio. Cuenta cada pulso, también durante los silencios. Alterna lectura individual, eco del docente y dictado al piano.",
+    "matches": true
+  },
+  {
+    "page": 48,
+    "text": "En 4/4 cuenta 1-2-3-4; en 3/4, 1-2-3. Para corcheas subdivide cada pulso en «número-y». Una barra de unión agrupa figuras; una barra divisoria separa compases.",
+    "matches": true
+  },
+  {
+    "page": 48,
+    "text": "Percute sobre una sola altura. Cada línea reúne dos fórmulas enlazadas en un ejercicio de cuatro compases. Las barras interiores son sencillas; la barra final cierra el ejercicio. Cuenta cada pulso, también durante los silencios. Alterna lectura individual, eco del docente y dictado al piano.",
+    "matches": true
+  },
+  {
+    "page": 49,
+    "text": "En 4/4 cuenta 1-2-3-4; en 3/4, 1-2-3. Para corcheas subdivide cada pulso en «número-y». Una barra de unión agrupa figuras; una barra divisoria separa compases.",
+    "matches": true
+  },
+  {
+    "page": 49,
+    "text": "Percute sobre una sola altura. Cada línea reúne dos fórmulas enlazadas en un ejercicio de cuatro compases. Las barras interiores son sencillas; la barra final cierra el ejercicio. Cuenta cada pulso, también durante los silencios. Alterna lectura individual, eco del docente y dictado al piano.",
+    "matches": true
+  },
+  {
+    "page": 50,
+    "text": "En 4/4 cuenta 1-2-3-4; en 3/4, 1-2-3. Para corcheas subdivide cada pulso en «número-y». Una barra de unión agrupa figuras; una barra divisoria separa compases.",
+    "matches": true
+  },
+  {
+    "page": 50,
+    "text": "Percute sobre una sola altura. Cada línea reúne dos fórmulas enlazadas en un ejercicio de cuatro compases. Las barras interiores son sencillas; la barra final cierra el ejercicio. Cuenta cada pulso, también durante los silencios. Alterna lectura individual, eco del docente y dictado al piano.",
+    "matches": true
+  },
+  {
+    "page": 51,
+    "text": "En 4/4 cuenta 1-2-3-4; en 3/4, 1-2-3. Para corcheas subdivide cada pulso en «número-y». Una barra de unión agrupa figuras; una barra divisoria separa compases.",
+    "matches": true
+  },
+  {
+    "page": 51,
+    "text": "Percute sobre una sola altura. Cada línea reúne dos fórmulas enlazadas en un ejercicio de cuatro compases. Las barras interiores son sencillas; la barra final cierra el ejercicio. Cuenta cada pulso, también durante los silencios. Alterna lectura individual, eco del docente y dictado al piano.",
+    "matches": true
+  },
+  {
+    "page": 52,
+    "text": "En 4/4 cuenta 1-2-3-4; en 3/4, 1-2-3. Para corcheas subdivide cada pulso en «número-y». Una barra de unión agrupa figuras; una barra divisoria separa compases.",
+    "matches": true
+  },
+  {
+    "page": 52,
+    "text": "Percute sobre una sola altura. Cada línea reúne dos fórmulas enlazadas en un ejercicio de cuatro compases. Las barras interiores son sencillas; la barra final cierra el ejercicio. Cuenta cada pulso, también durante los silencios. Alterna lectura individual, eco del docente y dictado al piano.",
+    "matches": true
+  },
+  {
+    "page": 53,
+    "text": "En 4/4 cuenta 1-2-3-4; en 3/4, 1-2-3. Para corcheas subdivide cada pulso en «número-y». Una barra de unión agrupa figuras; una barra divisoria separa compases.",
+    "matches": true
+  },
+  {
+    "page": 53,
+    "text": "Canta la escala de Do mayor subiendo y bajando. Aplica después las mismas alturas a una frase medida: la dirección cambia, pero el pulso continúa.",
+    "matches": true
+  },
+  {
+    "page": 54,
+    "text": "Repite con otras notas de la escala y termina en do. Escucha primero; canta después con nombres de notas. Estas fórmulas preparan el estudio de tono y semitono.",
+    "matches": true
+  },
+  {
+    "page": 54,
+    "text": "Canta la escala de Do mayor subiendo y bajando. Aplica después las mismas alturas a una frase medida: la dirección cambia, pero el pulso continúa.",
+    "matches": true
+  },
+  {
+    "page": 54,
+    "text": "Repite con otras notas de la escala y termina en do. Escucha primero; canta después con nombres de notas. Estas fórmulas preparan el estudio de tono y semitono.",
+    "matches": true
+  },
+  {
+    "page": 54,
+    "text": "<b>Caso:</b> Lectura de una frase de cuatro compases. Resuelve las preguntas sobre los ejemplos siguientes. Trabaja las respuestas escritas en una hoja pautada. Cada pregunta vale 10 puntos; total: 100.",
+    "matches": true
+  },
+  {
+    "page": 54,
+    "text": "Análisis y comprensión · 50 puntos",
+    "matches": true
+  },
+  {
+    "page": 54,
+    "text": "<b>1.</b> Explica la capacidad del 4/4 escrito en la frase.",
+    "matches": true
+  },
+  {
+    "page": 54,
+    "text": "<b>2.</b> ¿Cuántos pulsos de negra ocupa la primera nota?",
+    "matches": true
+  },
+  {
+    "page": 54,
+    "text": "<b>3.</b> ¿En qué pulsos empiezan las tres notas del compás 2?",
+    "matches": true
+  },
+  {
+    "page": 54,
+    "text": "<b>4.</b> Identifica el pulso silencioso del compás 3.",
+    "matches": true
+  },
+  {
+    "page": 55,
+    "text": "<b>5.</b> Cuenta los pulsos totales de la frase sin repetirla.",
+    "matches": true
+  },
+  {
+    "page": 55,
+    "text": "Escritura y aplicación · 50 puntos",
+    "matches": true
+  },
+  {
+    "page": 55,
+    "text": "<b>6.</b> Sustituye la redonda inicial por dos figuras iguales.",
+    "matches": true
+  },
+  {
+    "page": 55,
+    "text": "<b>7.</b> Sustituye el compás 4 por un silencio de compás completo.",
+    "matches": true
+  },
+  {
+    "page": 55,
+    "text": "<b>8.</b> Marca con la mano el recorrido de 4/4 mientras cuentas un compás.",
+    "matches": true
+  },
+  {
+    "page": 55,
+    "text": "<b>9.</b> Percute la frase respetando el silencio del compás 3.",
+    "matches": true
+  },
+  {
+    "page": 55,
+    "text": "<b>10.</b> Entona la frase tras escuchar do4 como referencia.",
+    "matches": true
+  }
+]

@@ -1,0 +1,124 @@
+{
+  "classId": "local-solfeo-m09-c03",
+  "duration": 56.533938,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Da Capo y Fine",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 16.833333,
+      "kind": "explanation",
+      "title": "Da Capo y Fine",
+      "sourceTopic": "saltos",
+      "soundEvents": []
+    },
+    {
+      "start": 16.833333,
+      "end": 29.166666,
+      "kind": "explanation",
+      "title": "Da Capo y Fine",
+      "sourceTopic": "saltos",
+      "soundEvents": []
+    },
+    {
+      "start": 29.166666,
+      "end": 38.512603999999996,
+      "kind": "explanation",
+      "title": "Da Capo y Fine",
+      "sourceTopic": "saltos",
+      "soundEvents": []
+    },
+    {
+      "start": 38.512603999999996,
+      "end": 50.512603999999996,
+      "kind": "notation",
+      "title": "Da Capo y Fine",
+      "sourceTopic": "saltos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "navigation",
+        "height": 145,
+        "mode": "DCFine",
+        "_sourcePage": "saltos",
+        "sourcePageId": "flow-cont-156"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "E4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "C4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "C4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 50.512603999999996,
+      "end": 56.512603999999996,
+      "kind": "completion",
+      "title": "¡Bien hecho!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

@@ -2,11 +2,11 @@
 .ps-score-engraving { --score-ink:hsl(var(--playsense-studio-notation)); color:var(--score-ink); }
 .ps-score-engraving .ps-staff-viewport { isolation:isolate; scrollbar-width:thin; scrollbar-color:hsl(var(--primary) / .3) transparent; }
 .ps-score-engraving .ps-staff-viewport:focus-visible { outline:1px solid hsl(var(--primary) / .45); outline-offset:-2px; border-radius:6px; }
-.ps-score-engraving [data-score-stave] { color:hsl(var(--playsense-studio-notation) / .24); }
+.ps-score-engraving [data-score-stave] { color:var(--score-ink); }
 .ps-score-engraving [data-score-stave] text { color:var(--score-ink); }
-/* N1 note states: played notes dim, the sounding note lights and pops (note heads only, so stems stay on their beams). */
+/* Keep all notation fully legible; the sounding note uses orange and a head-only pop. */
 .ps-score-engraving [data-score-note] { transition:color var(--dur-state) ease,opacity .3s ease,filter var(--dur-state) ease; }
-.ps-score-engraving [data-score-note][data-note-state=played] { opacity:.4; }
+.ps-score-engraving [data-score-note][data-note-state=played] { opacity:1; }
 .ps-score-engraving [data-score-note][data-note-state=active] { color:hsl(var(--primary)); filter:drop-shadow(0 0 6px hsl(var(--primary) / .45)); }
 .ps-score-engraving [data-score-note] .vf-notehead { transform-box:fill-box; transform-origin:50% 55%; }
 @media (prefers-reduced-motion:no-preference) {
@@ -20,8 +20,8 @@
 .ps-score-engraving .ps-staff-band { position:absolute; top:0; left:0; border-radius:10px; background:hsl(var(--primary) / .07); pointer-events:none; opacity:0; transition:transform var(--dur-turn) var(--ease-out),width var(--dur-turn) var(--ease-out),opacity .3s ease; }
 .ps-score-engraving .ps-staff-name { position:absolute; transform:translate(-50%,-50%); min-width:20px; height:20px; padding:0 5px; border-radius:6px; display:grid; place-items:center; font:700 11px/1 var(--font-inter),system-ui,sans-serif; white-space:nowrap; background:hsl(var(--muted)); color:hsl(var(--muted-foreground)); transition:transform var(--dur-state) var(--ease-spring),background-color var(--dur-state),color var(--dur-state),opacity .3s ease; }
 .ps-score-engraving .ps-staff-name[data-active=true] { background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); transform:translate(-50%,-50%) scale(1.18); }
-.ps-score-engraving .ps-staff-name[data-past=true] { opacity:.4; }
-.ps-score-engraving .ps-staff-count { position:absolute; transform:translate(-50%,-50%); font:600 11px/1 var(--font-inter),system-ui,sans-serif; color:hsl(var(--muted-foreground) / .75); transition:color var(--dur-tap),transform var(--dur-tap) var(--ease-spring); }
+.ps-score-engraving .ps-staff-name[data-past=true] { opacity:1; }
+.ps-score-engraving .ps-staff-count { position:absolute; transform:translate(-50%,-50%); font:600 11px/1 var(--font-inter),system-ui,sans-serif; color:hsl(var(--muted-foreground)); transition:color var(--dur-tap),transform var(--dur-tap) var(--ease-spring); }
 .ps-score-engraving .ps-staff-count[data-beat=true] { font-weight:800; color:hsl(var(--muted-foreground)); }
 .ps-score-engraving .ps-staff-count[data-active=true] { color:hsl(var(--primary)); transform:translate(-50%,-50%) scale(1.3); }
 .ps-score-engraving .ps-staff-next { position:absolute; top:0; left:0; width:26px; height:26px; margin:-13px 0 0 -13px; border-radius:50%; border:2px solid hsl(var(--primary) / .45); pointer-events:none; z-index:1; }
@@ -30,17 +30,17 @@
 @media (prefers-reduced-motion:no-preference) { .ps-score-engraving .ps-staff-next::after { animation:ps-next-ring 1s var(--ease-out) infinite; } }
 @keyframes ps-next-ring { 0% { transform:scale(.7); opacity:.9; } 100% { transform:scale(1.5); opacity:0; } }
 .ps-score-engraving.playsense-studio-notation svg [data-score-bar-number] { font-family:Georgia,'Times New Roman',serif; font-size:11px; font-style:italic; fill:hsl(var(--muted-foreground))!important; stroke:none!important; }
-/* Stacked rows: the row being read at full ink, past rows faded, upcoming rows nearly full. Paged: one page on show. */
-.ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=past] { opacity:.45; }
-.ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=next] { opacity:.88; }
-/* A past row already fades as a whole: its played notes and chips don't dim a second time (40% of 45%). */
+/* Past and upcoming rows retain full contrast in every shared lesson and exercise. */
+.ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=past] { opacity:1; }
+.ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=next] { opacity:1; }
+/* Played notes and their names remain readable when reviewing earlier rows. */
 .ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=past] [data-score-note][data-note-state=played] { opacity:1; }
 .ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=past] .ps-staff-name[data-past=true] { opacity:1; }
 .ps-score-engraving [data-page-state=hidden] { visibility:hidden; }
 /* A paged row sits in the middle of a tall pane (auto margins centre without clipping when the pane is short). */
 .ps-score-engraving[data-score-layout-mode=paged] { display:flex; flex-direction:column; }
 .ps-score-engraving[data-score-layout-mode=paged] .ps-staff-viewport { overflow:hidden; flex-shrink:0; margin-block:auto; }
-.ps-exercise-score .ps-staff-viewport { mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 20px),transparent); }
+.ps-exercise-score .ps-staff-viewport { mask-image:none; }
 .ps-score-engraving:not([data-score-interactive]) .ps-staff-content { touch-action:pan-y!important; }
 .ps-score-engraving[data-score-layout-mode=wrapped]:not([data-score-interactive]) .ps-staff-content { touch-action:pan-x pan-y!important; }
 /* Video intervals keep the staff aligned within a slightly taller, unfilled frame. */
@@ -51,7 +51,7 @@
 .ps-score-engraving.playsense-studio-notation [data-state=active] .ps-interlude-outline rect { stroke:hsl(var(--primary) / .4)!important; }
 .ps-interlude-staff { position:absolute; top:50%; left:0; right:0; transform:translateY(-50%); pointer-events:none; mask-image:linear-gradient(90deg,#000 calc(50% - 48px),transparent calc(50% - 26px),transparent calc(50% + 26px),#000 calc(50% + 48px)); }
 .ps-interlude-staff>i { position:absolute; left:0; right:0; height:1px; background:hsl(var(--playsense-studio-notation) / .07); transform:translateY(-50%); }
-.ps-interlude-label { position:absolute; bottom:calc(50% + 13px); font-size:8px; font-weight:550; line-height:1; letter-spacing:1px; text-transform:uppercase; color:hsl(var(--muted-foreground) / .75); }
+.ps-interlude-label { position:absolute; bottom:calc(50% + 13px); font-size:8px; font-weight:550; line-height:1; letter-spacing:1px; text-transform:uppercase; color:hsl(var(--muted-foreground)); }
 .ps-interlude-countdown { position:relative; font-size:17px; font-weight:500; line-height:1.1; letter-spacing:.3px; font-variant-numeric:tabular-nums; }
 .ps-notation-interlude[data-state=active] .ps-interlude-countdown { color:hsl(var(--foreground) / .9); }
 .ps-interlude-playhead { position:absolute; top:0; bottom:0; left:clamp(0px,var(--interlude-progress),calc(100% - 1.5px)); width:1.5px; background:hsl(var(--primary) / .9); box-shadow:0 0 5px hsl(var(--primary) / .2); pointer-events:none; }
@@ -61,8 +61,8 @@
 .ps-notation-interlude[data-compact=true] { padding:3px 8px; }
 .ps-notation-interlude[data-compact=true] .ps-interlude-label { display:none; }
 .ps-notation-interlude[data-compact=true] .ps-interlude-countdown { font-size:13px; }
-.ps-score-engraving [data-score-repeat-sign] { color:hsl(var(--playsense-studio-notation) / .6); }
+.ps-score-engraving [data-score-repeat-sign] { color:var(--score-ink); }
 .ps-score-engraving.playsense-studio-notation svg [data-score-repeat-count],
-.ps-score-engraving.playsense-studio-notation svg [data-score-repeat-count] tspan { font-family:Georgia,'Times New Roman',serif; font-size:10px; font-style:italic; font-weight:400; letter-spacing:.1px; fill:hsl(var(--playsense-studio-notation) / .85)!important; stroke:none!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-score-repeat-count] tspan { font-family:Georgia,'Times New Roman',serif; font-size:10px; font-style:italic; font-weight:400; letter-spacing:.1px; fill:var(--score-ink)!important; stroke:none!important; }
 .ps-score-engraving.playsense-studio-notation svg [data-score-repeat-count] [data-score-repeat-number] { font-size:13px; font-style:normal; font-weight:600; }
 @media(prefers-reduced-motion:reduce) { .ps-score-engraving * { transition:none!important; } }

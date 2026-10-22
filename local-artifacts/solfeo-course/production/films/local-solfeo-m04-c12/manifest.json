@@ -1,0 +1,1233 @@
+{
+  "classId": "local-solfeo-m04-c12",
+  "duration": 149.161513,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Seisillo y doble tresillo: agrupación y acentos",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 26,
+      "kind": "explanation",
+      "title": "Seisillo y doble tresillo: agrupación y acentos",
+      "sourceTopic": "seisillo-agrupacion",
+      "soundEvents": []
+    },
+    {
+      "start": 26,
+      "end": 38,
+      "kind": "notation",
+      "title": "Seisillo 6:4 · agrupación elegida 2 + 2 + 2",
+      "sourceTopic": "seisillo-agrupacion",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "Seisillo 6:4 · agrupación elegida 2 + 2 + 2",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ],
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ],
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ],
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ],
+                  "mark": null
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ],
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ],
+                  "mark": null
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ],
+                "ratio": [
+                  6,
+                  4
+                ]
+              }
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 145,
+        "_sourcePage": "seisillo-agrupacion",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "seisillos-aplicados"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.09583333333333341,
+          "gain": 0.20400000000000001,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.1041666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.2083333333333335,
+          "duration": 0.09583333333333341,
+          "gain": 0.20400000000000001,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.3125000000000002,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.416666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.20400000000000001,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.5208333333333337,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.6250000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 38,
+      "end": 50,
+      "kind": "notation",
+      "title": "Dos tresillos 3:2 · agrupación 3 + 3",
+      "sourceTopic": "seisillo-agrupacion",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "Dos tresillos 3:2 · agrupación 3 + 3",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 16,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 16,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "mark": null
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 16,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 16,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16,
+                  "tuplet": [
+                    3,
+                    2
+                  ],
+                  "mark": null
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                3,
+                4,
+                5
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              },
+              {
+                "indices": [
+                  3,
+                  4,
+                  5
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 145,
+        "_sourcePage": "seisillo-agrupacion",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "seisillos-aplicados"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.09583333333333341,
+          "gain": 0.20400000000000001,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.1041666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.2083333333333335,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.3125000000000002,
+          "duration": 0.09583333333333341,
+          "gain": 0.20400000000000001,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.416666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.5208333333333337,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.6250000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 50,
+      "end": 66.627792,
+      "kind": "explanation",
+      "title": "Seisillo y doble tresillo: agrupación y acentos",
+      "sourceTopic": "seisillo-agrupacion",
+      "soundEvents": []
+    },
+    {
+      "start": 66.627792,
+      "end": 76.572236,
+      "kind": "explanation",
+      "title": "Seisillo y doble tresillo: agrupación y acentos",
+      "sourceTopic": "seisillo-agrupacion",
+      "soundEvents": []
+    },
+    {
+      "start": 76.572236,
+      "end": 92.572236,
+      "kind": "explanation",
+      "title": "Seisillo y doble tresillo: agrupación y acentos",
+      "sourceTopic": "seisillos-aplicados",
+      "soundEvents": []
+    },
+    {
+      "start": 92.572236,
+      "end": 104.572236,
+      "kind": "notation",
+      "title": "1 · Seisillo en un pulso; tresillo en el siguiente compás",
+      "sourceTopic": "seisillos-aplicados",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "1 · Seisillo en un pulso; tresillo en el siguiente compás",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              [
+                7,
+                8,
+                9
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ],
+                "ratio": [
+                  6,
+                  4
+                ]
+              },
+              {
+                "indices": [
+                  7,
+                  8,
+                  9
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "seisillos-aplicados",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "seisillos-aplicados"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.1041666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.2083333333333335,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.3125000000000002,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.416666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.5208333333333337,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.6250000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.2500000000000004,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.458333333333334,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.6666666666666674,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.875000000000001,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 104.572236,
+      "end": 116.572236,
+      "kind": "notation",
+      "title": "2 · Seisillo en un pulso; tresillo en el siguiente compás",
+      "sourceTopic": "seisillos-aplicados",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "2 · Seisillo en un pulso; tresillo en el siguiente compás",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              [
+                7,
+                8,
+                9
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ],
+                "ratio": [
+                  6,
+                  4
+                ]
+              },
+              {
+                "indices": [
+                  7,
+                  8,
+                  9
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "seisillos-aplicados",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "seisillos-aplicados"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.1041666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.2083333333333335,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3125000000000002,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.416666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.5208333333333337,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.6250000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.2500000000000004,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.458333333333334,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.6666666666666674,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.875000000000001,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 116.572236,
+      "end": 128.572236,
+      "kind": "notation",
+      "title": "3 · Seisillo en un pulso; tresillo en el siguiente compás",
+      "sourceTopic": "seisillos-aplicados",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "3 · Seisillo en un pulso; tresillo en el siguiente compás",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 16,
+                  "tuplet": [
+                    6,
+                    4
+                  ]
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8,
+                  "tuplet": [
+                    3,
+                    2
+                  ]
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              [
+                7,
+                8,
+                9
+              ]
+            ],
+            "tupletGroups": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ],
+                "ratio": [
+                  6,
+                  4
+                ]
+              },
+              {
+                "indices": [
+                  7,
+                  8,
+                  9
+                ],
+                "ratio": [
+                  3,
+                  2
+                ]
+              }
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "seisillos-aplicados",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "seisillos-aplicados"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.1041666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.2083333333333335,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.3125000000000002,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.416666666666667,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.5208333333333337,
+          "duration": 0.09583333333333341,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.6250000000000004,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.2500000000000004,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.458333333333334,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.6666666666666674,
+          "duration": 0.19166666666666682,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.875000000000001,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 128.572236,
+      "end": 143.140174,
+      "kind": "explanation",
+      "title": "Seisillo y doble tresillo: agrupación y acentos",
+      "sourceTopic": "seisillos-aplicados",
+      "soundEvents": []
+    },
+    {
+      "start": 143.140174,
+      "end": 149.140174,
+      "kind": "completion",
+      "title": "¡Bien hecho!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

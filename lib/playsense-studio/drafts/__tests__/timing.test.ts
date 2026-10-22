@@ -21,7 +21,7 @@ describe('studio timing', () => {
   });
   it('turns a draft timing back into the map shape the SyncPanel seeds from', () => {
     const t = timingFromLive({ method: 'drag', params: { nudges: [{ qn: 2, deltaSeconds: -0.01 }] }, waypoints: [wp(0, 0), wp(4, 2)] }, null);
-    expect(timingToTimeMap(t)).toEqual({ id: 'draft', method: 'drag', waypoints: [wp(0, 0), wp(4, 2)], nudges: [{ qn: 2, deltaSeconds: -0.01 }], flex: [] });
+    expect(timingToTimeMap(t)).toEqual({ id: 'draft', params: t.params, method: 'drag', waypoints: [wp(0, 0), wp(4, 2)], nudges: [{ qn: 2, deltaSeconds: -0.01 }], flex: [] });
     expect(timingToTimeMap(EMPTY_TIMING)).toBeNull();
   });
   it('carries flex from params into the map shape', () => {

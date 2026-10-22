@@ -1,0 +1,755 @@
+{
+  "classId": "local-solfeo-m02-c04",
+  "duration": 162.693902,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Unidad de compás, tiempo y subdivisión",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 23,
+      "kind": "explanation",
+      "title": "Unidad de compás, tiempo y subdivisión",
+      "sourceTopic": "unidades",
+      "soundEvents": []
+    },
+    {
+      "start": 23,
+      "end": 35,
+      "kind": "notation",
+      "title": "4/4: compás = redonda; tiempo = negra; subdivisión = corchea · compases equivalentes",
+      "sourceTopic": "unidades",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 86,
+        "rows": [
+          {
+            "title": "4/4: compás = redonda; tiempo = negra; subdivisión = corchea · compases equivalentes",
+            "bars": [
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 1,
+                  "label": "compás"
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "label": "tiempo"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "label": "tiempo"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "label": "tiempo"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "label": "tiempo"
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "2": "final"
+            },
+            "beams": [
+              [
+                5,
+                6
+              ],
+              [
+                7,
+                8
+              ],
+              [
+                9,
+                10
+              ],
+              [
+                11,
+                12
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "unidades",
+        "rowHeights": [
+          86
+        ],
+        "sourcePageId": "flow-cont-15"
+      },
+      "soundEvents": [
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 1,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 4.75,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 5.375,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 6,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 6.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 6.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 6.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 7.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 7.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 7.875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 8.1875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 2
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 35,
+      "end": 47,
+      "kind": "notation",
+      "title": "2/4: compás = blanca; tiempo = negra; subdivisión = corchea · compases equivalentes",
+      "sourceTopic": "unidades",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 86,
+        "rows": [
+          {
+            "title": "2/4: compás = blanca; tiempo = negra; subdivisión = corchea · compases equivalentes",
+            "bars": [
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 2,
+                  "label": "compás"
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "label": "tiempo"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "label": "tiempo"
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                }
+              ]
+            ],
+            "meter": "2/4",
+            "barStyles": {
+              "2": "final"
+            },
+            "beams": [
+              [
+                3,
+                4
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "unidades",
+        "rowHeights": [
+          86
+        ],
+        "sourcePageId": "flow-cont-15"
+      },
+      "soundEvents": [
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 3.5,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 3.8125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 4.125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 4.4375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 47,
+      "end": 59,
+      "kind": "notation",
+      "title": "3/4: compás = blanca con puntillo; tiempo = negra · compases equivalentes",
+      "sourceTopic": "unidades",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 86,
+        "rows": [
+          {
+            "title": "3/4: compás = blanca con puntillo; tiempo = negra · compases equivalentes",
+            "bars": [
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 2,
+                  "dot": true,
+                  "label": "compás"
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "label": "tiempo"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "label": "tiempo"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "label": "tiempo"
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 8,
+                  "label": "subdivisión"
+                }
+              ]
+            ],
+            "meter": "3/4",
+            "barStyles": {
+              "2": "final"
+            },
+            "beams": [
+              [
+                4,
+                5
+              ],
+              [
+                6,
+                7
+              ],
+              [
+                8,
+                9
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "unidades",
+        "rowHeights": [
+          86
+        ],
+        "sourcePageId": "flow-cont-15"
+      },
+      "soundEvents": [
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 1,
+          "duration": 1.725,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 4.75,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 5.0625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 5.375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 5.6875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 6,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 6.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 2
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 59,
+      "end": 81,
+      "kind": "explanation",
+      "title": "Unidad de compás, tiempo y subdivisión",
+      "sourceTopic": "unidades",
+      "soundEvents": []
+    },
+    {
+      "start": 81,
+      "end": 101,
+      "kind": "explanation",
+      "title": "Unidad de compás, tiempo y subdivisión",
+      "sourceTopic": "unidades-cuadro",
+      "soundEvents": []
+    },
+    {
+      "start": 101,
+      "end": 113,
+      "kind": "notation",
+      "title": "Unidad de compás, tiempo y subdivisión",
+      "sourceTopic": "unidades-cuadro",
+      "diagram": {
+        "type": "diagram",
+        "kind": "unit-grid",
+        "height": 360,
+        "columns": [
+          {
+            "meter": "2/4",
+            "cells": [
+              {
+                "dur": 2,
+                "count": 1,
+                "dot": false
+              },
+              {
+                "dur": 4,
+                "count": 2
+              },
+              {
+                "dur": 8,
+                "count": 4
+              },
+              {
+                "dur": 16,
+                "count": 8
+              }
+            ]
+          },
+          {
+            "meter": "3/4",
+            "cells": [
+              {
+                "dur": 2,
+                "count": 1,
+                "dot": true
+              },
+              {
+                "dur": 4,
+                "count": 3
+              },
+              {
+                "dur": 8,
+                "count": 6
+              },
+              {
+                "dur": 16,
+                "count": 12
+              }
+            ]
+          },
+          {
+            "meter": "4/4",
+            "cells": [
+              {
+                "dur": 1,
+                "count": 1,
+                "dot": false
+              },
+              {
+                "dur": 4,
+                "count": 4
+              },
+              {
+                "dur": 8,
+                "count": 8
+              },
+              {
+                "dur": 16,
+                "count": 16
+              }
+            ]
+          }
+        ],
+        "_sourcePage": "unidades-cuadro",
+        "sourcePageId": "flow-cont-16"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 113,
+      "end": 128.672563,
+      "kind": "explanation",
+      "title": "Unidad de compás, tiempo y subdivisión",
+      "sourceTopic": "unidades-cuadro",
+      "soundEvents": []
+    },
+    {
+      "start": 128.672563,
+      "end": 144.672563,
+      "kind": "explanation",
+      "title": "Unidad de compás, tiempo y subdivisión",
+      "sourceTopic": "unidades-cuadro",
+      "soundEvents": []
+    },
+    {
+      "start": 144.672563,
+      "end": 156.672563,
+      "kind": "explanation",
+      "title": "Unidad de compás, tiempo y subdivisión",
+      "sourceTopic": "unidades-cuadro",
+      "soundEvents": []
+    },
+    {
+      "start": 156.672563,
+      "end": 162.672563,
+      "kind": "completion",
+      "title": "¡Un paso más en tu música!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

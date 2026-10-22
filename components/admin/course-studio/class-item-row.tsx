@@ -1,4 +1,5 @@
 'use client'
+import { FittedNavigationTitle } from '@/components/class-viewer/fitted-navigation-title'
 import { useTranslation } from '@/components/language-provider'
 import { pick } from '@/lib/i18n/localize'
 import { AdminText } from '@/components/admin/admin-text'
@@ -7,7 +8,7 @@ import { AdminText } from '@/components/admin/admin-text'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronRight, GripVertical, Trash2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatMediaDuration } from '@/lib/utils'
 import { itemMeta } from './item-meta'
 import type { ClassItem } from '@/types/modules'
 
@@ -16,12 +17,6 @@ interface ClassItemRowProps {
   active: boolean
   onSelect: () => void
   onDelete: () => void
-}
-
-function formatDuration(seconds: number) {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${m}:${String(s).padStart(2, '0')}`
 }
 
 export function ClassItemRow({ item, active, onSelect, onDelete }: ClassItemRowProps) {
@@ -35,7 +30,7 @@ export function ClassItemRow({ item, active, onSelect, onDelete }: ClassItemRowP
 
   const detail =
     item.item_type === 'VIDEO' && item.video_duration_seconds
-      ? formatDuration(item.video_duration_seconds)
+      ? formatMediaDuration(item.video_duration_seconds)
       : item.item_type === 'JAM_SESSION' && item.bpm
         ? `${item.bpm} BPM${item.key_signature ? ` · ${item.key_signature}` : ''}`
         : null
@@ -84,9 +79,7 @@ export function ClassItemRow({ item, active, onSelect, onDelete }: ClassItemRowP
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13.5px] font-medium text-foreground">
-            {pick(locale, item.title, item.title_es ?? '')}
-          </span>
+          <FittedNavigationTitle className="font-medium text-foreground" text={pick(locale, item.title, item.title_es ?? '')} />
           <span className="block truncate text-xs text-muted-foreground">
             {<AdminText text={meta.label} />}
             {detail && ` · ${detail}`}

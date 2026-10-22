@@ -130,7 +130,7 @@ export interface StaveHeader { clef?: NotationClef; key?: { spec: string; cancel
  * the signature would read wrong); mid-row bars show only a clef or key change.
  */
 export function staveHeader(
-  b: { clef: NotationClef; keyFifths: number; previousKeyFifths: number; keyChanged: boolean; clefChanged: boolean; timeSignature: [number, number] },
+  b: { measure?: { senzaMisura?: boolean }; clef: NotationClef; keyFifths: number; previousKeyFifths: number; keyChanged: boolean; clefChanged: boolean; timeSignature: [number, number] },
   at: { opening: boolean; rowStart: boolean },
 ): StaveHeader {
   const h: StaveHeader = {}
@@ -141,7 +141,7 @@ export function staveHeader(
   } else if ((at.opening || at.rowStart) && b.keyFifths !== 0) {
     h.key = { spec: keySignatureName(b.keyFifths) }
   }
-  if (at.opening) h.time = `${b.timeSignature[0]}/${b.timeSignature[1]}`
+  if (at.opening && !b.measure?.senzaMisura) h.time = `${b.timeSignature[0]}/${b.timeSignature[1]}`
   return h
 }
 
@@ -187,7 +187,8 @@ export function buildMeasure(voiceDescriptors: VexEventDescriptor[][], ts: [numb
 }
 
 export function formatMeasure(b: BuiltMeasure, width: number): void {
-  new Formatter().joinVoices(b.voices).format(b.voices, Math.max(40, width))
+  // Reserve a shared engraving inset before closing/repeat barlines.
+  new Formatter().joinVoices(b.voices).format(b.voices, Math.max(40, width - 16))
 }
 
 export function drawMeasure(ctx: RenderContext, stave: Stave, b: BuiltMeasure): void {

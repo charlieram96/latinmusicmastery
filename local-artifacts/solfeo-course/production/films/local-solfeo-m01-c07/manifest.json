@@ -1,0 +1,89 @@
+{
+  "classId": "local-solfeo-m01-c07",
+  "duration": 76.264604,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Cabeza, plica, corchete y barras de unión",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 31,
+      "kind": "explanation",
+      "title": "Cabeza, plica, corchete y barras de unión",
+      "sourceTopic": "partes",
+      "soundEvents": []
+    },
+    {
+      "start": 31,
+      "end": 43,
+      "kind": "notation",
+      "title": "Cabeza, plica, corchete y barras de unión",
+      "sourceTopic": "partes",
+      "diagram": {
+        "type": "diagram",
+        "kind": "parts-map",
+        "height": 255,
+        "_sourcePage": "partes",
+        "sourcePageId": "flow-cont-6"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 43,
+      "end": 58.243271,
+      "kind": "explanation",
+      "title": "Cabeza, plica, corchete y barras de unión",
+      "sourceTopic": "partes",
+      "soundEvents": []
+    },
+    {
+      "start": 58.243271,
+      "end": 70.243271,
+      "kind": "notation",
+      "title": "Cabeza, plica, corchete y barras de unión",
+      "sourceTopic": "partes",
+      "diagram": {
+        "type": "diagram",
+        "kind": "blank",
+        "height": 90,
+        "count": 1,
+        "_sourcePage": "partes",
+        "sourcePageId": "flow-cont-6"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 70.243271,
+      "end": 76.243271,
+      "kind": "completion",
+      "title": "¡Bien hecho!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

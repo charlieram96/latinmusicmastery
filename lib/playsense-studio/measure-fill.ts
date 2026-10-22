@@ -2,7 +2,7 @@
 // (a 6/8 bar holds 6). Drives the strip's beat chip, the hatched missing time
 // and the footer's "bars don't add up" chip.
 
-import type { MusicalEvent } from '@/components/playsense-studio/shared/score-model/types';
+import type { MusicalEvent, Measure } from '@/components/playsense-studio/shared/score-model/types';
 import { QN_EPS, isFillerRest, measureLengthInQN, occupiedQN } from './time-mapping';
 
 export type FillKind = 'empty' | 'short' | 'ok' | 'over';
@@ -15,9 +15,9 @@ export interface MeasureFill {
   overBeats: number;
 }
 
-export function measureFill(voice1: MusicalEvent[], voice2: MusicalEvent[] | undefined, ts: [number, number]): MeasureFill {
+export function measureFill(voice1: MusicalEvent[], voice2: MusicalEvent[] | undefined, ts: [number, number], measure?: Measure): MeasureFill {
   const unitQN = 4 / ts[1];
-  const needQN = measureLengthInQN(ts);
+  const needQN = measureLengthInQN(ts, measure);
   const totalBeats = needQN / unitQN;
   const v1 = isFillerRest(voice1, ts) ? [] : voice1;
   const v2 = voice2 && voice2.some((e) => e.kind !== 'rest') ? voice2 : [];

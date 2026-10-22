@@ -1,11 +1,15 @@
 'use client'
 
+import { LessonNarration } from '@/components/lesson-narration/lesson-narration'
+import { ProducedSolfeoLessonPreview } from '@/components/solfeo/produced-lesson-preview'
+import { FullSolfeoLessonPreview } from '@/components/solfeo/full-lesson-preview'
+import { LocalOutlineItemEditor } from './local-outline-item-editor'
 import { AdminText } from '@/components/admin/admin-text'
 
 
 import { localizedRichContent, withRichContentTranslation } from '@/lib/i18n/rich-content'
 import type { Locale } from '@/lib/i18n'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -44,6 +48,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     ItemSaveProvider scopes the explicit Save button + status footer across both
     these fields and the nested quiz editor. */
 export function ItemEditor(props: ItemEditorProps) {
+  if (['local-solfeo-m01-c01-exercise','local-solfeo-m01-c02-exercise'].includes(props.item.id)) return <ItemSaveProvider><LocalOutlineItemEditor {...props} /></ItemSaveProvider>
   return (
     <ItemSaveProvider>
       <ItemEditorBody {...props} />
@@ -78,6 +83,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
   const [description, setDescription] = useState(item.description ?? '')
   const [titleEs, setTitleEs] = useState(item.title_es ?? '')
   const [descriptionEs, setDescriptionEs] = useState(item.description_es ?? '')
+  const narrationTarget = useRef<HTMLDivElement|null>(null)
   const [notesLocale, setNotesLocale] = useState<Locale>('en')
   const [soundslice, setSoundslice] = useState(item.soundslice_embed_url ?? '')
 
@@ -180,6 +186,8 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
       {item.item_type === 'VIDEO' && (
         <div className="space-y-5 border-t border-border pt-5">
           <SectionLabel>Video</SectionLabel>
+          {['local-solfeo-m01-c01-video','local-solfeo-m01-c02-video'].includes(item.id) && <FullSolfeoLessonPreview lessonNumber={item.id==='local-solfeo-m01-c02-video'?2:1} />}
+          {/^local-solfeo-m\d{2}-c\d{2}-video$/.test(item.id) && !['local-solfeo-m01-c01-video','local-solfeo-m01-c02-video'].includes(item.id) && <ProducedSolfeoLessonPreview classId={item.class_id}/>}
           <VideoUpload
             moduleId={item.id}
             currentVideoUrl={item.video_url}
@@ -280,6 +288,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
 
       {item.item_type === 'EXERCISE' && (
         <div className="space-y-5 border-t border-border pt-5">
+          {item.id.startsWith('local-solfeo-') && <ProducedSolfeoLessonPreview classId={item.class_id} exercise/>}
           <SectionLabel><AdminText text={"Exercise video &amp; score"} /></SectionLabel>
           <VideoUpload
             moduleId={item.id}
@@ -323,7 +332,8 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
         <div className="flex gap-2" role="group" aria-label="Notes language">
           {(['en', 'es'] as const).map(lang => <button key={lang} type="button" aria-pressed={notesLocale === lang} onClick={() => setNotesLocale(lang)} className={`rounded-md border px-3 py-1.5 text-sm ${notesLocale === lang ? 'border-primary bg-primary/15 text-primary' : 'border-border'}`}>{lang === 'es' ? 'Español' : 'English'}</button>)}
         </div>
-        <TiptapEditor
+        {item.item_type==='VIDEO'&&<LessonNarration target={narrationTarget} resetKey={JSON.stringify([item.id,item.rich_content])} language={notesLocale}/>}
+        <div ref={narrationTarget}><TiptapEditor
           key={`${item.id}-${notesLocale}`}
           content={localizedRichContent(item.rich_content, notesLocale)}
           onChange={(content) => {
@@ -331,7 +341,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
             onPatched({ rich_content })
             queue({ rich_content })
           }}
-        />
+        /></div>
       </div>
     </div>
     <ItemSaveBar />

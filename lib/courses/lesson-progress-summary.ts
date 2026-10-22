@@ -52,9 +52,9 @@ export function summarizeLessonProgress(input: LessonProgressInput, live: { comp
   const partial = !done && !saving && !error && !!state?.activities.length
   const hasNextPart = currentIndex < totalItems - 1
   const lessonHref = `/dashboard/course/${courseId}/class/${classId}`
-  const prevHref = currentIndex > 0 ? `${lessonHref}?item=${currentIndex - 1}` : null
+  const prevHref = currentIndex > 0 ? `${lessonHref}?itemId=${encodeURIComponent(itemIds[currentIndex - 1])}` : null
   const next = hasNextPart ? 'part' : nextClassId ? 'lesson' : 'course'
-  const nextHref = next === 'part' ? `${lessonHref}?item=${currentIndex + 1}`
+  const nextHref = next === 'part' ? `${lessonHref}?itemId=${encodeURIComponent(itemIds[currentIndex + 1])}`
     : next === 'lesson' ? `/dashboard/course/${courseId}/class/${nextClassId}` : `/dashboard/course/${courseId}`
   const performed = !!state?.activities.includes('performance')
   const label: LessonProgressLabel = lessonDone ? 'lessonComplete'

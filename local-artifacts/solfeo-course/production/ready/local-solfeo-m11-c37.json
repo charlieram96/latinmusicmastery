@@ -1,0 +1,5704 @@
+{
+  "classId": "local-solfeo-m11-c37",
+  "title": {
+    "es": "11.37 · Lección 37 · Scherzo en La",
+    "en": "11.37 · Singing study 37 · 2/4"
+  },
+  "videoUrl": "/local-course-assets/solfeo/films/local-solfeo-m11-c37-sync-v3.mp4",
+  "posterUrl": "/local-course-assets/solfeo/films/local-solfeo-m11-c37.png",
+  "duration": 124.04675,
+  "sections": [
+    {
+      "id": "local-solfeo-m11-c37-section-5",
+      "label": "Compases 1–5",
+      "videoStartSeconds": 38,
+      "videoEndSeconds": 52.5,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Lección 37 · Scherzo en La · Compases 1–5",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 48,
+        "initialTimeSignature": [
+          2,
+          4
+        ],
+        "initialKeyFifths": 3,
+        "spans": [
+          {
+            "id": "xe21becdc-14",
+            "type": "slur",
+            "from": "xe21becdc-1",
+            "to": "xe21becdc-13"
+          },
+          {
+            "id": "xe21becdc-31",
+            "type": "cresc",
+            "from": "xe21becdc-23",
+            "to": "xe21becdc-30"
+          }
+        ],
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "clef": "treble",
+                "keyFifths": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-1",
+                        "midi": 57,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        },
+                        "dynamic": "p",
+                        "text": "Largo · negra = 48"
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-2",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-3",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-4",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-5",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-6",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-7",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-8",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 2,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-9",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-10",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-11",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-12",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-13",
+                        "midi": 68,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-15",
+                        "midi": 69,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-16",
+                        "midi": 68,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-17",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-18",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-19",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-20",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-21",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-22",
+                        "midi": 57,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 4,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-23",
+                        "midi": 59,
+                        "durationQN": 2,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        },
+                        "dynamic": "p"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 5,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-24",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-25",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-26",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-27",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-28",
+                        "midi": 68,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-29",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-30",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xe21becdc-32",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        },
+                        "dynamic": "mf"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "clef": "treble",
+              "keyFifths": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-1",
+                      "midi": 57,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      },
+                      "dynamic": "p",
+                      "text": "Largo · negra = 48"
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-2",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-3",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-4",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-5",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-6",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-7",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-8",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 2,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-9",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-10",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-11",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-12",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-13",
+                      "midi": 68,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-15",
+                      "midi": 69,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-16",
+                      "midi": 68,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-17",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-18",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-19",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-20",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-21",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-22",
+                      "midi": 57,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 4,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-23",
+                      "midi": 59,
+                      "durationQN": 2,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      },
+                      "dynamic": "p"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-24",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-25",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-26",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-27",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-28",
+                      "midi": 68,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-29",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-30",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xe21becdc-32",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      },
+                      "dynamic": "mf"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m11-c37-section-5-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m11-c37-section-5-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 39,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.25,
+            "videoTimeSeconds": 39.3125,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.5,
+            "videoTimeSeconds": 39.625,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.75,
+            "videoTimeSeconds": 39.9375,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1,
+            "videoTimeSeconds": 40.25,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1.25,
+            "videoTimeSeconds": 40.5625,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1.5,
+            "videoTimeSeconds": 40.875,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1.75,
+            "videoTimeSeconds": 41.1875,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2,
+            "videoTimeSeconds": 41.5,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.25,
+            "videoTimeSeconds": 41.8125,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.5,
+            "videoTimeSeconds": 42.125,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.75,
+            "videoTimeSeconds": 42.4375,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 3,
+            "videoTimeSeconds": 42.75,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 44,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.25,
+            "videoTimeSeconds": 44.3125,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.5,
+            "videoTimeSeconds": 44.625,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.75,
+            "videoTimeSeconds": 44.9375,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5,
+            "videoTimeSeconds": 45.25,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5.25,
+            "videoTimeSeconds": 45.5625,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5.5,
+            "videoTimeSeconds": 45.875,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5.75,
+            "videoTimeSeconds": 46.1875,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6,
+            "videoTimeSeconds": 46.5,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8,
+            "videoTimeSeconds": 49,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.25,
+            "videoTimeSeconds": 49.3125,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.5,
+            "videoTimeSeconds": 49.625,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.75,
+            "videoTimeSeconds": 49.9375,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9,
+            "videoTimeSeconds": 50.25,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9.25,
+            "videoTimeSeconds": 50.5625,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9.5,
+            "videoTimeSeconds": 50.875,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9.75,
+            "videoTimeSeconds": 51.1875,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 10,
+            "videoTimeSeconds": 51.5,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 39
+    },
+    {
+      "id": "local-solfeo-m11-c37-section-6",
+      "label": "Compases 6–10",
+      "videoStartSeconds": 52.5,
+      "videoEndSeconds": 65.636354,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Lección 37 · Scherzo en La · Compases 6–10",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 48,
+        "initialTimeSignature": [
+          2,
+          4
+        ],
+        "initialKeyFifths": 3,
+        "spans": [
+          {
+            "id": "xbb7e8865-5",
+            "type": "cresc",
+            "from": "xbb7e8865-1",
+            "to": "xbb7e8865-4"
+          }
+        ],
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "clef": "treble",
+                "keyFifths": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-1",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        },
+                        "dynamic": "p"
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-2",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-3",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-4",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-6",
+                        "midi": 61,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        },
+                        "dynamic": "mf"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 2,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-7",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-8",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-9",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-10",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-11",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-12",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-13",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-14",
+                        "midi": 57,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-15",
+                        "midi": 64,
+                        "durationQN": 2,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 4,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-16",
+                        "midi": 57,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "articulations": [
+                          "staccato"
+                        ],
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        },
+                        "text": "Andante · negra = 66"
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-17",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "articulations": [
+                          "staccato"
+                        ],
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-18",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "articulations": [
+                          "staccato"
+                        ],
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-19",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "articulations": [
+                          "staccato"
+                        ],
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-20",
+                        "midi": 68,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "articulations": [
+                          "staccato"
+                        ],
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-21",
+                        "midi": 69,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "articulations": [
+                          "staccato"
+                        ],
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-22",
+                        "midi": 68,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "articulations": [
+                          "staccato"
+                        ],
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-23",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "articulations": [
+                          "staccato"
+                        ],
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 5,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-24",
+                        "midi": 57,
+                        "durationQN": 0.16666666666666666,
+                        "dotted": false,
+                        "tuplet": {
+                          "id": "xbb7e8865-t5-1-0",
+                          "n": 6,
+                          "m": 4
+                        },
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-25",
+                        "midi": 59,
+                        "durationQN": 0.16666666666666666,
+                        "dotted": false,
+                        "tuplet": {
+                          "id": "xbb7e8865-t5-1-0",
+                          "n": 6,
+                          "m": 4
+                        },
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-26",
+                        "midi": 61,
+                        "durationQN": 0.16666666666666666,
+                        "dotted": false,
+                        "tuplet": {
+                          "id": "xbb7e8865-t5-1-0",
+                          "n": 6,
+                          "m": 4
+                        },
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-27",
+                        "midi": 62,
+                        "durationQN": 0.16666666666666666,
+                        "dotted": false,
+                        "tuplet": {
+                          "id": "xbb7e8865-t5-1-0",
+                          "n": 6,
+                          "m": 4
+                        },
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-28",
+                        "midi": 64,
+                        "durationQN": 0.16666666666666666,
+                        "dotted": false,
+                        "tuplet": {
+                          "id": "xbb7e8865-t5-1-0",
+                          "n": 6,
+                          "m": 4
+                        },
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-29",
+                        "midi": 66,
+                        "durationQN": 0.16666666666666666,
+                        "dotted": false,
+                        "tuplet": {
+                          "id": "xbb7e8865-t5-1-0",
+                          "n": 6,
+                          "m": 4
+                        },
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "xbb7e8865-30",
+                        "midi": 64,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "clef": "treble",
+              "keyFifths": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-1",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      },
+                      "dynamic": "p"
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-2",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-3",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-4",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-6",
+                      "midi": 61,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      },
+                      "dynamic": "mf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 2,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-7",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-8",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-9",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-10",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-11",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-12",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-13",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-14",
+                      "midi": 57,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-15",
+                      "midi": 64,
+                      "durationQN": 2,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 4,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-16",
+                      "midi": 57,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "articulations": [
+                        "staccato"
+                      ],
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      },
+                      "text": "Andante · negra = 66"
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-17",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "articulations": [
+                        "staccato"
+                      ],
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-18",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "articulations": [
+                        "staccato"
+                      ],
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-19",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "articulations": [
+                        "staccato"
+                      ],
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-20",
+                      "midi": 68,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "articulations": [
+                        "staccato"
+                      ],
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-21",
+                      "midi": 69,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "articulations": [
+                        "staccato"
+                      ],
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-22",
+                      "midi": 68,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "articulations": [
+                        "staccato"
+                      ],
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-23",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "articulations": [
+                        "staccato"
+                      ],
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-24",
+                      "midi": 57,
+                      "durationQN": 0.16666666666666666,
+                      "dotted": false,
+                      "tuplet": {
+                        "id": "xbb7e8865-t5-1-0",
+                        "n": 6,
+                        "m": 4
+                      },
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-25",
+                      "midi": 59,
+                      "durationQN": 0.16666666666666666,
+                      "dotted": false,
+                      "tuplet": {
+                        "id": "xbb7e8865-t5-1-0",
+                        "n": 6,
+                        "m": 4
+                      },
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-26",
+                      "midi": 61,
+                      "durationQN": 0.16666666666666666,
+                      "dotted": false,
+                      "tuplet": {
+                        "id": "xbb7e8865-t5-1-0",
+                        "n": 6,
+                        "m": 4
+                      },
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-27",
+                      "midi": 62,
+                      "durationQN": 0.16666666666666666,
+                      "dotted": false,
+                      "tuplet": {
+                        "id": "xbb7e8865-t5-1-0",
+                        "n": 6,
+                        "m": 4
+                      },
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-28",
+                      "midi": 64,
+                      "durationQN": 0.16666666666666666,
+                      "dotted": false,
+                      "tuplet": {
+                        "id": "xbb7e8865-t5-1-0",
+                        "n": 6,
+                        "m": 4
+                      },
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-29",
+                      "midi": 66,
+                      "durationQN": 0.16666666666666666,
+                      "dotted": false,
+                      "tuplet": {
+                        "id": "xbb7e8865-t5-1-0",
+                        "n": 6,
+                        "m": 4
+                      },
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "xbb7e8865-30",
+                      "midi": 64,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m11-c37-section-6-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m11-c37-section-6-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 53.5,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.25,
+            "videoTimeSeconds": 53.8125,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.5,
+            "videoTimeSeconds": 54.125,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.75,
+            "videoTimeSeconds": 54.4375,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1,
+            "videoTimeSeconds": 54.75,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2,
+            "videoTimeSeconds": 56,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.25,
+            "videoTimeSeconds": 56.3125,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.5,
+            "videoTimeSeconds": 56.625,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.75,
+            "videoTimeSeconds": 56.9375,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 3,
+            "videoTimeSeconds": 57.25,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 3.25,
+            "videoTimeSeconds": 57.5625,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 3.5,
+            "videoTimeSeconds": 57.875,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 3.75,
+            "videoTimeSeconds": 58.1875,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 58.5,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6,
+            "videoTimeSeconds": 61,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.25,
+            "videoTimeSeconds": 61.22727272727273,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.5,
+            "videoTimeSeconds": 61.45454545454545,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.75,
+            "videoTimeSeconds": 61.68181818181818,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7,
+            "videoTimeSeconds": 61.90909090909091,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7.25,
+            "videoTimeSeconds": 62.13636363636363,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7.5,
+            "videoTimeSeconds": 62.36363636363636,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7.75,
+            "videoTimeSeconds": 62.590909090909086,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8,
+            "videoTimeSeconds": 62.81818181818181,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.166666666666666,
+            "videoTimeSeconds": 62.96969696969697,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.333333333333332,
+            "videoTimeSeconds": 63.12121212121212,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.499999999999998,
+            "videoTimeSeconds": 63.272727272727266,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.666666666666664,
+            "videoTimeSeconds": 63.42424242424242,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.83333333333333,
+            "videoTimeSeconds": 63.57575757575758,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.999999999999996,
+            "videoTimeSeconds": 63.72727272727273,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9.999999999999996,
+            "videoTimeSeconds": 64.63636363636364,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 53.5
+    },
+    {
+      "id": "local-solfeo-m11-c37-section-7",
+      "label": "Compases 11–15",
+      "videoStartSeconds": 65.636354,
+      "videoEndSeconds": 77.636354,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Lección 37 · Scherzo en La · Compases 11–15",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 66,
+        "initialTimeSignature": [
+          2,
+          4
+        ],
+        "initialKeyFifths": 3,
+        "spans": [
+          {
+            "id": "x69ff510f-19",
+            "type": "slur",
+            "from": "x69ff510f-10",
+            "to": "x69ff510f-18"
+          }
+        ],
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "clef": "treble",
+                "keyFifths": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-1",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-2",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-3",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-4",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-5",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-6",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-7",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-8",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 2,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-9",
+                        "midi": 61,
+                        "durationQN": 2,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-10",
+                        "midi": 57,
+                        "durationQN": 0.3333333333333333,
+                        "dotted": false,
+                        "tuplet": {
+                          "id": "x69ff510f-t3-1-0",
+                          "n": 3,
+                          "m": 2
+                        },
+                        "triplet": true,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-11",
+                        "midi": 59,
+                        "durationQN": 0.3333333333333333,
+                        "dotted": false,
+                        "tuplet": {
+                          "id": "x69ff510f-t3-1-0",
+                          "n": 3,
+                          "m": 2
+                        },
+                        "triplet": true,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-12",
+                        "midi": 61,
+                        "durationQN": 0.3333333333333333,
+                        "dotted": false,
+                        "tuplet": {
+                          "id": "x69ff510f-t3-1-0",
+                          "n": 3,
+                          "m": 2
+                        },
+                        "triplet": true,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-13",
+                        "midi": 64,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 4,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-14",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-15",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-16",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-17",
+                        "midi": 57,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-18",
+                        "midi": 59,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 5,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-20",
+                        "midi": 68,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-21",
+                        "midi": 59,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-22",
+                        "midi": 68,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x69ff510f-23",
+                        "midi": 59,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "clef": "treble",
+              "keyFifths": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-1",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-2",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-3",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-4",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-5",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-6",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-7",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-8",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 2,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-9",
+                      "midi": 61,
+                      "durationQN": 2,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-10",
+                      "midi": 57,
+                      "durationQN": 0.3333333333333333,
+                      "dotted": false,
+                      "tuplet": {
+                        "id": "x69ff510f-t3-1-0",
+                        "n": 3,
+                        "m": 2
+                      },
+                      "triplet": true,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-11",
+                      "midi": 59,
+                      "durationQN": 0.3333333333333333,
+                      "dotted": false,
+                      "tuplet": {
+                        "id": "x69ff510f-t3-1-0",
+                        "n": 3,
+                        "m": 2
+                      },
+                      "triplet": true,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-12",
+                      "midi": 61,
+                      "durationQN": 0.3333333333333333,
+                      "dotted": false,
+                      "tuplet": {
+                        "id": "x69ff510f-t3-1-0",
+                        "n": 3,
+                        "m": 2
+                      },
+                      "triplet": true,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-13",
+                      "midi": 64,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 4,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-14",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-15",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-16",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-17",
+                      "midi": 57,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-18",
+                      "midi": 59,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-20",
+                      "midi": 68,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-21",
+                      "midi": 59,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-22",
+                      "midi": 68,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x69ff510f-23",
+                      "midi": 59,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m11-c37-section-7-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m11-c37-section-7-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 66.636354,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.25,
+            "videoTimeSeconds": 66.86362672727273,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.5,
+            "videoTimeSeconds": 67.09089945454545,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.75,
+            "videoTimeSeconds": 67.31817218181818,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1,
+            "videoTimeSeconds": 67.5454449090909,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1.25,
+            "videoTimeSeconds": 67.77271763636364,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1.5,
+            "videoTimeSeconds": 67.99999036363636,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1.75,
+            "videoTimeSeconds": 68.22726309090909,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2,
+            "videoTimeSeconds": 68.45453581818181,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 70.27271763636364,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.333333333333333,
+            "videoTimeSeconds": 70.57574793939393,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.666666666666666,
+            "videoTimeSeconds": 70.87877824242423,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.999999999999999,
+            "videoTimeSeconds": 71.18180854545454,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5.999999999999999,
+            "videoTimeSeconds": 72.09089945454545,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.249999999999999,
+            "videoTimeSeconds": 72.31817218181818,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.499999999999999,
+            "videoTimeSeconds": 72.5454449090909,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.749999999999999,
+            "videoTimeSeconds": 72.77271763636364,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.999999999999999,
+            "videoTimeSeconds": 72.99999036363636,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7.999999999999999,
+            "videoTimeSeconds": 73.90908127272726,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.5,
+            "videoTimeSeconds": 74.36362672727273,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9,
+            "videoTimeSeconds": 74.81817218181818,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9.5,
+            "videoTimeSeconds": 75.27271763636364,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 10,
+            "videoTimeSeconds": 75.72726309090909,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 66.636354
+    },
+    {
+      "id": "local-solfeo-m11-c37-section-8",
+      "label": "Compases 16–20",
+      "videoStartSeconds": 77.636354,
+      "videoEndSeconds": 89.636354,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Lección 37 · Scherzo en La · Compases 16–20",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 66,
+        "initialTimeSignature": [
+          2,
+          4
+        ],
+        "initialKeyFifths": 3,
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "clef": "treble",
+                "keyFifths": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x35848940-1",
+                        "midi": 57,
+                        "durationQN": 2,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 2,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x35848940-2",
+                        "midi": 61,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        },
+                        "text": "accelerando"
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-3",
+                        "midi": 62,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-4",
+                        "midi": 61,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x35848940-5",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-6",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-7",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-8",
+                        "midi": 68,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-9",
+                        "midi": 69,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 4,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x35848940-10",
+                        "midi": 69,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        },
+                        "text": "accelerando"
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-11",
+                        "midi": 69,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-12",
+                        "midi": 68,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-13",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-14",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-15",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-16",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x35848940-17",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 5,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x35848940-18",
+                        "midi": 61,
+                        "durationQN": 2,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "clef": "treble",
+              "keyFifths": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x35848940-1",
+                      "midi": 57,
+                      "durationQN": 2,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 2,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x35848940-2",
+                      "midi": 61,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      },
+                      "text": "accelerando"
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-3",
+                      "midi": 62,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-4",
+                      "midi": 61,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x35848940-5",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-6",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-7",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-8",
+                      "midi": 68,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-9",
+                      "midi": 69,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 4,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x35848940-10",
+                      "midi": 69,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      },
+                      "text": "accelerando"
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-11",
+                      "midi": 69,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-12",
+                      "midi": 68,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-13",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-14",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-15",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-16",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x35848940-17",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x35848940-18",
+                      "midi": 61,
+                      "durationQN": 2,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m11-c37-section-8-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m11-c37-section-8-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 78.636354,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2,
+            "videoTimeSeconds": 80.45453581818181,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.5,
+            "videoTimeSeconds": 80.78062277470356,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 3.5,
+            "videoTimeSeconds": 81.41468074571804,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 81.72314138026564,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.25,
+            "videoTimeSeconds": 81.8733130049796,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.5,
+            "videoTimeSeconds": 82.01963407521372,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.75,
+            "videoTimeSeconds": 82.16229711869197,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5,
+            "videoTimeSeconds": 82.30148057574394,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6,
+            "videoTimeSeconds": 82.8449588366135,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.25,
+            "videoTimeSeconds": 83.00800231487437,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.5,
+            "videoTimeSeconds": 83.16706912293375,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.75,
+            "videoTimeSeconds": 83.32234862603934,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7,
+            "videoTimeSeconds": 83.47401697790993,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7.25,
+            "videoTimeSeconds": 83.62223832178344,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7.5,
+            "videoTimeSeconds": 83.76716585801532,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7.75,
+            "videoTimeSeconds": 83.90894279563346,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8,
+            "videoTimeSeconds": 84.047703202664,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 10,
+            "videoTimeSeconds": 85.13465972440312,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 78.636354
+    },
+    {
+      "id": "local-solfeo-m11-c37-section-9",
+      "label": "Compases 21–26",
+      "videoStartSeconds": 89.636354,
+      "videoEndSeconds": 101.636354,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Lección 37 · Scherzo en La · Compases 21–26",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 92,
+        "initialTimeSignature": [
+          2,
+          4
+        ],
+        "initialKeyFifths": 3,
+        "spans": [
+          {
+            "id": "x848f735a-10",
+            "type": "slur",
+            "from": "x848f735a-1",
+            "to": "x848f735a-9"
+          },
+          {
+            "id": "x848f735a-16",
+            "type": "slur",
+            "from": "x848f735a-11",
+            "to": "x848f735a-15"
+          },
+          {
+            "id": "x848f735a-31",
+            "type": "dim",
+            "from": "x848f735a-21",
+            "to": "x848f735a-30"
+          }
+        ],
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "clef": "treble",
+                "keyFifths": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-1",
+                        "midi": 64,
+                        "durationQN": 0.125,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        },
+                        "text": "a tempo"
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-2",
+                        "midi": 62,
+                        "durationQN": 0.125,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-3",
+                        "midi": 61,
+                        "durationQN": 0.125,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-4",
+                        "midi": 59,
+                        "durationQN": 0.125,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-5",
+                        "midi": 57,
+                        "durationQN": 0.125,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-6",
+                        "midi": 59,
+                        "durationQN": 0.125,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-7",
+                        "midi": 61,
+                        "durationQN": 0.125,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-8",
+                        "midi": 62,
+                        "durationQN": 0.125,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-9",
+                        "midi": 61,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 2,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-11",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-12",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-13",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-14",
+                        "midi": 57,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-15",
+                        "midi": 59,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-17",
+                        "midi": 57,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-18",
+                        "midi": 59,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-19",
+                        "midi": 61,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 4,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-20",
+                        "midi": 64,
+                        "durationQN": 2,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 5,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-21",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        },
+                        "dynamic": "mf",
+                        "text": "Adagio · negra = 54"
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-22",
+                        "midi": 68,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-23",
+                        "midi": 69,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-24",
+                        "midi": 68,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-25",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-26",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-27",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-28",
+                        "midi": 57,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 6,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-29",
+                        "midi": 61,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        },
+                        "tieToNext": true
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-30",
+                        "midi": 61,
+                        "durationQN": 0.5,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x848f735a-32",
+                        "midi": 62,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        },
+                        "dynamic": "p"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "clef": "treble",
+              "keyFifths": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-1",
+                      "midi": 64,
+                      "durationQN": 0.125,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      },
+                      "text": "a tempo"
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-2",
+                      "midi": 62,
+                      "durationQN": 0.125,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-3",
+                      "midi": 61,
+                      "durationQN": 0.125,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-4",
+                      "midi": 59,
+                      "durationQN": 0.125,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-5",
+                      "midi": 57,
+                      "durationQN": 0.125,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-6",
+                      "midi": 59,
+                      "durationQN": 0.125,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-7",
+                      "midi": 61,
+                      "durationQN": 0.125,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-8",
+                      "midi": 62,
+                      "durationQN": 0.125,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-9",
+                      "midi": 61,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 2,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-11",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-12",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-13",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-14",
+                      "midi": 57,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-15",
+                      "midi": 59,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-17",
+                      "midi": 57,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-18",
+                      "midi": 59,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-19",
+                      "midi": 61,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 4,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-20",
+                      "midi": 64,
+                      "durationQN": 2,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-21",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      },
+                      "dynamic": "mf",
+                      "text": "Adagio · negra = 54"
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-22",
+                      "midi": 68,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-23",
+                      "midi": 69,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-24",
+                      "midi": 68,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-25",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-26",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-27",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-28",
+                      "midi": 57,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 6,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-29",
+                      "midi": 61,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      },
+                      "tieToNext": true
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-30",
+                      "midi": 61,
+                      "durationQN": 0.5,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x848f735a-32",
+                      "midi": 62,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      },
+                      "dynamic": "p"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m11-c37-section-9-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m11-c37-section-9-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 90.636354,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.125,
+            "videoTimeSeconds": 90.71787573913043,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.25,
+            "videoTimeSeconds": 90.79939747826087,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.375,
+            "videoTimeSeconds": 90.8809192173913,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.5,
+            "videoTimeSeconds": 90.96244095652173,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.625,
+            "videoTimeSeconds": 91.04396269565217,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.75,
+            "videoTimeSeconds": 91.1254844347826,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.875,
+            "videoTimeSeconds": 91.20700617391304,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1,
+            "videoTimeSeconds": 91.28852791304348,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2,
+            "videoTimeSeconds": 91.94070182608695,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.25,
+            "videoTimeSeconds": 92.10374530434783,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.5,
+            "videoTimeSeconds": 92.2667887826087,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2.75,
+            "videoTimeSeconds": 92.42983226086956,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 3,
+            "videoTimeSeconds": 92.59287573913043,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 93.24504965217392,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.5,
+            "videoTimeSeconds": 93.57113660869565,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5.5,
+            "videoTimeSeconds": 94.22331052173912,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6,
+            "videoTimeSeconds": 94.54939747826087,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8,
+            "videoTimeSeconds": 95.85374530434783,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.25,
+            "videoTimeSeconds": 96.1315230821256,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.5,
+            "videoTimeSeconds": 96.40930085990338,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8.75,
+            "videoTimeSeconds": 96.68707863768115,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9,
+            "videoTimeSeconds": 96.96485641545894,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9.25,
+            "videoTimeSeconds": 97.24263419323671,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9.5,
+            "videoTimeSeconds": 97.5204119710145,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9.75,
+            "videoTimeSeconds": 97.79818974879227,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 10,
+            "videoTimeSeconds": 98.07596752657005,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 10.5,
+            "videoTimeSeconds": 98.6315230821256,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 11,
+            "videoTimeSeconds": 99.18707863768115,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 12,
+            "videoTimeSeconds": 100.29818974879227,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 90.636354
+    },
+    {
+      "id": "local-solfeo-m11-c37-section-10",
+      "label": "Compases 27–32",
+      "videoStartSeconds": 101.636354,
+      "videoEndSeconds": 118.025417,
+      "score": {
+        "schemaVersion": 1,
+        "title": "Lección 37 · Scherzo en La · Compases 27–32",
+        "composer": "LMM",
+        "sourceFormat": "musicxml",
+        "initialTempo": 54,
+        "initialTimeSignature": [
+          2,
+          4
+        ],
+        "initialKeyFifths": 3,
+        "spans": [
+          {
+            "id": "x92f923d3-9",
+            "type": "dim",
+            "from": "x92f923d3-1",
+            "to": "x92f923d3-8"
+          },
+          {
+            "id": "x92f923d3-24",
+            "type": "slur",
+            "from": "x92f923d3-11",
+            "to": "x92f923d3-23"
+          }
+        ],
+        "tracks": [
+          {
+            "index": 0,
+            "instrument": "staff",
+            "displayName": "Solfeo Aplicado",
+            "tuning": null,
+            "stringMultiplicity": 1,
+            "channel": null,
+            "defaultView": "staff",
+            "measures": [
+              {
+                "number": 1,
+                "clef": "treble",
+                "keyFifths": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-1",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        },
+                        "dynamic": "mf"
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-2",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-3",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-4",
+                        "midi": 66,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "F",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-5",
+                        "midi": 64,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-6",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-7",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-8",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 2,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-10",
+                        "midi": 61,
+                        "durationQN": 2,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        },
+                        "dynamic": "p"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 3,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-11",
+                        "midi": 57,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        },
+                        "text": "rit."
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-12",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-13",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-14",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-15",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-16",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-17",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-18",
+                        "midi": 62,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "D",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 4,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-19",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-20",
+                        "midi": 61,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "C",
+                          "alter": 1
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-21",
+                        "midi": 59,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-22",
+                        "midi": 57,
+                        "durationQN": 0.25,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-23",
+                        "midi": 59,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "B",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 5,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-25",
+                        "midi": 64,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "E",
+                          "alter": 0
+                        }
+                      },
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-26",
+                        "midi": 68,
+                        "durationQN": 1,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "G",
+                          "alter": 1
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "number": 6,
+                "voices": [
+                  {
+                    "number": 1,
+                    "events": [
+                      {
+                        "kind": "note",
+                        "id": "x92f923d3-27",
+                        "midi": 57,
+                        "durationQN": 2,
+                        "dotted": false,
+                        "spelling": {
+                          "step": "A",
+                          "alter": 0
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "index": 0,
+          "instrument": "staff",
+          "displayName": "Solfeo Aplicado",
+          "tuning": null,
+          "stringMultiplicity": 1,
+          "channel": null,
+          "defaultView": "staff",
+          "measures": [
+            {
+              "number": 1,
+              "clef": "treble",
+              "keyFifths": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-1",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      },
+                      "dynamic": "mf"
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-2",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-3",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-4",
+                      "midi": 66,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "F",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-5",
+                      "midi": 64,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-6",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-7",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-8",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 2,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-10",
+                      "midi": 61,
+                      "durationQN": 2,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      },
+                      "dynamic": "p"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-11",
+                      "midi": 57,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      },
+                      "text": "rit."
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-12",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-13",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-14",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-15",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-16",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-17",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-18",
+                      "midi": 62,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "D",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 4,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-19",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-20",
+                      "midi": 61,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "C",
+                        "alter": 1
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-21",
+                      "midi": 59,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-22",
+                      "midi": 57,
+                      "durationQN": 0.25,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-23",
+                      "midi": 59,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "B",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-25",
+                      "midi": 64,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "E",
+                        "alter": 0
+                      }
+                    },
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-26",
+                      "midi": 68,
+                      "durationQN": 1,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "G",
+                        "alter": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "number": 6,
+              "voices": [
+                {
+                  "number": 1,
+                  "events": [
+                    {
+                      "kind": "note",
+                      "id": "x92f923d3-27",
+                      "midi": 57,
+                      "durationQN": 2,
+                      "dotted": false,
+                      "spelling": {
+                        "step": "A",
+                        "alter": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "local-solfeo-m11-c37-section-10-track-0",
+          "trackIndex": 0
+        }
+      ],
+      "activeTimeMap": {
+        "id": "local-solfeo-m11-c37-section-10-timing",
+        "method": "drag",
+        "params": {},
+        "waypoints": [
+          {
+            "musicalPositionQN": 0,
+            "videoTimeSeconds": 102.636354,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.25,
+            "videoTimeSeconds": 102.91413177777777,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.5,
+            "videoTimeSeconds": 103.19190955555555,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 0.75,
+            "videoTimeSeconds": 103.46968733333333,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1,
+            "videoTimeSeconds": 103.74746511111111,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1.25,
+            "videoTimeSeconds": 104.02524288888888,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1.5,
+            "videoTimeSeconds": 104.30302066666667,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 1.75,
+            "videoTimeSeconds": 104.58079844444444,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 2,
+            "videoTimeSeconds": 104.85857622222221,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4,
+            "videoTimeSeconds": 107.08079844444444,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.25,
+            "videoTimeSeconds": 107.35857622222221,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.5,
+            "videoTimeSeconds": 107.64037976489533,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 4.75,
+            "videoTimeSeconds": 107.92632747731363,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5,
+            "videoTimeSeconds": 108.21654306603668,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5.25,
+            "videoTimeSeconds": 108.51115586064947,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5.5,
+            "videoTimeSeconds": 108.81030115979478,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 5.75,
+            "videoTimeSeconds": 109.11412060423922,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6,
+            "videoTimeSeconds": 109.42276257954786,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.25,
+            "videoTimeSeconds": 109.73638265123245,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.5,
+            "videoTimeSeconds": 110.0551440355676,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 6.75,
+            "videoTimeSeconds": 110.37921810964167,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 7,
+            "videoTimeSeconds": 110.70878496463226,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 8,
+            "videoTimeSeconds": 112.04978113321464,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 9,
+            "videoTimeSeconds": 113.41430355036863,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 10,
+            "videoTimeSeconds": 114.80319243925751,
+            "measureNumber": null,
+            "beatInMeasure": null
+          },
+          {
+            "musicalPositionQN": 12,
+            "videoTimeSeconds": 117.02541466147974,
+            "measureNumber": null,
+            "beatInMeasure": null
+          }
+        ]
+      },
+      "metronomeAnchorSeconds": 102.636354
+    }
+  ],
+  "questions": [
+    {
+      "id": "local-solfeo-m11-c37-exercise-q1",
+      "class_item_id": "local-solfeo-m11-c37-exercise",
+      "order_index": 0,
+      "question": "En la notación alfabética, ¿cómo se lee C#4?",
+      "question_es": "En la notación alfabética, ¿cómo se lee C#4?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Do sostenido 4"
+          },
+          {
+            "id": "choice-1",
+            "text": "Do 4"
+          },
+          {
+            "id": "choice-2",
+            "text": "Fa sostenido 4"
+          },
+          {
+            "id": "choice-3",
+            "text": "Si doble bemol 4"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-0",
+      "explanation": "La respuesta es Do sostenido 4.",
+      "explanation_es": "La respuesta es Do sostenido 4.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m11-c37-exercise-q2",
+      "class_item_id": "local-solfeo-m11-c37-exercise",
+      "order_index": 1,
+      "question": "¿Cuántos semitonos separan Do sostenido 4 y La 3?",
+      "question_es": "¿Cuántos semitonos separan Do sostenido 4 y La 3?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "5"
+          },
+          {
+            "id": "choice-1",
+            "text": "6"
+          },
+          {
+            "id": "choice-2",
+            "text": "4"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-2",
+      "explanation": "Se compara la altura sonora de ambas notas, conservando su escritura.",
+      "explanation_es": "Se compara la altura sonora de ambas notas, conservando su escritura.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m11-c37-exercise-q3",
+      "class_item_id": "local-solfeo-m11-c37-exercise",
+      "order_index": 2,
+      "question": "¿Cuántos tiempos de negra dura una semicorchea?",
+      "question_es": "¿Cuántos tiempos de negra dura una semicorchea?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "2.25"
+          },
+          {
+            "id": "choice-1",
+            "text": "1/4"
+          },
+          {
+            "id": "choice-2",
+            "text": "1.25"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-1",
+      "explanation": "Se aplica el valor de la figura, la suma de los puntillos y la proporción del grupo irregular, si corresponde.",
+      "explanation_es": "Se aplica el valor de la figura, la suma de los puntillos y la proporción del grupo irregular, si corresponde.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m11-c37-exercise-q4",
+      "class_item_id": "local-solfeo-m11-c37-exercise",
+      "order_index": 3,
+      "question": "¿Cuántas figuras de 1/4 completan un compás de 2/4?",
+      "question_es": "¿Cuántas figuras de 1/4 completan un compás de 2/4?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "2"
+          },
+          {
+            "id": "choice-1",
+            "text": "3"
+          },
+          {
+            "id": "choice-2",
+            "text": "4"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-0",
+      "explanation": "El numerador indica 2 unidades de negra.",
+      "explanation_es": "El numerador indica 2 unidades de negra.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    }
+  ],
+  "nextHref": "/solfeo-preview?class=local-solfeo-m11-c38",
+  "metronome": {
+    "trimInSeconds": 0,
+    "trimOutSeconds": null,
+    "bpm": 48,
+    "anchorSeconds": null,
+    "segments": []
+  }
+}

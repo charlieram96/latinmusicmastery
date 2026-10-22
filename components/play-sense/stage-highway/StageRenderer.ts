@@ -1,3 +1,6 @@
+import type { StageCity } from './cities'
+import { strokeSymbolTexture } from './stroke-symbol'
+import { buildSonPiece } from './timbal-instruments'
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
@@ -15,7 +18,7 @@ import { box, buildDrum, buildEnvironment, buildPad, disposeObject, glowTexture,
 import { block, contactShadow, cylinder, metal, rod, textured } from './craft'
 import { buildMiami, createComposer, createHitFx, createShatter, laneLightTexture, NOTE_LAYOUT, noteCore, noteHead, notePool, tunnelTexture, DECK_TOP } from './miami'
 import { colorNoteEmission, entranceGlow, noteChevronGeometry, noteGemGeometry, noteTrailTexture, strikeAura } from './note-geometry'
-import { observeFrameResize } from './frame-resize'
+import { observeFrameResize, stagePageZoom } from './frame-resize'
 
 interface SkinRipple { hit: { value: number }; color: { value: THREE.Color }; power: { value: number } }
 interface Receptor { object: THREE.Object3D; glow: THREE.Sprite; energy: number; homeY: number; aura: ReturnType<typeof strikeAura>; skin?: SkinRipple }
@@ -67,8 +70,12 @@ function addSkinRipple(material: THREE.MeshStandardMaterial, clock: { value: num
 interface Burst { mesh: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>; age: number; active: boolean; size: number; upright: boolean }
 interface Spark { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; lane: number }
 export interface StageRendererOptions {
+  locale?: 'en'|'es'
+  hiddenInstruments?: readonly string[]
+  laneOrder?: readonly string[]
   theme: StageThemeId
   reducedMotion: boolean
+  city?: StageCity
   quality: 'standard' | 'low'
   readFrame: () => StageFrame
   onError: (message: string) => void
@@ -144,6 +151,9 @@ export function beatLinePositions(
 export class StageRenderer {
   private renderer: THREE.WebGLRenderer
   private scene = new THREE.Scene()
+  private strokeSymbols: THREE.Sprite[] = []
+  private strokeTextures = new Map<string,THREE.CanvasTexture>()
+  private runwayWidth = 10
   private camera = new THREE.PerspectiveCamera(47, 1, 0.1, 160)
   private clock = 0
   private composer: EffectComposer | null = null
@@ -173,6 +183,7 @@ export class StageRenderer {
   private grade: ReturnType<typeof createComposer>['grade'] | null = null
   private fx: ReturnType<typeof createHitFx> | null = null
   private skinClock = { value: 0 }
+  private previousNoteTime = Number.NaN
   private shatter: ReturnType<typeof createShatter> | null = null
   private lastCombo = 0
   private stageEnergy = 0
@@ -210,7 +221,7 @@ export class StageRenderer {
     const studio = theme.id === 'studio'
     this.farZ = studio ? -25 : FAR_Z
     // Cap the render scale to keep the animated scene affordable on retina screens.
-    this.maxPixelRatio = this.pixelRatio = Math.min(window.devicePixelRatio || 1, options.quality === 'low' ? 1 : studio ? 1.35 : 1.5)
+    this.maxPixelRatio = this.pixelRatio = Math.min(window.devicePixelRatio || 1, options.quality === 'low' ? 1 : 2)
     this.renderer.setPixelRatio(this.pixelRatio)
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -220,13 +231,15 @@ export class StageRenderer {
     // The set is static; bake its shadow once instead of re-rendering every bolt per frame.
     this.renderer.shadowMap.autoUpdate = false
     this.renderer.shadowMap.needsUpdate = true
-    this.renderer.domElement.setAttribute('aria-label', `${exercise.title}: 3D note runway`)
+    this.renderer.domElement.setAttribute('aria-label', `${exercise.title}: Three.js 3D note runway`)
     this.renderer.domElement.setAttribute('role', 'img')
     this.renderer.domElement.addEventListener('webglcontextlost', this.onContextLost)
     container.appendChild(this.renderer.domElement)
     this.scene.background = new THREE.Color(theme.background)
     this.scene.fog = new THREE.FogExp2(theme.background, studio ? 0.017 : 0.022)
-    const model = createStageModel(exercise)
+    const visibleCount = createStageModel(exercise, options.laneOrder, options.locale, RUNWAY_WIDTH, options.hiddenInstruments).lanes.length
+    this.runwayWidth = exercise.instrument === 'timbale' ? Math.max(10, Math.min(20, visibleCount * 2.15)) : RUNWAY_WIDTH
+    const model = createStageModel(exercise, options.laneOrder, options.locale, this.runwayWidth, options.hiddenInstruments)
     this.lanes = model.lanes; this.notes = model.notes
     this.notesByIndex = new Map(this.notes.map(note => [note.index, note]))
     this.colors = this.lanes.map((lane, index) => new THREE.Color(theme.colors[exercise.instrument === 'piano' ? (lane.black ? 1 : 0) : index % theme.colors.length]))
@@ -235,8 +248,13 @@ export class StageRenderer {
     if (studio) {
       // A near plane of 1 keeps depth precision for the thin layers laid on the deck.
       this.camera.near = 1; this.camera.far = 1600
-      this.miami = buildMiami(this.renderer, this.scene, { farZ: this.farZ, quality: options.quality, reducedMotion: options.reducedMotion })
+      this.miami = buildMiami(this.renderer, this.scene, { city: options.city, farZ: this.farZ, runwayWidth:this.runwayWidth, quality: options.quality, reducedMotion: options.reducedMotion })
       this.environmentMap = this.miami.environment
+      if (exercise.instrument === 'timbale') {
+        const instrumentKey = new THREE.DirectionalLight(0xffecd5, 2.1)
+        instrumentKey.position.set(-4, 7, 16); instrumentKey.target.position.set(0, -1, HIT_Z)
+        this.scene.add(instrumentKey, instrumentKey.target)
+      }
       this.fx = createHitFx()
       for (const mesh of this.fx.meshes) this.scene.add(mesh)
       this.shatter = createShatter(DECK_TOP + .06)
@@ -263,7 +281,7 @@ export class StageRenderer {
         box(this.scene, .035, .01, runwayLength + .4, inlay, (this.lanes[i - 1].x + this.lanes[i].x) / 2, DECK_TOP + .004, runwayCenter)
       }
       // Readability tunnel: the far lane darkens so incoming notes never sit on the sun's glare.
-      const tunnel = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .3, runwayLength).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x0c0610, alphaMap: tunnelTexture(), transparent: true, opacity: .85, depthWrite: false }))
+      const tunnel = new THREE.Mesh(new THREE.PlaneGeometry(this.runwayWidth + .3, runwayLength).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x0c0610, alphaMap: tunnelTexture(), transparent: true, opacity: .85, depthWrite: false }))
       tunnel.position.set(0, DECK_TOP + .002, runwayCenter); tunnel.renderOrder = -1
       decal(tunnel.material)
       this.scene.add(tunnel)
@@ -277,10 +295,10 @@ export class StageRenderer {
         this.scene.add(strip)
       })
       for (let i = 0; i < 18; i++) {
-        this.beatLines.push(box(this.scene, RUNWAY_WIDTH, .006, .035, new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: .07, depthWrite: false, blending: THREE.AdditiveBlending }), 0, DECK_TOP + .005))
+        this.beatLines.push(box(this.scene, this.runwayWidth, .006, .035, new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: .07, depthWrite: false, blending: THREE.AdditiveBlending }), 0, DECK_TOP + .005))
       }
-      box(this.scene, RUNWAY_WIDTH + .5, .03, .06, new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2, 1.35) }), 0, DECK_TOP + .02, HIT_Z)
-      const halo = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .6, 1.1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: laneLightTexture(true), color: 0xffc98a, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending }))
+      box(this.scene, this.runwayWidth + .5, .03, .06, new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2, 1.35) }), 0, DECK_TOP + .02, HIT_Z)
+      const halo = new THREE.Mesh(new THREE.PlaneGeometry(this.runwayWidth + .6, 1.1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: laneLightTexture(true), color: 0xffc98a, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending }))
       halo.position.set(0, DECK_TOP + .008, HIT_Z)
       decal(halo.material)
       for (const line of this.beatLines) decal(line.material as THREE.Material)
@@ -301,10 +319,10 @@ export class StageRenderer {
         box(this.scene, 0.011, 0.006, runwayLength, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: exercise.instrument === 'piano' ? 0.08 : 0.16 }), lane.x, -0.16, runwayCenter)
       }
       for (let i = 0; i < 18; i++) {
-        this.beatLines.push(box(this.scene, RUNWAY_WIDTH, 0.012, 0.025, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: i % 4 === 0 ? 0.18 : 0.06 }), 0, -0.14))
+        this.beatLines.push(box(this.scene, this.runwayWidth, 0.012, 0.025, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: i % 4 === 0 ? 0.18 : 0.06 }), 0, -0.14))
       }
-      box(this.scene, RUNWAY_WIDTH + 0.3, 0.035, 0.07, lightMaterial(theme.accent, 2), 0, 0.04, HIT_Z)
-      box(this.scene, RUNWAY_WIDTH + 0.5, 0.016, 0.23, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: 0.12 }), 0, 0.025, HIT_Z)
+      box(this.scene, this.runwayWidth + 0.3, 0.035, 0.07, lightMaterial(theme.accent, 2), 0, 0.04, HIT_Z)
+      box(this.scene, this.runwayWidth + 0.5, 0.016, 0.23, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: 0.12 }), 0, 0.025, HIT_Z)
     }
 
     // A separate, slightly lower keyboard station clears the board's front apron.
@@ -334,14 +352,14 @@ export class StageRenderer {
         }
       } else {
         const drum = ['conga', 'bongo'].includes(exercise.instrument)
-        object = drum ? buildDrum(color, theme, exercise.instrument !== 'conga') : buildPad(color, theme, lane.id)
-        const scale = Math.min(lane.width / 1.4 * (studio ? 1.2 : 1.13), studio ? 1.99 : 1.55)
+        object = exercise.instrument === 'timbale' ? buildSonPiece(lane.id,color,theme) : drum ? buildDrum(color, theme, exercise.instrument !== 'conga') : buildPad(color, theme, lane.surface ?? lane.id)
+        const scale = Math.min(lane.width / 1.4 * (studio ? 1.2 : 1.13), exercise.instrument === 'timbale' ? 1.32 : studio ? 1.99 : 1.55)
         object.scale.setScalar(scale)
         object.position.set(lane.x, -0.03, HIT_Z + (drum ? 1.05 : .9))
         this.scene.add(object)
         if (studio) {
           contactShadow(this.scene, lane.x, HIT_Z + 1.05, scale * 1.9, scale * 1.9)
-          if (exercise.instrument !== 'conga') {
+          if (exercise.instrument !== 'conga' && exercise.instrument !== 'timbale') {
             const support = metal(theme.metal, .3), z = object.position.z
             rod(this.scene, [lane.x,-3.17,z], [lane.x,-.5*scale,z], .036, support)
             cylinder(this.scene,.085,.085,.14,support,lane.x,-2.4,z)
@@ -352,8 +370,8 @@ export class StageRenderer {
           }
         }
         const label = labelSprite(lane.label, '#' + this.colors[index].getHexString())
-        label.position.set(lane.x, drum ? -.56 : -.68, HIT_Z + (drum ? 2.25 : 1.9)); this.scene.add(label)
-        this.labels.push({ sprite: label, aspect: label.scale.x / label.scale.y, maxWidth: lane.width / .7 * .86, pixels: 22 })
+        label.position.set(lane.x, drum ? -.86 : -1.3, HIT_Z + (drum ? 2.4 : 2.15)); this.scene.add(label)
+        this.labels.push({ sprite: label, aspect: label.scale.x / label.scale.y, maxWidth: lane.width * .96, pixels: label.userData.labelLines > 1 ? 44 : 28 })
       }
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowMap, color, blending: THREE.AdditiveBlending, transparent: true, opacity: 0, depthWrite: false }))
       glow.position.set(lane.x, 0.25, HIT_Z)
@@ -363,7 +381,12 @@ export class StageRenderer {
       aura.position.set(lane.x, .06, HIT_Z + .12)
       aura.scale.set(Math.min(lane.width * 1.7, 4.8), 3.6, 1)
       this.scene.add(aura)
-      this.receptors.push({ object, glow, energy: 0, homeY: object.position.y, aura })
+      const receptor: Receptor = { object, glow, energy: 0, homeY: object.position.y, aura }
+      if (lane.id.startsWith('paila-')) object.traverse(child => {
+        if (!(child instanceof THREE.Mesh) || !(child.material instanceof THREE.MeshStandardMaterial) || child.material.name !== 'PlaySense paila head') return
+        receptor.skin = addSkinRipple(child.material, this.skinClock, lane.id === 'paila-low' ? .775 : .695)
+      })
+      this.receptors.push(receptor)
     })
 
     // Allocate for the densest visible window, not the full song or an arbitrary cap.
@@ -373,6 +396,16 @@ export class StageRenderer {
       capacity = Math.max(capacity, i - first + 1)
     }
     this.noteCapacity = capacity
+    if(exercise.instrument==='timbale') {
+      for(const note of this.notes) {
+        const head=note.notehead ?? 'normal'
+        if(!this.strokeTextures.has(head)) this.strokeTextures.set(head,strokeSymbolTexture(head))
+      }
+      for(let i=0;i<capacity;i++) {
+        const sprite=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,toneMapped:false}))
+        sprite.visible=false;this.scene.add(sprite);this.strokeSymbols.push(sprite)
+      }
+    }
     const piano = exercise.instrument === 'piano'
     const trail = new THREE.MeshBasicMaterial({ color: 0xffffff, map: noteTrailTexture(), transparent: true, opacity: .65, depthWrite: false, blending: THREE.AdditiveBlending })
     if (studio) {
@@ -439,7 +472,7 @@ export class StageRenderer {
     this.visibilityObserver = new IntersectionObserver(entries => { this.inView = entries[0]?.isIntersecting ?? true })
     this.visibilityObserver.observe(container)
     this.frameId = requestAnimationFrame(this.render)
-    if (studio && options.quality !== 'low') {
+    if (studio && options.quality !== 'low' && exercise.instrument !== 'timbale') {
       void this.loadAuthoredInstruments()
     }
   }
@@ -454,14 +487,16 @@ export class StageRenderer {
       if (this.destroyed) return
       const gltf = await new GLTFLoader().setDRACOLoader(decoder).parseAsync(bytes, '/playsense/models/')
       if (this.destroyed) { disposeObject(gltf.scene); return }
+      // Authored Son pieces have distinct finishes and must retain their models.
+      if (this.exercise.instrument === 'timbale') { disposeObject(gltf.scene); return }
       // Retain the hidden masters with the scene so all shared GPU resources have one owner.
       gltf.scene.visible = false
       this.scene.add(gltf.scene)
       gltf.scene.updateMatrixWorld(true)
       this.receptors.forEach((receptor, index) => {
         const lane = this.lanes[index]
-        const name = this.exercise.instrument === 'conga' ? lane.id : this.exercise.instrument !== 'timbale' ? null :
-          lane.id === 'macho' ? 'timbale_macho' : ['hembra', 'cascara'].includes(lane.id) ? 'timbale_hembra' : null
+        const name = this.exercise.instrument === 'conga' ? (lane.surface ?? lane.id) : this.exercise.instrument !== 'timbale' ? null :
+          (lane.surface ?? lane.id) === 'macho' ? 'timbale_macho' : ['hembra', 'cascara'].includes(lane.surface ?? lane.id) ? 'timbale_hembra' : null
         if (!name) return
         const master = gltf.scene.getObjectByName(name)
         if (!master) return
@@ -517,15 +552,21 @@ export class StageRenderer {
     this.composer?.setSize(width, height)
     this.camera.aspect = width / height
     // Keep the entire hit zone visible on portrait screens as well as lesson embeds.
+    const fitAspect = this.camera.aspect * stagePageZoom()
     const studio = this.options.theme === 'studio'
     const piano = this.exercise.instrument === 'piano'
-    const distance = studio ? Math.max(16, (piano ? 14.6 : 13) / this.camera.aspect) : Math.max(18, (piano ? 15.6 : 14) / this.camera.aspect)
+    const distance = studio ? Math.max(16, (piano ? 14.6 : this.runwayWidth * 1.1) / fitAspect) : Math.max(18, (piano ? 15.6 : this.runwayWidth * 1.1) / fitAspect)
     this.camera.fov = studio ? 52 : 47
     if (!this.controls) {
       // The bayfront camera sits lower so the skyline, sky and archway stay in frame.
       if (studio) {
-        this.camera.position.set(0, Math.max(5.8, distance * .36), distance)
-        this.camera.lookAt(0, 2.2, -8)
+        // Frame both the instrument bodies below the hit line and the skyline crowns.
+        // Horizontal fit includes all ten slots, even in a narrow split panel.
+        const stageDistance = this.exercise.instrument === 'timbale'
+          ? Math.max(16.5, 5 + (this.runwayWidth + 2) / (2 * Math.tan(THREE.MathUtils.degToRad(26)) * fitAspect))
+          : distance
+        this.camera.position.set(0, this.exercise.instrument === 'timbale' ? 5.8 : Math.max(5.8, distance * .36), stageDistance)
+        this.camera.lookAt(0, this.exercise.instrument === 'timbale' ? -.5 : 2.2, -8)
       } else {
         this.camera.position.set(0, Math.max(10, distance * .45), distance)
         this.camera.lookAt(0, 0, -4)
@@ -611,7 +652,7 @@ export class StageRenderer {
     if (this.slowFrames > 75) {
       this.slowFrames = 0
       this.downgrades++
-      if (this.pixelRatio > .75) this.setPixelScale(this.pixelRatio - .15)
+      if (this.pixelRatio > .75) this.setPixelScale(Math.max(.75, this.pixelRatio - .15))
       else if (this.composer) this.disposeComposer()
     } else if (this.fastFrames > 1800 && this.downgrades < 2 && this.pixelRatio < this.maxPixelRatio && this.composer) {
       // Recover once at most: a GPU that keeps dipping would otherwise oscillate and visibly pop.
@@ -630,7 +671,23 @@ export class StageRenderer {
       for (const result of changedJudgments(frame.results, this.judgments)) this.impact(result.eventIndex, result.grade)
       this.lastResults = frame.results
     }
+    // Contact animation is not a judgment: previews have no scorer. Never synthesize a grade.
+    const advance = frame.elapsed - this.previousNoteTime
+    if (frame.playing && frame.showNotes && advance > 0 && advance < .25 && !this.options.reducedMotion) {
+      const firstContact = firstVisibleNote(this.notes, this.previousNoteTime)
+      for (let i = firstContact; i < this.notes.length && this.notes[i].time <= frame.elapsed; i++) {
+        const note = this.notes[i]
+        if (note.time <= this.previousNoteTime || this.judgments.has(note.index)) continue
+        const receptor = this.receptors[note.lane]
+        if (!this.lanes[note.lane].id.startsWith('paila-') || !receptor.skin) continue
+        receptor.skin.hit.value = this.skinClock.value
+        receptor.skin.color.value.copy(this.colors[note.lane])
+        receptor.skin.power.value = .8
+      }
+    }
+    this.previousNoteTime = frame.elapsed
     const speed = (HIT_Z - this.farZ) / APPROACH_SECONDS
+    for(const sprite of this.strokeSymbols) sprite.visible=false
     let count = 0, tailCount = 0
     if (frame.showNotes) {
       const first = firstVisibleNote(this.notes, frame.elapsed - 1)
@@ -651,6 +708,13 @@ export class StageRenderer {
         // Place the note itself on the strike line at its timestamp.
         // The surrounding glow is decorative; it does not define hit timing.
         const noteZ = z
+        const symbol=this.strokeSymbols[count]
+        if(symbol) {
+          symbol.material.map=this.strokeTextures.get(note.notehead ?? 'normal')!
+          symbol.material.color.setHSL(((note.strokeId ?? '').split('').reduce((n,c)=>n+c.charCodeAt(0),0)*.071)%1,.65,.8)
+          symbol.position.set(lane.x,this.miami?NOTE_LAYOUT.head+.6:.65,z)
+          symbol.scale.setScalar(Math.max(.8,width*1.3));symbol.visible=true
+        }
         this.dummy.rotation.set(0, 0, 0)
         if (this.miami) {
           // Notes rise out of the gate's light, then ride the deck on a pool of their own glow.
@@ -797,6 +861,7 @@ export class StageRenderer {
     this.viewport.disconnect(); this.visibilityObserver.disconnect()
     this.renderer.domElement.removeEventListener('webglcontextlost', this.onContextLost)
     this.disposeComposer(); disposeObject(this.scene); this.glowMap.dispose()
+    for(const texture of this.strokeTextures.values()) texture.dispose()
     this.environmentMap?.dispose()
     this.controls?.removeEventListener('change', this.fitLabels)
     this.controls?.dispose()

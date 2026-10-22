@@ -49,6 +49,7 @@ import type { PopoverAnchor } from './measure/popover';
 import { ContinuousStaff, MIN_RENDER_WIDTH } from './continuous-staff';
 
 export interface MeasureStripItem {
+  emptyText?: {text:string;fontSize:number};
   /** 0-based index into the score track's measures (NOT the 1-based measureNumber). */
   measureIndex: number;
   measureNumber: number;
@@ -56,8 +57,14 @@ export interface MeasureStripItem {
   repeatPass?: { id: string; pass: number; count: number; offset: number; length: number };
   /** Close this measure with a final (thin–thick) bar. */
   finalBarline?: boolean;
+  /** Continuous projects use one separator at the exact timeline boundary. */
+  continuousBarlines?: boolean;
+  endBarline?: 'single' | 'double' | 'final';
   startVideoTimeSeconds: number;
   endVideoTimeSeconds: number;
+  repeatStart?: boolean;
+  repeatEnd?: boolean;
+  volta?: '1.' | '2.';
   events: VexEventDescriptor[];
   /** Second voice, display-only — never hit-tested, selected or graded. */
   voice2Events: VexEventDescriptor[];
@@ -255,32 +262,53 @@ export function EditableMeasureStrip({
     return () => cancelAnimationFrame(raf);
   }, [getCurrentSeconds, pixelsPerSecond, scrollLeftPx]);
 
+  const wheelCallbacks = useRef({ onScrollByPx, onWheelZoom });
+  wheelCallbacks.current = { onScrollByPx, onWheelZoom };
+
   // Horizontal gestures pan; pinch zooms; vertical gestures scroll the staves.
   // Use a non-passive listener so the page does not scroll while zooming.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    let frame: number | null = null;
+    let zoomFactor = 1;
+    let anchorPx = 0;
+    let panPx = 0;
+    const flush = () => {
+      frame = null;
+      const factor = zoomFactor, anchor = anchorPx, pan = panPx;
+      zoomFactor = 1; panPx = 0;
+      if (factor !== 1) wheelCallbacks.current.onWheelZoom?.(factor, anchor);
+      if (pan !== 0) wheelCallbacks.current.onScrollByPx?.(pan);
+    };
+    const schedule = () => { if (frame === null) frame = requestAnimationFrame(flush); };
     const onWheel = (e: WheelEvent) => {
       // Horizontal intent: trackpad x-deltas, or shift+wheel (Chrome/Safari remap
       // shift+wheel to deltaX; Firefox keeps deltaY with shiftKey set).
       const horizontal = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
       if (!horizontal) {
         if (!e.ctrlKey) return;
-        if (!onWheelZoom || e.deltaY === 0) return;
+        if (!wheelCallbacks.current.onWheelZoom || e.deltaY === 0) return;
         e.preventDefault();
         const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? el.clientHeight : 1);
-        onWheelZoom(Math.exp(-Math.max(-200, Math.min(200, delta)) * 0.003), e.clientX - el.getBoundingClientRect().left);
+        zoomFactor *= Math.exp(-Math.max(-200, Math.min(200, delta)) * 0.003);
+        anchorPx = e.clientX - el.getBoundingClientRect().left;
+        schedule();
         return;
       }
-      if (!onScrollByPx) return;
+      if (!wheelCallbacks.current.onScrollByPx) return;
       const dx = e.deltaX !== 0 ? e.deltaX : e.deltaY;
       if (dx === 0) return;
       e.preventDefault();
-      onScrollByPx(dx);
+      panPx += dx;
+      schedule();
     };
     el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, [onScrollByPx, onWheelZoom]);
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, []);
 
   // ---- Bar selection by drag ------------------------------------------------
   // A press on a bar's header or empty staff selects it; while the button is
@@ -405,6 +433,8 @@ export function EditableMeasureStrip({
 
   const selectionSurface = useRef<HTMLDivElement | null>(null);
   const selectionIds = useRef(new Set<string>());
+  const openHit = useRef({ onOpenMeasure, onOpenNote });
+  openHit.current = { onOpenMeasure, onOpenNote };
   const noteInput = useRef(onNoteInput);
   noteInput.current = onNoteInput;
   const noteSelectionCallback = useRef(onNoteSelection);
@@ -425,7 +455,7 @@ export function EditableMeasureStrip({
         event: h.eventIndex, member: h.member ?? 0, x: x + h.x, y: REP_H + h.y, width: h.w, height: h.h,
       }));
     });
-    return installScoreSelection(surface, hits, selectionIds.current, hits => noteSelectionCallback.current?.(hits), {measureHeaderHeight: HANDLE_BAND_PX, onInput: (hit,line) => noteInput.current?.(hit,line) ?? false});
+    return installScoreSelection(surface, hits, selectionIds.current, hits => noteSelectionCallback.current?.(hits), {measureHeaderHeight: HANDLE_BAND_PX, onInput: (hit,line) => noteInput.current?.(hit,line) ?? false, onOpen: hit => { if (hit.kind === 'note') openHit.current.onOpenNote?.(hit.measure, hit.event ?? 0); else openHit.current.onOpenMeasure(hit.measure); }});
   }, [bboxVersion, measures, pixelsPerSecond, scrollLeftPx, height, trackIndex, noteTimeForQN, !!onNoteSelection]);
 
   const barWidth = (item: MeasureStripItem) => videoTimeToX(item.endVideoTimeSeconds) - videoTimeToX(item.startVideoTimeSeconds);

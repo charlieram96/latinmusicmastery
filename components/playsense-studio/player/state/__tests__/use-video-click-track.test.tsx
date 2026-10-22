@@ -14,6 +14,8 @@ const scheduledGrid = vi.fn();
 const reanchor = vi.fn();
 const teardown = vi.fn();
 let running = false;
+let contextState='running';
+let resumeContext=()=>Promise.resolve();
 vi.mock('@/lib/playsense-studio/click-track', () => ({
   ClickTrack: class {
     grid: readonly number[] = [];
@@ -21,7 +23,7 @@ vi.mock('@/lib/playsense-studio/click-track', () => ({
     setVolume() {}
     setOffsetSeconds() {}
     ensureContext() {
-      return { state: 'running', resume: () => Promise.resolve() };
+      return { state: contextState, resume: () => resumeContext() };
     }
     start(media: number, rate: number) {
       running = true;
@@ -127,18 +129,20 @@ describe('useVideoClickTrack rate changes', () => {
     act(() => root.unmount());
   });
 
-  it('restarts on a ratechange by default (unflexed behaviour is unchanged)', () => {
+  it('preserves the beat cursor during seven 1 BPM increases to 107 BPM', () => {
     const video = playingVideo();
     act(() => root.render(<PlayingHarness video={video} />));
     act(() => root.render(<PlayingHarness video={video} />)); // the late-bound element is picked up
     expect(start).toHaveBeenCalledTimes(1);
     teardown.mockClear();
-    video.playbackRate = 0.8;
-    act(() => { video.dispatchEvent(new Event('ratechange')); });
-    expect(start).toHaveBeenCalledTimes(2);
-    expect(start).toHaveBeenLastCalledWith(1.5, 0.8);
-    expect(teardown).not.toHaveBeenCalled(); // start() itself tears down; the hook adds nothing
-    expect(reanchor).not.toHaveBeenCalled();
+    for(let bpm=101;bpm<=107;bpm++){
+      video.playbackRate=bpm/100;
+      act(()=>video.dispatchEvent(new Event('ratechange')));
+    }
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(reanchor).toHaveBeenCalledTimes(7);
+    expect(reanchor).toHaveBeenLastCalledWith(1.5,1.07);
+    expect(teardown).not.toHaveBeenCalled();
   });
 
   it('re-anchors instead of restarting with smoothRateChanges while running', () => {
@@ -173,4 +177,35 @@ it('keeps the lesson metronome grid on the live engine after StrictMode remount'
   act(()=>video.dispatchEvent(new Event('play')));
   expect(scheduledGrid).toHaveBeenLastCalledWith([0,1,2]);
  } finally {act(()=>root.unmount());}
+});
+
+
+it('does not resurrect the click when audio resume resolves after Pause or unmount',async()=>{
+ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+ let resolve!:()=>void;
+ contextState='suspended';resumeContext=()=>new Promise<void>(r=>{resolve=r});
+ const root=createRoot(document.createElement('div')),video=playingVideo();
+ start.mockClear();teardown.mockClear();
+ try{
+  act(()=>root.render(<PlayingHarness video={video}/>));
+  act(()=>{video.dispatchEvent(new Event('pause'));});
+  await act(async()=>{resolve();await Promise.resolve();});
+  expect(start).not.toHaveBeenCalled();expect(teardown).toHaveBeenCalled();
+  act(()=>video.dispatchEvent(new Event('play')));
+  act(()=>root.unmount());
+  await act(async()=>{resolve();await Promise.resolve();});
+  expect(start).not.toHaveBeenCalled();
+ }finally{contextState='running';resumeContext=()=>Promise.resolve();}
+});
+
+it('tears down on pause and ended, and schedules again only on playback',()=>{
+ const root=createRoot(document.createElement('div')),video=playingVideo();
+ let paused=false;Object.defineProperty(video,'paused',{get:()=>paused});
+ act(()=>root.render(<PlayingHarness video={video}/>));
+ expect(running).toBe(true);
+ act(()=>{paused=true;video.dispatchEvent(new Event('pause'));});expect(running).toBe(false);
+ act(()=>video.dispatchEvent(new Event('ratechange')));expect(running).toBe(false);
+ act(()=>{paused=false;video.dispatchEvent(new Event('playing'));});expect(running).toBe(true);
+ act(()=>{paused=true;video.dispatchEvent(new Event('ended'));});expect(running).toBe(false);
+ act(()=>root.unmount());
 });

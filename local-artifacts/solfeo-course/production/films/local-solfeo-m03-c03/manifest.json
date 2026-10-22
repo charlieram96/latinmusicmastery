@@ -1,0 +1,264 @@
+{
+  "classId": "local-solfeo-m03-c03",
+  "duration": 82.021333,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Armadura y alteraciones accidentales",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 31,
+      "kind": "explanation",
+      "title": "Armadura y alteraciones accidentales",
+      "sourceTopic": "accidental-alcance",
+      "soundEvents": []
+    },
+    {
+      "start": 31,
+      "end": 43,
+      "kind": "notation",
+      "title": "Sol mayor · Fa natural accidental y retorno a Fa sostenido",
+      "sourceTopic": "accidental-alcance",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Sol mayor · Fa natural accidental y retorno a Fa sostenido",
+            "meter": "4/4",
+            "key": 1,
+            "bars": [
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "F#4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 125,
+        "_sourcePage": "accidental-alcance",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-38"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 43,
+      "end": 55,
+      "kind": "notation",
+      "title": "Fa mayor · Si natural accidental y retorno a Si bemol",
+      "sourceTopic": "accidental-alcance",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Fa mayor · Si natural accidental y retorno a Si bemol",
+            "meter": "4/4",
+            "key": -1,
+            "bars": [
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C5",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "Bb4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 125,
+        "_sourcePage": "accidental-alcance",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-38"
+      },
+      "soundEvents": [
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 55,
+      "end": 76,
+      "kind": "explanation",
+      "title": "Armadura y alteraciones accidentales",
+      "sourceTopic": "accidental-alcance",
+      "soundEvents": []
+    },
+    {
+      "start": 76,
+      "end": 82,
+      "kind": "completion",
+      "title": "¡Un paso más en tu música!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

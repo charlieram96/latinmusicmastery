@@ -1,10 +1,12 @@
 import * as THREE from 'three'
+import type { StageCity } from '../cities'
 import { bakeSkyEnvironment, createSea, createSkyDome, skyUniforms, SEA_Y, SUN_DIRECTION } from './sky'
 import { createSkyline } from './skyline'
 import { createPalms } from './palms'
 import { GATE_Z, createSet, DECK_TOP, TERRACE_Y, type BeatUniforms } from './set'
 import { createFireworks } from './fireworks'
 import { createBoats } from './boats'
+import { cityPanorama } from './city-panorama'
 import { RUNWAY_WIDTH } from '../model'
 
 export { laneLightTexture, NOTE_LAYOUT, noteCore, noteHead, notePool, tunnelTexture } from './notes'
@@ -20,7 +22,8 @@ export interface StageAmbience { elapsed: number; beatSeconds: number; speed: nu
  * palms, pier set and fireworks; all resources are parented to the scene so the
  * renderer's normal teardown releases them.
  */
-export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, options: { farZ: number; quality: 'standard' | 'low'; reducedMotion: boolean }) {
+export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, options: { city?: StageCity; farZ: number; quality: 'standard' | 'low'; runwayWidth?:number; reducedMotion: boolean }) {
+  const runwayWidth = options.runwayWidth ?? RUNWAY_WIDTH
   const motion = !options.reducedMotion
   const low = options.quality === 'low'
   const sky = skyUniforms(motion)
@@ -30,11 +33,15 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
   scene.background = new THREE.Color(0x120d22)
   scene.fog = new THREE.Fog(0x3b1f45, 40, 180)
 
+  const distinctCity = !!options.city && options.city !== 'miami'
+  const panorama = distinctCity ? cityPanorama(options.city!, motion) : null
   const dome = createSkyDome(sky)
-  scene.add(dome)
-  scene.add(createSea(sky))
-  const skyline = createSkyline(sky, motion)
-  scene.add(skyline.group)
+  scene.add(dome); dome.visible = !distinctCity
+  const sea = createSea(sky); scene.add(sea); sea.visible = !distinctCity
+  if (panorama) scene.add(panorama.mesh)
+  const skyline = createSkyline(sky, motion, options.city)
+  scene.add(skyline.group); skyline.group.visible = !distinctCity
+  if (distinctCity) { scene.fog = null; scene.add(new THREE.HemisphereLight(options.city === 'new-york' ? 0xdbeaff : 0xffd6a0, 0x44404b, 1.3)) }
 
   // Dusk light: violet sky fill, the low sun behind the arch, a warm stage wash from the front.
   scene.add(new THREE.HemisphereLight(0x9d86e0, 0x3a2030, .95))
@@ -58,22 +65,25 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
     psLive: { value: 0 }, psEnergy: { value: 0 }, psClock: { value: 0 },
   }
   // Boats tie up along the right side of the dock; the festoon lights keep the left.
-  const set = createSet(beat, options.farZ, options.quality, 1)
+  const set = createSet(beat, options.farZ, options.quality, 1, runwayWidth)
   scene.add(set.group)
-  const dockEdge = RUNWAY_WIDTH / 2 + .75
+  const dockEdge = runwayWidth / 2 + .75
   const boats = createBoats([
     { kind: 'yacht', x: dockEdge + .45 + 3.9 / 2, z: -8.2, heading: -Math.PI / 2 },
     { kind: 'speedboat', x: dockEdge + .4 + 2.5 / 2, z: -17.4, heading: Math.PI / 2 },
     { kind: 'sloop', x: dockEdge + .4 + 2.9 / 2, z: -24.4, heading: -Math.PI / 2 },
   ], SEA_Y, dockEdge, DECK_TOP, motion)
-  scene.add(boats.group)
+  scene.add(boats.group); boats.group.visible = options.city !== 'los-angeles'
   const lampLights = set.lampGlobes.filter(p => Math.abs(p.x) < 12).map(p => {
     const light = new THREE.PointLight(0xffb36b, 16, 15, 1.6)
     light.position.copy(p).add(new THREE.Vector3(0, -.3, .4)); scene.add(light)
     return light
   })
 
-  const palms = createPalms([
+  const palms = createPalms(options.city === 'los-angeles' ? [
+    {x:-21,z:0,ground:TERRACE_Y,height:12,kind:'coconut',seed:13},
+    {x:25,z:0,ground:TERRACE_Y,height:12,kind:'coconut',seed:15},
+  ] : [
     { x: -13.2, z: -.1, ground: TERRACE_Y, height: 16, kind: 'royal', seed: 1 },
     { x: -18.2, z: 1.2, ground: TERRACE_Y, height: 12, kind: 'coconut', lean: .2, heading: -.15, seed: 3 },
     { x: -22.5, z: -.2, ground: TERRACE_Y, height: 18.5, kind: 'royal', seed: 2 },
@@ -81,17 +91,19 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
     { x: 18.6, z: 1, ground: TERRACE_Y, height: 12.5, kind: 'coconut', lean: .2, heading: Math.PI + .2, seed: 5 },
     { x: 23, z: -.3, ground: TERRACE_Y, height: 15, kind: 'royal', seed: 6 },
   ], motion)
-  scene.add(palms.group)
+  if (options.city !== 'new-york') scene.add(palms.group)
+  else { palms.group.traverse(object => { if(object instanceof THREE.Mesh) {object.geometry.dispose(); const materials=Array.isArray(object.material)?object.material:[object.material];materials.forEach(m=>m.dispose())} }) }
 
   const fireworks = createFireworks()
   for (const mesh of fireworks.meshes) scene.add(mesh)
 
-  let clock = 0, pulse = 0, energy = 0
+  let clock = 0, pulse = 0, energy = 0, nextAmbientFirework = 3
   return {
     environment,
     fireworks,
     update(frame: StageAmbience, camera: THREE.Camera) {
       clock += frame.dt
+      panorama?.update(frame.dt)
       dome.position.copy(camera.position)
       if (motion) sky.psTime.value = clock
       beat.psClock.value = clock
@@ -112,7 +124,14 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
       skyline.update(frame.dt)
       palms.update(frame.dt)
       boats.update(frame.dt)
-      if (motion) fireworks.update(frame.dt)
+      if (motion) {
+        // Ambient bay celebration is visual only; score milestones remain separate.
+        if (!distinctCity && clock >= nextAmbientFirework) {
+          fireworks.launch(low ? 1 : 2)
+          nextAmbientFirework = clock + 16
+        }
+        fireworks.update(frame.dt)
+      }
     },
   }
 }

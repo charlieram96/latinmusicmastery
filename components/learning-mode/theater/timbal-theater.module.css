@@ -1,0 +1,125 @@
+.theater{--ink:#f2e7c9;--wall:#304a58;--floor:#53616a;--trim:#c09963;position:relative;isolation:isolate;width:100%;margin:auto;overflow:hidden;border:2px solid #718b85;border-radius:22px;color:var(--ink);background:linear-gradient(90deg,#243d4940,transparent 20% 80%,#243d4940),linear-gradient(var(--wall) 0 73%,var(--floor) 73%);box-shadow:0 10px 30px #253d4520}
+.theater[data-day=true]{--ink:#294a50;--wall:#d1e8dc;--floor:#d5bd98;--trim:#b58752;background:linear-gradient(90deg,#72a5a82b,transparent 22% 78%,#72a5a82b),linear-gradient(var(--wall) 0 73%,var(--floor) 73%)}
+.ceiling{height:24px;display:flex;justify-content:space-around;background:repeating-linear-gradient(90deg,transparent 0 24%,#73918a33 24% 24.2%),#acbca7;clip-path:polygon(0 0,100% 0,94% 100%,6% 100%);border-bottom:2px solid #75928b}
+.ceiling i{width:14%;height:10px;background:#fff4c6;border:2px solid #b29e75;box-shadow:0 0 25px #ffe5a1}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 24px 11px}.kicker{font-size:9px;letter-spacing:2px;font-weight:800}.header h2{font-size:clamp(18px,1.6vw,25px);font-weight:850;margin:2px 0;line-height:1.2}.header p{font-size:12px;margin:0;opacity:.8}.settings{display:flex;gap:4px;flex-shrink:0}.settings button{padding:7px 9px;font-size:11px;border:1px solid #8aab9b;border-radius:9px;background:var(--wall);color:var(--ink)}.settings button[aria-pressed=true]{background:#ffc777;border-color:#ec870c;color:#53350c}.settings button:focus-visible{outline:3px solid #f58210;outline-offset:3px}
+.auditorium{display:grid;grid-template-columns:minmax(60px,1fr) minmax(0,min(74%,clamp(320px,calc((100dvh - 545px)*1.8),1050px))) minmax(60px,1fr);gap:24px;padding:0 4%;position:relative}
+.stage{grid-column:2;grid-row:1;background:#294d45;border:9px solid var(--trim);border-radius:5px;padding:7px;box-shadow:inset 0 0 0 2px #e9c38b,0 6px 0 #795c42,0 12px 25px #23433030;min-width:0;align-self:start}.boardLabel{color:#e0e9ce;font-size:9px;letter-spacing:3px;text-align:center;margin-bottom:6px;font-weight:700}.screen{position:relative;min-width:0;background:#162e2b;border:2px solid #567e6b;border-radius:5px;overflow:hidden}.screen [data-lesson-video]{border-radius:2px;border:0}.screen:has(.waiting){background:#294d45}.waiting{min-height:200px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#f4ebcf;padding:20px}.waiting svg{width:220px;height:130px}.waiting p{font-size:12px}.world{font-size:24px}
+.leftWall,.rightWall{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:15px;padding-bottom:3px;min-width:0}.leftWall{grid-column:1;grid-row:1}.rightWall{grid-column:3;grid-row:1}
+.clock{width:50px;height:50px;border:5px solid #ca785b;border-radius:50%;background:#fff4d5;position:absolute;top:0;right:8%;box-shadow:2px 3px #5c76672a}.clock span{position:absolute;top:0;left:13px;font:9px sans-serif;color:#344d50}.clock i{position:absolute;left:19px;top:10px;width:2px;height:13px;background:#344d50;transform-origin:bottom;transform:rotate(12deg)}.clock b{position:absolute;left:19px;top:21px;width:12px;height:2px;background:#344d50;transform:rotate(18deg)}
+.poster{width:clamp(70px,11vw,155px);padding:8px;text-align:center;background:#f9e5a5;border:5px solid #72988b;box-shadow:3px 4px #45695424;transform:rotate(-4deg);color:#3d716b}.poster>span{font-size:40px}.poster small{display:block;font-size:10px;font-weight:bold;letter-spacing:2px}.poster div{font-size:22px;color:#b06b56}
+.shelf{width:clamp(75px,13vw,180px);background:#738e82;border:6px solid #a37b55;box-shadow:5px 5px #3c5a5633}.shelf>div{display:flex;gap:5px;align-items:flex-end;justify-content:center;height:63px;border-bottom:7px solid #bd956a;padding:0 5px}.shelf>div:last-child{border-bottom:0}.shelf i{width:17%;max-width:23px;background:linear-gradient(90deg,#ffffff30,transparent 30%),var(--book);border:1px solid #49594a66;border-radius:2px 2px 0 0;position:relative}.shelf i:after{content:'';position:absolute;left:3px;right:3px;top:8px;border-top:2px solid #ffffff80;border-bottom:2px solid #ffffff80;height:6px}.shelf i:nth-child(4){transform:rotate(-10deg);transform-origin:bottom}
+.window{position:absolute;top:0;width:clamp(75px,14vw,195px);height:46%;background:linear-gradient(#254664,#739ca7);border:8px solid #c8975c;box-shadow:0 0 0 3px #71988b,5px 8px #415b4e20;overflow:hidden}.theater[data-day=true] .window{background:linear-gradient(#88cddd,#e4f2ce)}.window:after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 20%,#fff5 21% 28%,transparent 29% 40%,#fff2 41% 47%,transparent 48%)}.window i{position:absolute;inset:0 auto 0 48%;width:7px;background:#e7ba7e;z-index:2}.window b{position:absolute;inset:49% 0 auto;height:7px;background:#e7ba7e;z-index:2}.skyOrb{position:absolute;right:14%;top:12%;width:29px;height:29px;background:#fff3b8;border-radius:50%;box-shadow:0 0 25px #ffe69c99}.theater[data-day=true] .skyOrb{background:#ffd364}.hills{position:absolute;width:150%;height:60%;bottom:-20%;left:-25%;border-radius:50% 50% 0 0;background:#679884;box-shadow:35px -15px #85b391}.cloud{position:absolute;left:15%;top:25%;width:45px;height:12px;background:#ffffffb0;border-radius:100%;animation:drift 9s ease-in-out infinite alternate}
+.cabinet{width:clamp(70px,12vw,170px);height:100px;border:5px solid #a27a50;background:#d5b16f;display:flex;gap:4px;padding:22px 8px 8px;position:relative}.cabinet>span{position:absolute;top:0;left:45%;color:#536e5b}.cabinet>div{flex:1;border:2px solid #a38155;background:#a4bba0;border-radius:3px}.cabinet>div:after{content:'';display:block;width:5px;height:5px;background:#876a45;border-radius:50%;margin:22px 8px}.plant{position:absolute;bottom:99px;left:26%;width:60px;height:75px}.plant b{position:absolute;bottom:0;left:12px;width:37px;height:30px;background:#c77f5e;clip-path:polygon(0 0,100% 0,85% 100%,15% 100%)}.plant i{position:absolute;width:24px;height:42px;left:20px;bottom:20px;border-radius:100% 0 100% 0;background:#5b9275;transform:rotate(-35deg);transform-origin:bottom;animation:leaf 6s ease-in-out infinite alternate}.plant i:nth-child(2){transform:rotate(35deg);background:#8ab08a}.plant i:nth-child(3){transform:rotate(5deg);height:54px;background:#6ba281}
+.chalkTray{height:10px;width:45%;margin:5px auto 0;background:#bc965f;box-shadow:0 3px #715940;display:flex;align-items:flex-end;justify-content:flex-end;padding:0 20px;gap:8px}.chalkTray i{width:25px;height:4px;background:#faf5df;border-radius:3px}.chalkTray i:nth-child(2){background:#f0c49b}.chalkTray b{width:35px;height:8px;background:#5f7772;border-top:4px solid #b3a98b}
+.audience{height:153px;position:relative;background:repeating-conic-gradient(from 45deg at 50% -100%,#ad906020 0 1deg,transparent 1deg 12deg);margin-top:8px;overflow:hidden}.deskRow{display:flex;justify-content:space-around;position:absolute;left:10%;right:10%;bottom:-4px;gap:4%;z-index:2}.deskRow[data-row='0']{left:18%;right:18%;bottom:46px;z-index:1;transform:scale(.77);transform-origin:center bottom}.student{width:clamp(60px,10vw,145px);min-width:0;max-height:126px;overflow:visible}.pupil{transform-origin:90px 100px;animation:listen 7s ease-in-out infinite;animation-delay:var(--delay)}.caption{text-align:center;font-size:10px;margin:0;padding:0 10px 6px;background:var(--floor)}
+@keyframes listen{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}}@keyframes drift{to{transform:translateX(18px)}}@keyframes leaf{to{rotate:7deg}}
+.theater[data-motion=false] *{animation-play-state:paused!important}@media(prefers-reduced-motion:reduce){.theater *{animation:none!important}}
+@media(max-width:700px){.header{padding:6px 10px 10px;flex-wrap:wrap;gap:7px}.header p{display:none}.header h2{font-size:18px}.kicker{font-size:8px}.settings button{padding:5px 7px;font-size:10px}.auditorium{grid-template-columns:27px minmax(0,1fr) 27px;gap:5px;padding:0 5px}.stage{border-width:5px;padding:3px}.boardLabel{font-size:6px;letter-spacing:1px}.clock{width:23px;height:23px;border-width:3px;right:0}.clock span{display:none}.clock i{left:8px;top:3px;height:7px}.clock b{left:8px;top:10px;width:6px}.poster{display:none}.shelf{width:27px;border-width:3px}.shelf>div{height:38px;padding:0 1px;gap:1px;border-bottom-width:4px}.shelf i{height:25px!important}.shelf i:after{display:none}.window{width:26px;height:45%;border-width:3px}.window i{width:3px}.window b{height:3px}.skyOrb{width:12px;height:12px}.cabinet{width:27px;height:56px;border-width:3px;padding:15px 2px 3px}.cabinet>div:after{margin:10px 1px;width:3px;height:3px}.plant{transform:scale(.5);left:-18px;bottom:39px}.audience{height:105px;margin-top:4px}.student{max-height:80px}.deskRow{left:2%;right:2%;gap:0}.deskRow[data-row='0']{left:8%;right:8%;bottom:30px}.caption{font-size:8px}.ceiling{height:15px}.chalkTray{width:65%;height:7px}}
+/* Instruments are native vectors, keeping the room editable and animatable. */
+.instruments{width:min(100%,250px);height:auto;max-height:210px;filter:drop-shadow(2px 6px 2px #35544c22)}
+.percussion{max-height:165px;z-index:1}.rightWall .plant{bottom:125px;left:3%;transform:scale(.7)}
+.theater[data-day=true]{--wall:#c9e9df;--floor:#e5c38d}
+.theater .audience{background:radial-gradient(ellipse at 50% 88%,#87b9ad88 0 44%,transparent 45%),repeating-conic-gradient(from 45deg at 50% -100%,#ad906020 0 1deg,transparent 1deg 12deg)}
+@media(max-width:700px){.instruments{width:38px;max-width:none}.rightWall .plant{display:none}.percussion{margin-bottom:5px}}
+
+@media(min-width:701px){.ceiling{height:18px}.header{padding-top:4px;padding-bottom:7px}.header p{font-size:11px}.audience{height:120px;margin-top:4px}.student{max-height:103px}.deskRow[data-row='0']{bottom:35px}.caption{font-size:9px;padding-bottom:4px}}
+/* Decorations must fit their side wall in narrow editor previews too. */
+.poster,.window,.shelf,.cabinet{max-width:100%;box-sizing:border-box}.leftWall,.rightWall{overflow:hidden}.clock{right:5%;max-width:90%}.poster{transform:none}.instruments{flex-shrink:0}
+
+/* Give the board more room; keep the classroom objects at the outer walls. */
+@media(min-width:701px){
+ .auditorium{padding-inline:2.5%;gap:18px}
+ .leftWall{align-items:flex-start;padding-left:6%}
+ .rightWall{align-items:flex-end;padding-right:6%}
+ .leftWall .clock{right:auto;left:10%;top:0}
+ .leftWall .poster{margin-top:54px}
+ .rightWall .window{right:6%}
+ .rightWall .plant{left:auto;right:8%}
+ .header{padding-top:2px;padding-bottom:4px}
+ .stage{padding:4px;border-width:7px}
+ .boardLabel{margin-bottom:4px;font-size:8px}
+}
+.screen [data-lesson-video][data-presentation=true][data-fullscreen=false] [data-video-transport]{padding-top:2px;padding-bottom:3px}
+.screen [data-lesson-video][data-presentation=true][data-fullscreen=false] [data-video-seek-track]{margin-bottom:0}
+/* Keep the previous top edge: the old 1.16 bottom-origin scale lifted it by 16%.
+   Grow the board evenly to both sides and downward from that same edge. */
+@media(min-width:701px){
+ .stage:has([data-lesson-video]){transform:translateY(-16%) scale(1.26);transform-origin:center top;position:relative;z-index:2}
+ .stage:has([data-lesson-video][data-fullscreen=true]){transform:none}
+ .auditorium:has([data-lesson-video]){padding-bottom:clamp(28px,4.8dvh,52px)}
+ .leftWall .instruments{transform:translateX(-24px)}
+ .rightWall .percussion{transform:translateX(24px)}
+ .leftWall:has(.instruments){overflow:visible}
+ .theater:has([data-lesson-video]) .student{max-height:88px}
+ .theater:has([data-lesson-video]) .deskRow[data-row='0']{transform:scale(.72);bottom:32px}
+}
+
+.mascot{position:absolute;top:44%;left:0;z-index:4}.rightWall:has(.mascot){overflow:visible}.mascot button{width:88px}.mascot~.plant{display:none}@media(max-width:700px){.mascot{left:-15px;top:45%}.mascot button{width:49px}.mascot strong{font-size:8px;padding:2px 4px}}
+.mascot{left:30%;top:44%}.mascot aside>div{right:auto;left:0;width:190px}@media(max-width:700px){.mascot{left:auto;right:0;top:auto;bottom:-98px}.mascot aside>div{left:auto;right:0}}
+/* Keep the copy in the left wall, clear of the enlarged video board. */
+@media(min-width:701px){
+ .header{position:relative;height:80.5px;min-height:80.5px;justify-content:flex-end}
+ .header>div:first-child{position:absolute;left:24px;top:2px;width:max(120px,calc((100% - min(74%,clamp(320px,calc((100dvh - 545px)*1.8),1050px))*1.26)/2 - 42px));max-width:380px}
+ .header h2{font-size:clamp(14px,1.1vw,19px);line-height:1.18;overflow-wrap:anywhere;margin:3px 0 5px}
+ .header p{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+ .kicker{font-size:8px;letter-spacing:1.5px}
+}
+
+/* Interactive classroom decorations never change the video geometry. */
+.hotspot{cursor:pointer;touch-action:manipulation}.hotspot:focus-visible{outline:3px solid #f58210;outline-offset:3px}.hotspot:hover{filter:drop-shadow(0 0 5px #ffbc60)}
+@media(min-width:701px){.leftWall .clock{left:50%;right:auto;transform:translateX(-50%)}}
+.tipCard{position:absolute;z-index:8;left:50%;bottom:18px;transform:translateX(-50%);width:min(520px,calc(100% - 24px));display:flex;align-items:center;gap:12px;padding:14px 36px 14px 12px;border:2px solid #f5a24d;border-radius:20px;background:#fff9eb;color:#294a50;box-shadow:0 8px 25px #283e4530}
+.tipCard>svg{width:75px;flex-shrink:0}.tipCard strong,.completion strong{color:#a84d00;font-size:16px}.tipCard p,.completion p{font-size:14px;line-height:1.5;margin:5px 0 0}.tipCard>button{position:absolute;right:5px;top:5px;width:32px;height:32px;border-radius:50%;background:#ffe1b5;color:#884600;font-size:22px}
+.completion{position:absolute;z-index:9;left:50%;top:43%;transform:translate(-50%,-50%);width:min(520px,calc(100% - 28px));display:flex;align-items:center;gap:14px;pointer-events:none;animation:guideArrival .65s ease-out both}
+.completion>svg{width:140px;flex-shrink:0;filter:drop-shadow(0 6px 8px #0003)}.completion>div{padding:20px;border:2px solid #f58210;border-radius:22px;background:#fff9eb;color:#294a50;box-shadow:0 10px 30px #0003}.completion small{display:block;font-size:11px;margin-top:10px}
+@keyframes guideArrival{from{opacity:0;translate:100px 50px;scale:.7}to{opacity:1;translate:0 0;scale:1}}
+@media(max-width:700px){.completion{gap:5px}.completion>svg{width:70px}.completion>div{padding:12px}.completion p,.tipCard p{font-size:12px}.completion strong,.tipCard strong{font-size:14px}.tipCard>svg{width:48px}}
+
+.tipArrow{position:absolute;inset:0;width:100%;height:100%;z-index:8;pointer-events:none;overflow:visible}.tipCard{bottom:auto;transform:none;width:min(300px,calc(100% - 24px));padding:12px 34px 12px 14px}
+
+.posterStaff{display:block;width:100%;height:auto;margin-top:3px;max-height:65px}
+
+.posterStaff{height:36px;margin-top:0}
+
+/* Object cards must not intercept the nearby instruments. */
+.tipCard{pointer-events:none}.tipCard>button{pointer-events:auto}
+.instruments .hotspot{pointer-events:all}
+
+/* Exercise demonstrations reuse Timbalito's speech card with real practice actions. */
+.exerciseCompletion{display:flex;align-items:center;gap:10px;width:min(540px,100%);max-height:100%;color:#294a50}
+.exerciseCompletion>svg{width:clamp(58px,18%,110px);flex-shrink:0;filter:drop-shadow(0 6px 8px #0003)}
+.exerciseBubble{position:relative;flex:1;min-width:0;max-height:100%;overflow:auto;padding:18px;border:2px solid #f58210;border-radius:22px;background:#fff9eb;box-shadow:0 10px 30px #0003;text-align:center}
+.exerciseBubble h3{font-size:18px;color:#a84d00;padding-right:14px}.exerciseBubble p{font-size:12px;color:#294a50}
+.exerciseBubble button[data-action]{font-size:12px;padding:8px;margin-top:8px}
+.theater:has([data-timbalito-completion]) .mascot{visibility:hidden}
+
+/* A slim board frame gives the teaching surface the decorative space back. */
+.stage{border-width:3px;padding:2px;box-shadow:inset 0 0 0 1px #e9c38b,0 3px 0 #795c42,0 8px 20px #23433030}
+.screen{border-width:1px}
+.chalkTray{width:116px;height:7px;margin:3px 14% 0 auto;padding:0 8px;gap:6px}
+@media(max-width:700px){.stage{border-width:2px;padding:1px}.chalkTray{width:94px;margin-right:10%;padding-inline:5px;gap:4px}.chalkTray i{width:20px}.chalkTray b{width:30px}}
+
+/* Attach the small tray to the board, inset from its right edge. */
+.stage{position:relative}
+.stage .chalkTray{position:absolute;right:14px;bottom:-5px;margin:0;max-width:calc(100% - 28px);pointer-events:none}
+
+/* Fit the room decorations around the approved board; do not resize the stage. */
+@media(min-width:701px){
+ .leftWall .instruments{transform:translateX(-28px) scale(.72);transform-origin:left bottom}
+ .leftWall .poster{transform:translateX(-20px)}
+ .leftWall .clock{top:55px;left:35%;transform:translateX(-50%) scale(.85)}
+ .rightWall .window{transform:translateX(16px) scale(.82);transform-origin:right top}
+ .rightWall .percussion{transform:translateX(26px) scale(.76);transform-origin:right bottom}
+ .mascot{left:auto;right:18%;transform:scale(.85);transform-origin:right top}
+ .settings{transform:translateX(10px) scale(.8);transform-origin:right center}
+}
+
+/* The student's expanded view prioritizes video and notation over the room. */
+:global([data-student-fullscreen=true]) .theater { border-radius:8px; }
+:global([data-student-fullscreen=true]) .theater > :is(.ceiling,.header,.audience,.caption) { display:none; }
+:global([data-student-fullscreen=true]) .auditorium { display:block; padding:0; }
+:global([data-student-fullscreen=true]) :is(.leftWall,.rightWall) { display:none; }
+:global([data-student-fullscreen=true]) .stage { width:100%; transform:none; margin:0; padding:2px; }
+:global([data-student-fullscreen=true]) .screen { width:100%; max-width:none; }
+:global([data-student-fullscreen=true]) .auditorium:has([data-lesson-video]) { padding-bottom:0; }

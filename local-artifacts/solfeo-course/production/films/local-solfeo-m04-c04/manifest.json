@@ -1,0 +1,1142 @@
+{
+  "classId": "local-solfeo-m04-c04",
+  "duration": 228.656847,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Doble y triple puntillo",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 25,
+      "kind": "explanation",
+      "title": "Doble y triple puntillo",
+      "sourceTopic": "triple-puntillo",
+      "soundEvents": []
+    },
+    {
+      "start": 25,
+      "end": 37,
+      "kind": "notation",
+      "title": "Doble puntillo: siete semicorcheas + una",
+      "sourceTopic": "triple-puntillo",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Doble puntillo: siete semicorcheas + una",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 16
+                }
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 120,
+        "_sourcePage": "triple-puntillo",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-63"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.09375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 37,
+      "end": 49,
+      "kind": "notation",
+      "title": "Triple puntillo: quince fusas + una",
+      "sourceTopic": "triple-puntillo",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Triple puntillo: quince fusas + una",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4,
+                  "dots": 3
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 32
+                }
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 120,
+        "_sourcePage": "triple-puntillo",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-63"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 1.078125,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.171875,
+          "duration": 0.07187500000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 49,
+      "end": 62.467208,
+      "kind": "explanation",
+      "title": "Doble y triple puntillo",
+      "sourceTopic": "triple-puntillo",
+      "soundEvents": []
+    },
+    {
+      "start": 62.467208,
+      "end": 87.467208,
+      "kind": "explanation",
+      "title": "Doble y triple puntillo",
+      "sourceTopic": "doble-puntillo-ejemplos",
+      "soundEvents": []
+    },
+    {
+      "start": 87.467208,
+      "end": 99.467208,
+      "kind": "notation",
+      "title": "Blanca con doble puntillo + corchea = cuatro negras",
+      "sourceTopic": "doble-puntillo-ejemplos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Blanca con doble puntillo + corchea = cuatro negras",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 2,
+                  "dots": 2
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2,
+                  "dots": 2
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 105,
+        "_sourcePage": "doble-puntillo-ejemplos",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-64"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 2.0125,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.1875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.5,
+          "duration": 2.0125,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 5.6875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 99.467208,
+      "end": 111.467208,
+      "kind": "notation",
+      "title": "Negra con doble puntillo + semicorchea = dos negras",
+      "sourceTopic": "doble-puntillo-ejemplos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Negra con doble puntillo + semicorchea = dos negras",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 105,
+        "_sourcePage": "doble-puntillo-ejemplos",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-64"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.09375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.34375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 111.467208,
+      "end": 123.467208,
+      "kind": "notation",
+      "title": "Corchea con doble puntillo + fusa = una negra",
+      "sourceTopic": "doble-puntillo-ejemplos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 87,
+        "rows": [
+          {
+            "title": "Corchea con doble puntillo + fusa = una negra",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 8,
+                  "dots": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "dots": 2
+                },
+                {
+                  "pitch": "B3",
+                  "dur": 32
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "beams": [
+              [
+                0,
+                1
+              ],
+              [
+                3,
+                4
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 105,
+        "_sourcePage": "doble-puntillo-ejemplos",
+        "rowHeights": [
+          87
+        ],
+        "sourcePageId": "flow-cont-64"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.503125,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.546875,
+          "duration": 0.07187500000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 0.503125,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 2.796875,
+          "duration": 0.07187500000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 123.467208,
+      "end": 135.467208,
+      "kind": "notation",
+      "title": "El doble puntillo también prolonga silencios",
+      "sourceTopic": "doble-puntillo-ejemplos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "El doble puntillo también prolonga silencios",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "rest": true,
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "rest": true,
+                  "dur": 16
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 105,
+        "_sourcePage": "doble-puntillo-ejemplos",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-64"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.09375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 135.467208,
+      "end": 147.578319,
+      "kind": "explanation",
+      "title": "Doble y triple puntillo",
+      "sourceTopic": "doble-puntillo-ejemplos",
+      "soundEvents": []
+    },
+    {
+      "start": 147.578319,
+      "end": 162.635507,
+      "kind": "explanation",
+      "title": "Doble y triple puntillo",
+      "sourceTopic": "doble-puntillo-fa",
+      "soundEvents": []
+    },
+    {
+      "start": 162.635507,
+      "end": 174.635507,
+      "kind": "notation",
+      "title": "Compases 1-4",
+      "sourceTopic": "doble-puntillo-fa",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Compases 1-4",
+            "clef": "F",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "E3",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "F3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "F3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {},
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "doble-puntillo-fa",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-65"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.09375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 2.25,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 3.34375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 3.5,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 4.59375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 174.635507,
+      "end": 186.635507,
+      "kind": "notation",
+      "title": "Compases 5-8",
+      "sourceTopic": "doble-puntillo-fa",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Compases 5-8",
+            "clef": "F",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "D3",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "G2",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "F3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "B2",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {},
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "doble-puntillo-fa",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-65"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 1,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.09375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 2.25,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 3.34375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 3.5,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 4.59375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 186.635507,
+      "end": 198.635507,
+      "kind": "notation",
+      "title": "Compases 9-12",
+      "sourceTopic": "doble-puntillo-fa",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Compases 9-12",
+            "clef": "F",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E3",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "F3",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "F3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "A3",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {},
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "doble-puntillo-fa",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-65"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 1,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.09375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 2.25,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 3.34375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 3.5,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 4.59375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 198.635507,
+      "end": 210.635507,
+      "kind": "notation",
+      "title": "Compases 13-16",
+      "sourceTopic": "doble-puntillo-fa",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Compases 13-16",
+            "clef": "F",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "F3",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "D3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "D3",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "F3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "B2",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 16
+                }
+              ],
+              [
+                {
+                  "pitch": "C3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "doble-puntillo-fa",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-65"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 1,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.09375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.25,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 3.34375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 3.5,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 4.59375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 210.635507,
+      "end": 222.635507,
+      "kind": "explanation",
+      "title": "Doble y triple puntillo",
+      "sourceTopic": "doble-puntillo-fa",
+      "soundEvents": []
+    },
+    {
+      "start": 222.635507,
+      "end": 228.635507,
+      "kind": "completion",
+      "title": "¡Bien hecho!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

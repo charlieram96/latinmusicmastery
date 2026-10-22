@@ -8,6 +8,8 @@ import { CourseModeProvider } from "@/contexts/course-mode-context";
 import { PlaysenseProvider } from "@/contexts/playsense-context";
 import { DEFAULT_LOCALE, LANGUAGE_COOKIE, getTranslation, isLocale } from "@/lib/i18n";
 import "./globals.css";
+import "./learning-mode.css";
+import { LearningModeAppearance } from "@/components/learning-mode/store";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -46,6 +48,7 @@ export default async function RootLayout({
         {/* Applies the stored theme before hydration so light-mode users never see a dark flash. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <ThemeProvider>
+          <LearningModeAppearance />
           <LanguageProvider initialLocale={locale}>
             <CourseModeProvider>
               <PlaysenseProvider>

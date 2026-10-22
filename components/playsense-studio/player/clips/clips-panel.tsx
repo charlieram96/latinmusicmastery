@@ -6,6 +6,10 @@
 // inserts via server action. Load flow: click a clip to apply its loop range
 // (and rate) to the active clock. Delete flow: trash button per row.
 
+import { createPortal } from 'react-dom';
+import { useLearningMode } from '@/components/learning-mode/store';
+import { useLessonFrame } from '@/components/class-viewer/lesson-viewer/lesson-mode/lesson-frame';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useTranslation } from '@/components/language-provider';
 import { studioText } from '@/lib/playsense-studio/i18n/text';
 import { Bookmark, Plus, Repeat, Trash2 } from 'lucide-react';
@@ -34,6 +38,8 @@ export function ClipsPanel({
   onLoadClip,
 }: ClipsPanelProps) {
   const { locale } = useTranslation();
+  const mode = useLearningMode();
+  const frame = useLessonFrame();
   const st = (text: string) => studioText(text, locale);
   const [clips, setClips] = useState<PlaysenseStudioClip[]>([]);
   const [name, setName] = useState('');
@@ -104,7 +110,7 @@ export function ClipsPanel({
     });
   };
 
-  return (
+  const panel = (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
         <Bookmark className="w-4 h-4 text-muted-foreground" />
@@ -182,6 +188,15 @@ export function ClipsPanel({
       )}
     </section>
   );
+  if (mode === 'kids' && frame && !frame.noClaim) {
+    return frame.clipsHost ? createPortal(<Popover>
+      <PopoverTrigger asChild><button type="button" className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 px-2 py-1.5 text-xs font-medium hover:bg-primary/10">
+        <Bookmark className="h-3.5 w-3.5"/>{st('Saved clips')}
+      </button></PopoverTrigger>
+      <PopoverContent side="top" align="end" className="w-[min(420px,calc(100vw-24px))] max-h-[min(440px,70dvh)] overflow-y-auto">{panel}</PopoverContent>
+    </Popover>, frame.clipsHost) : null;
+  }
+  return panel;
 }
 
 function formatSeconds(s: number): string {

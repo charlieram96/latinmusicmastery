@@ -7,10 +7,10 @@ import { MeasurePopover, type PopoverAnchor } from './popover';
 
 const COUNTS = [2, 3, 4, 6, 8];
 
-export function RepeatPopover({ anchor, range, group, problemFor, onPick, onRemove, onSelectPassOne, onClose }: {
+export function RepeatPopover({ anchor, range, group, problemFor, onPick, onRemove, onUnlink, onSelectPassOne, onClose }: {
   anchor: PopoverAnchor; range: [number, number]; group: { id: string; count: number } | null;
   problemFor: (count: number) => string | null;
-  onPick: (count: number) => void; onRemove: () => void; onSelectPassOne: () => void; onClose: () => void;
+  onPick: (count: number) => void; onRemove: () => void; onUnlink?: () => void; onSelectPassOne: () => void; onClose: () => void;
 }) {
   const st = useStudioText();
   const [count, setCount] = useState(group?.count ?? 2);
@@ -45,7 +45,8 @@ export function RepeatPopover({ anchor, range, group, problemFor, onPick, onRemo
       </div>
       {group && (
         <div className="st-mpop-row">
-          <button type="button" className="st-mpop-item" onClick={onRemove}>{st("✕ Remove repeat")}</button>
+          <button type="button" className="st-mpop-item" title={st("Keep the first pass and remove the extra passes") } onClick={onRemove}>{st("✕ Remove repeat")}</button>
+          {onUnlink && <button type="button" className="st-mpop-item" title={st("Keep all measures as independent measures")} onClick={onUnlink}>{st("Unlink repeat")}</button>}
           <button type="button" className="st-mpop-item" onClick={onSelectPassOne}>{st("Select pass 1")}</button>
         </div>
       )}

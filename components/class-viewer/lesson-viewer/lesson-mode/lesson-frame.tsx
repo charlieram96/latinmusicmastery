@@ -13,6 +13,8 @@ import { cn } from '@/lib/utils'
 export type ActionTone = 'neutral' | 'success' | 'danger'
 
 export interface LessonFrameValue {
+  registerTransport?: (host: HTMLElement | null) => void
+  clipsHost?: HTMLElement | null
   actionHost: HTMLElement | null
   /** Only the newest claim shows (a celebration over a finished quiz, say). */
   topClaim: string | null

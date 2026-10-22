@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import { AdminText } from '@/components/admin/admin-text'
 
 
@@ -129,9 +130,9 @@ export function QuizBuilder({
   return (
     <div className="space-y-4">
       <div className="grid gap-2">
-        <Label htmlFor="question"><AdminText text={"Question"} /></Label>
+        <Label htmlFor={`${questionId}-question`}><AdminText text={"Question"} /></Label>
         <Textarea
-          id="question"
+          id={`${questionId}-question`}
           value={question}
           onChange={(e) => onChange({ question: e.target.value })}
           rows={3}
@@ -140,9 +141,9 @@ export function QuizBuilder({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="question-es" className="text-muted-foreground"><AdminText text={"Question (Español)"} /></Label>
+        <Label htmlFor={`${questionId}-question-es`} className="text-muted-foreground"><AdminText text={"Question (Español)"} /></Label>
         <Textarea
-          id="question-es"
+          id={`${questionId}-question-es`}
           value={questionEs}
           onChange={(e) => onChange({ question_es: e.target.value || null })}
           rows={3}
@@ -153,9 +154,9 @@ export function QuizBuilder({
       {renderOptionsBuilder()}
 
       <div className="grid gap-2">
-        <Label htmlFor="explanation"><AdminText text={"Explanation (shown after answer)"} /></Label>
+        <Label htmlFor={`${questionId}-explanation`}><AdminText text={"Explanation (shown after answer)"} /></Label>
         <Textarea
-          id="explanation"
+          id={`${questionId}-explanation`}
           value={explanation}
           onChange={(e) => onChange({ explanation: e.target.value })}
           rows={2}
@@ -164,9 +165,9 @@ export function QuizBuilder({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="explanation-es" className="text-muted-foreground"><AdminText text={"Explanation (Español)"} /></Label>
+        <Label htmlFor={`${questionId}-explanation-es`} className="text-muted-foreground"><AdminText text={"Explanation (Español)"} /></Label>
         <Textarea
-          id="explanation-es"
+          id={`${questionId}-explanation-es`}
           value={explanationEs}
           onChange={(e) => onChange({ explanation_es: e.target.value || null })}
           rows={2}
@@ -189,6 +190,7 @@ function MultipleChoiceBuilder({
   correctAnswer: string
   onChange: (data: any) => void
 }) {
+  const radioName = useId()
   const choices = options?.choices || []
 
   const addChoice = () => {
@@ -227,7 +229,8 @@ function MultipleChoiceBuilder({
           <div className="flex gap-2 items-center">
             <input
               type="radio"
-              name="correct"
+              name={radioName}
+              aria-label={`Correct answer: option ${index+1}`}
               checked={correctAnswer === choice.id}
               onChange={() => onChange({ correct_answer: choice.id })}
               className="h-4 w-4"
@@ -612,6 +615,7 @@ function TrueFalseBuilder({
   correctAnswer: string
   onChange: (data: any) => void
 }) {
+  const fieldId = useId()
   return (
     <div className="space-y-3">
       <Label><AdminText text={"Correct Answer"} /></Label>
@@ -621,12 +625,12 @@ function TrueFalseBuilder({
         className="flex gap-4"
       >
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="true" id="true" />
-          <Label htmlFor="true" className="font-normal"> <AdminText text={"True"} /> </Label>
+          <RadioGroupItem value="true" id={`${fieldId}-true`} />
+          <Label htmlFor={`${fieldId}-true`} className="font-normal"> <AdminText text={"True"} /> </Label>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="false" id="false" />
-          <Label htmlFor="false" className="font-normal"> <AdminText text={"False"} /> </Label>
+          <RadioGroupItem value="false" id={`${fieldId}-false`} />
+          <Label htmlFor={`${fieldId}-false`} className="font-normal"> <AdminText text={"False"} /> </Label>
         </div>
       </RadioGroup>
     </div>
@@ -641,11 +645,12 @@ function TextAnswerBuilder({
   correctAnswer: string
   onChange: (data: any) => void
 }) {
+  const fieldId = useId()
   return (
     <div className="grid gap-2">
-      <Label htmlFor="correct_answer"><AdminText text={"Correct Answer"} /></Label>
+      <Label htmlFor={`${fieldId}-correct_answer`}><AdminText text={"Correct Answer"} /></Label>
       <Input
-        id="correct_answer"
+        id={`${fieldId}-correct_answer`}
         value={correctAnswer}
         onChange={(e) => onChange({ correct_answer: e.target.value })}
         placeholder="Enter the correct answer"

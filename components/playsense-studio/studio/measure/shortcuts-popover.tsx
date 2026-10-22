@@ -14,7 +14,7 @@ const SHORTCUTS: Array<[string, string]> = [
   ['⇧-click', 'extend the selection'],
   ['Double-click or ⏎', 'edit the bar’s notes'],
   ['← →', 'move the selection (⇧ extends)'],
-  ['⌘C ⌘V ⌘D', 'copy, paste after, duplicate'],
+  ['⌘C ⌘V ⌘D', 'copy, paste at selection, duplicate'],
   ['⌫', 'delete bars'],
   ['Esc', 'deselect'],
   ['Scroll', 'Pinch to zoom · horizontal scroll to pan'],

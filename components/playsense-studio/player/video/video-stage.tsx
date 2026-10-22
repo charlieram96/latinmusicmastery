@@ -11,11 +11,17 @@
 // user taps, we hand control back to the transport bar.
 
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
+import { LessonPresentationOverlay } from '@/components/playsense-studio/shared/lesson-presentation';
+import { lessonPresentationFor } from '@/lib/playsense-studio/lesson-presentation';
+import { ExerciseVideoGuidance } from '../../shared/exercise-video-guidance';
+import { exerciseVideoGuidance } from '@/lib/playsense-studio/exercise-video-guidance';
 import { Play } from 'lucide-react';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import type { SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt';
 
 interface VideoStageProps {
+  classItemId?: string;
+  startLabel?: string;
   src: string;
   poster?: string;
   className?: string;
@@ -31,7 +37,7 @@ interface VideoStageProps {
 }
 
 export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
-  function VideoStage({ src, poster, className, tracks, onFirstPlay }, ref) {
+  function VideoStage({ src, poster, className, tracks, onFirstPlay, startLabel, classItemId }, ref) {
     const [hasPlayed, setHasPlayed] = useState(false);
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -53,7 +59,11 @@ export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
       if (!video) return;
       const onPlay = () => setHasPlayed(true);
       video.addEventListener('play', onPlay);
-      return () => video.removeEventListener('play', onPlay);
+      video.addEventListener('seeking', onPlay);
+      return () => {
+        video.removeEventListener('play', onPlay);
+        video.removeEventListener('seeking', onPlay);
+      };
     }, []);
 
     const handleOverlayClick = () => {
@@ -62,11 +72,11 @@ export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
     };
 
     return (
-      <div className={`relative bg-black rounded-lg overflow-hidden ${className ?? ''}`}>
+      <div className={`relative select-none bg-black rounded-lg overflow-hidden ${className ?? ''}`}>
         <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()}
           ref={setVideoRef}
           src={src}
-          poster={poster}
+          poster={hasPlayed ? undefined : lessonPresentationFor(src)?.poster ?? poster}
           playsInline
           preload="metadata"
           crossOrigin={tracks && tracks.length > 0 ? 'anonymous' : undefined}
@@ -75,17 +85,18 @@ export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
           {tracks?.map((t) => (
             <track key={t.src} kind="subtitles" src={t.src} srcLang={t.lang} label={t.label} />
           ))}
-        </video><VideoWatermark />
-        {!hasPlayed && (
+        </video>{classItemId && <ExerciseVideoGuidance watch itemId={classItemId} videoRef={videoRef} />}<VideoWatermark /><LessonPresentationOverlay src={src} />
+        {!hasPlayed && !lessonPresentationFor(src) && !exerciseVideoGuidance[classItemId ?? ''] && (
           <button
             type="button"
             onClick={handleOverlayClick}
-            className="group absolute inset-0 flex cursor-pointer items-center justify-center bg-black/40 backdrop-blur-[2px] transition hover:bg-black/30"
-            aria-label="Play video"
+            className="group absolute inset-0 flex cursor-pointer items-center justify-center bg-transparent"
+            aria-label={startLabel ?? "Play video"}
           >
             <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-primary/90 text-primary-foreground shadow-[0_8px_30px_-4px_hsl(var(--primary)/0.6)] ring-1 ring-white/15 transition-transform duration-150 group-hover:scale-105 group-hover:bg-primary group-active:scale-95">
               <Play className="ml-1 h-8 w-8" fill="currentColor" />
             </span>
+            {startLabel&&<span className="ml-3 rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground">{startLabel}</span>}
           </button>
         )}
       </div>

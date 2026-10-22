@@ -7,6 +7,7 @@ vi.mock('@/components/language-provider', () => ({
   useTranslation: () => ({ t: (key: string, params?: Record<string, string | number>) => params ? `${key}(${Object.values(params).join(',')})` : key }),
 }))
 
+vi.mock('../bar-practice-dialog', () => ({ BarPracticeDialog: ({bar,onClose}: {bar: {bar:number};onClose:()=>void}) => <button data-practice-dialog onClick={onClose}>Close bar {bar.bar}</button> }))
 import { PartDone } from '../part-done'
 import type { AttemptStats } from '@/lib/play-sense/types'
 import type { BarResult } from '@/lib/play-sense/bar-results'
@@ -32,6 +33,21 @@ const render = (previousBest: number | null | undefined, extra: Partial<React.Co
   act(() => root.render(<PartDone stats={stats} bars={bars} previousBest={previousBest} onAgain={vi.fn()} onContinue={vi.fn()} demo={false} {...extra} />))
 
 describe('PartDone', () => {
+  it('opens only close and missed bars and returns to the same results', () => {
+    const onContinue = vi.fn()
+    render(null, { onContinue, practice: {videoUrl:'/clip.mp4',clipForBar: bar => bar === 6 ? null : {start:bar*2,end:bar*2+2,bpm:120,beats:4,beatSeconds:.5}} })
+    expect(host.querySelector('[data-status=clean] button')).toBeNull()
+    expect(host.querySelector('[data-status=rest] button')).toBeNull()
+    expect(host.querySelectorAll('.lx-bar-practice')).toHaveLength(2)
+    const tile = host.querySelector<HTMLButtonElement>('.lx-bar-practice')!
+    act(() => tile.click())
+    expect(host.querySelector('[data-practice-dialog]')?.textContent).toBe('Close bar 2')
+    act(() => host.querySelector<HTMLButtonElement>('[data-practice-dialog]')!.click())
+    expect(host.querySelector('[data-practice-dialog]')).toBeNull()
+    expect(host.querySelectorAll('[data-bar-tile]')).toHaveLength(6)
+    expect(onContinue).not.toHaveBeenCalled()
+  })
+
   it('distinguishes missing capture from detected hits outside the timing window', () => {
     render(null, { stats: { ...stats, accuracy: 0, rhythm: evaluateRhythm([0, .5], []) } })
     expect(host.querySelector('[role="alert"]')?.textContent).toContain('No hits were recorded')

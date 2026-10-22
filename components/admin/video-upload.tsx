@@ -1,10 +1,13 @@
 'use client'
 
+import { uploadLocalSolfeoMedia } from '@/lib/courses/upload-local-solfeo-media'
 import { AdminText } from '@/components/admin/admin-text'
 
 
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
-import { useState, useRef } from 'react'
+import { LessonPresentationOverlay } from '@/components/playsense-studio/shared/lesson-presentation';
+import { lessonPresentationFor } from '@/lib/playsense-studio/lesson-presentation';
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -26,6 +29,11 @@ export function VideoUpload({
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentVideoUrl)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Server refreshes can replace the media without remounting this editor.
+  useEffect(() => {
+    setPreviewUrl(currentVideoUrl)
+  }, [moduleId, currentVideoUrl])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -49,6 +57,7 @@ export function VideoUpload({
     setProgress(0)
 
     try {
+      if (moduleId.startsWith('local-solfeo-')) {const url=await uploadLocalSolfeoMedia(moduleId,file);setPreviewUrl(url);onVideoUploaded(url);return}
       const supabase = createClient()
       const fileExt = file.name.split('.').pop()
       const fileName = `${moduleId}-${Date.now()}.${fileExt}`
@@ -99,10 +108,12 @@ export function VideoUpload({
       {previewUrl ? (
         <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
           <video
+            key={previewUrl}
             src={previewUrl}
+            poster={lessonPresentationFor(previewUrl)?.poster}
             controls
             className="w-full h-full object-contain"
-          /><VideoWatermark nativeControls />
+          /><LessonPresentationOverlay src={previewUrl} /><VideoWatermark nativeControls />
           <Button
             type="button"
             variant="destructive"

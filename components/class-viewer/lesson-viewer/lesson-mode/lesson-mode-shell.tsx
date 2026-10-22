@@ -5,7 +5,13 @@
 // arrives as slots (body, comments). Parts reach the action bar through the
 // LessonFrame context (see lesson-frame.tsx).
 
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
+import { useLearningMode } from '@/components/learning-mode/store'
+import { TimbalitoContext, TimbalitoGuide } from '@/components/learning-mode/timbalito'
+import { timbalScene } from '@/components/learning-mode/theater/timbal-scenes'
+import { TimbalTheater, TheaterClassContext } from '@/components/learning-mode/theater/timbal-theater'
+import { LessonNarration } from '@/components/lesson-narration/lesson-narration'
+import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { markClassItemComplete } from '@/app/actions/progress'
 import { useTranslation } from '@/components/language-provider'
@@ -16,6 +22,9 @@ import type { RailLesson } from '@/lib/courses/lesson-rail'
 import { celebrationStats } from '@/lib/dashboard/lesson-celebration'
 import { LessonProgressProvider, useLessonProgress } from '../lesson-progress-context'
 import { LessonFrameProvider, useActionClaims } from './lesson-frame'
+import { LessonSequence } from './lesson-sequence'
+import { CourseSequenceContext } from '@/components/solfeo/course-sequence-navigation'
+import { activitySequence } from '@/lib/courses/activity-sequence'
 import { LessonActionBar } from './lesson-action-bar'
 import { LessonRail, LessonRailList } from './lesson-rail'
 import { LessonTopBar, type TopBarPart } from './lesson-top-bar'
@@ -43,27 +52,36 @@ export interface LessonModeShellProps {
   commentCount: number
   teacherName: string | null
   nextLesson: NextLessonCard | null
+  theaterEmpty?: boolean
   body: ReactNode
   /** Local previews pass a no-op so nothing writes student progress. */
   saveCompletion?: typeof markClassItemComplete
 }
 
 export function LessonModeShell(props: LessonModeShellProps) {
-  return <LessonProgressProvider key={props.lesson.id} itemIds={props.progress?.itemIds ?? []}
+  return <TimbalitoContext.Provider value={/timbal/i.test(props.course.title)}><LessonProgressProvider key={props.lesson.id} itemIds={props.progress?.itemIds ?? []}
     initialCompletedItemIds={props.progress?.completedItemIds ?? []} saveCompletion={props.saveCompletion}>
     <LessonModeFrame {...props} />
-  </LessonProgressProvider>
+  </LessonProgressProvider></TimbalitoContext.Provider>
 }
 
 function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, progress, practice, about, comments, commentCount,
-  teacherName, nextLesson, body, sections, hasAccess = false }: LessonModeShellProps) {
+  teacherName, nextLesson, body, sections, theaterEmpty = false, hasAccess = false }: LessonModeShellProps) {
   const { t, locale } = useTranslation()
+  const learningMode = useLearningMode()
   const router = useRouter()
   const live = useLessonProgress()
   const claims = useActionClaims()
+  const [transportHost, setTransportHost] = useState<HTMLElement | null>(null)
   const [actionHost, setActionHost] = useState<HTMLElement | null>(null)
+  const [clipsHost, setClipsHost] = useState<HTMLElement | null>(null)
   const [toolsHost, setToolsHost] = useState<HTMLElement | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [footerCollapsed, setFooterCollapsed] = useState(false)
+  const [footerSpace, setFooterSpace] = useState(0)
+  const footerContent = useRef<HTMLDivElement>(null)
+  const footerId = useId()
+  const hideFooter = footerCollapsed
   const discussionRef = useRef<HTMLElement>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
@@ -107,12 +125,18 @@ function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, pro
     setCelebrating(true)
   }
 
-  const frame = useMemo(() => ({ actionHost, topClaim: claims.top, claim: claims.claim, advance, teacherName }),
-    [actionHost, claims.top, claims.claim, advance, teacherName])
+  const frame = useMemo(() => ({ registerTransport: setTransportHost, actionHost, clipsHost, topClaim: claims.top, claim: claims.claim, advance, teacherName }),
+    [actionHost, clipsHost, claims.top, claims.claim, advance, teacherName])
 
-  return <LessonFrameProvider value={frame}>
+  const narrationTarget = useRef<HTMLDivElement|null>(null)
+  const isNarratedLesson = parts[activeIndex]?.item_type === 'VIDEO'
+  const sequence = activitySequence({ courseId: course.id, classId: lesson.id,
+    classes: sections?.flatMap(section => section.classes) ?? rail, parts, activeIndex, t })
+  if (!sections && !sequence.next && nextLesson) sequence.next = { ...nextLesson, classId: '' }
+  return <CourseSequenceContext.Provider value={sequence}><LessonFrameProvider value={frame}>
     <WorkspaceToolsSlotProvider host={toolsHost}>
-      <div data-lesson-shell data-lesson-mode className="lx" data-course-navigation={!!sections} data-navigation-collapsed={sidebarCollapsed}>
+      <div data-lesson-shell data-kids-world={learningMode === 'kids'} data-lesson-mode className="lx" data-course-navigation={!!sections} data-navigation-collapsed={sidebarCollapsed}
+        style={{ '--lesson-footer-space': `${hideFooter ? footerSpace : 0}px` } as CSSProperties}>
         {sections ? <LessonSidebar courseId={course.id} currentClassId={lesson.id} sections={sections.map(section => ({ ...section,
           completedItems: section.completedItems + (section.classes.some(item => item.id === lesson.id) ? added : 0),
           classes: section.classes.map(item => item.id === lesson.id ? { ...item, completedItems: Math.min(item.totalItems, item.completedItems + added) } : item),
@@ -127,18 +151,32 @@ function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, pro
             courseId={course.id} classId={lesson.id} streak={stats?.streak.after ?? 0} onOpenDrawer={() => setDrawerOpen(true)} />
           <main data-dashboard-main data-lesson-stage className="lx-stage">
             <div className="lx-fill" hidden={celebrating} inert={celebrating}>
-              {body}
+              {learningMode === 'kids' && /timbal/i.test(course.title) && !['VIDEO','QUIZ'].includes(parts[activeIndex]?.item_type) && <div data-shell-timbalito className="flex justify-end"><TimbalitoGuide compact/></div>}
+              {!theaterEmpty && !!timbalScene(lesson.id) ? <TheaterClassContext.Provider value={lesson.id}><div ref={narrationTarget}>{body}</div></TheaterClassContext.Provider> : <TimbalTheater classId={lesson.id} empty={theaterEmpty && progress !== null}><div ref={narrationTarget}>{body}</div></TimbalTheater>}
               {comments != null && <section key={lesson.id} ref={discussionRef} data-lesson-community tabIndex={-1}
                 aria-label={t('dashboard.classViewer.lessonMode.drawer.comments')}
-                className="mx-auto mt-8 w-full max-w-[78ch] border-t border-border pt-6 pb-4 outline-none">
+                className="mx-auto mt-8 w-full max-w-[1200px] border-t border-border pt-6 pb-4 outline-none">
                 {comments}
               </section>}
             </div>
             {celebrating && stats && <LessonDone stats={stats} lessonTitle={lesson.title} partCount={progress?.totalItems ?? 0}
               nextLesson={nextLesson} courseHref={courseHref} />}
           </main>
-          <LessonActionBar progress={progress} claimed={claims.claimed} tone={claims.tone} onActionHost={setActionHost}
-            onToolsHost={setToolsHost} onPrimary={onPrimary} primaryLabel={celebrate ? t('dashboard.classViewer.lessonMode.finishLesson') : null} />
+          <div className="lx-bottom" data-collapsed={hideFooter}>
+            <button type="button" className="lx-bottom-toggle"
+              aria-expanded={!hideFooter} aria-controls={footerId}
+              aria-label={locale === 'es' ? (hideFooter ? 'Mostrar controles y navegación' : 'Recoger controles y navegación') : (hideFooter ? 'Show controls and navigation' : 'Collapse controls and navigation')}
+              title={locale === 'es' ? (hideFooter ? 'Mostrar controles y navegación' : 'Recoger controles y navegación') : (hideFooter ? 'Show controls and navigation' : 'Collapse controls and navigation')}
+              onClick={() => {
+                if (!hideFooter) setFooterSpace(Math.max(0, (footerContent.current?.getBoundingClientRect().height ?? 0) - 12))
+                setFooterCollapsed(value => !value)
+              }}>{hideFooter ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}</button>
+            <div id={footerId} ref={footerContent} hidden={hideFooter}>
+            <LessonActionBar transportHost={celebrating ? null : transportHost} narration={!transportHost && isNarratedLesson && !celebrating ? <LessonNarration target={narrationTarget} resetKey={`${lesson.id}:${activeIndex}`}/> : null} progress={progress} claimed={claims.claimed} tone={claims.tone} onActionHost={setActionHost}
+            onClipsHost={learningMode === 'kids' ? setClipsHost : undefined} onToolsHost={setToolsHost} onPrimary={onPrimary} primaryLabel={celebrate ? t('dashboard.classViewer.lessonMode.finishLesson') : null} />
+          <LessonSequence course={course} lesson={lesson} sections={sections} rail={rail} parts={parts} activeIndex={activeIndex} nextLesson={nextLesson} />
+            </div>
+          </div>
         </div>
         <LessonDrawer open={drawerOpen} onOpenChange={setDrawerOpen} title={lesson.title} description={about.description}
           meta={about.meta} comments={comments == null ? null : <button type="button"
@@ -154,5 +192,5 @@ function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, pro
           lessons={<LessonRailList lessons={rail} open />} />
       </div>
     </WorkspaceToolsSlotProvider>
-  </LessonFrameProvider>
+  </LessonFrameProvider></CourseSequenceContext.Provider>
 }

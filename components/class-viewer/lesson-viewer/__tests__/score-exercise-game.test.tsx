@@ -7,6 +7,11 @@ import type { ExerciseDefinition } from '@/lib/play-sense/types'
 vi.mock('@/components/language-provider', () => ({
   useTranslation: () => ({ t: (key: string, params?: Record<string, string | number>) => params ? `${key}(${Object.values(params).join(',')})` : key }),
 }))
+// Audio settings persistence is tested separately; these transport tests use the original track.
+vi.mock('@/components/playsense-studio/shared/use-audio-source', async importOriginal => ({
+  ...await importOriginal<typeof import('@/components/playsense-studio/shared/use-audio-source')>(),
+  useAudioSource: () => ({settings:{selected:'original',offsetSeconds:0},loaded:true,error:''}),
+}))
 vi.mock('next/image', () => ({ default: () => null }))
 
 // The engine is stubbed: each test sets the session it wants to see.
@@ -228,7 +233,7 @@ describe('ScoreExerciseGame score shape without a video', () => {
     expect(workspace.getAttribute('data-layout')).toBe('side')
     expect(host.querySelector('[data-layout-option][aria-label="lessonWorkspace.pip"]')).toBeNull()
     expect(workspace.getAttribute('data-three-panes')).toBe('true')
-    expect(workspace.querySelector('.ws-div2')?.getAttribute('aria-valuenow')).toBe('50')
+    expect(workspace.querySelector('.ws-div2')?.getAttribute('aria-valuenow')).toBe('54')
     const divider = workspace.querySelector('.ws-div')!
     act(() => divider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
     expect(Number(divider.getAttribute('aria-valuenow'))).toBe(48)
@@ -249,18 +254,19 @@ describe('ScoreExerciseGame score shape without a video', () => {
     render({ score })
     const divider = host.querySelector('.ws-div2')!
     expect(divider.getAttribute('aria-orientation')).toBe('vertical')
-    expect(divider.getAttribute('aria-valuenow')).toBe('50')
+    expect(divider.getAttribute('aria-valuenow')).toBe('54')
     act(() => divider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
-    expect(divider.getAttribute('aria-valuenow')).toBe('52')
+    expect(divider.getAttribute('aria-valuenow')).toBe('56')
     act(() => divider.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })))
     expect(divider.getAttribute('aria-valuenow')).toBe('50')
   })
 
-  it('without a video, the score keeps the music-only shape whatever layout is stored', () => {
+  it('without a video, the score respects the chosen workspace orientation', () => {
     stored('stack')
     session = { ...baseSession(), exercise, sessionState: 'playing' }
     render({ score, exerciseVideo: null })
-    expect(host.querySelector('[data-score]')?.getAttribute('data-position')).toBe('right')
+    expect(host.querySelector('[data-score]')?.getAttribute('data-position')).toBe('top')
+    expect(host.querySelector('.ws')?.getAttribute('data-layout')).toBe('stack')
   })
 
   it('without a video, the score cannot change the saved layout of exercises that have one', () => {
@@ -375,7 +381,7 @@ describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
       let e = 3.8
       session = { ...baseSession(), exercise, sessionState: 'playing', getElapsedSeconds: () => e }
       currentTime = 11.8
-      render({ preview: false, play: { ...play, bar1Seconds: 8 } })
+      render({ exercise: {...exercise,loopCount:3}, preview: false, play: { ...play, bar1Seconds: 8 } })
       tick()
       expect(paused).toBe(false)
       // The element reaches the end of its file and pauses itself.
@@ -452,7 +458,7 @@ describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
       let e = 0
       session = { ...baseSession(), exercise, sessionState: 'playing', getElapsedSeconds: () => e }
       currentTime = 5
-      render({ preview: false, play })
+      render({ exercise: {...exercise,loopCount:3}, preview: false, play })
       const dt = 1 / 60
       for (; e < 2 * loop + 0.5; e += dt) {
         tick()

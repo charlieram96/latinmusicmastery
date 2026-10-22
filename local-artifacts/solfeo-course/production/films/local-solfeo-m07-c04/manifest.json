@@ -1,0 +1,1537 @@
+{
+  "classId": "local-solfeo-m07-c04",
+  "duration": 268.188,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Lectura con sostenidos, bemoles y becuadros",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 23,
+      "kind": "explanation",
+      "title": "Lectura con sostenidos, bemoles y becuadros",
+      "sourceTopic": "alteraciones-entonadas-0",
+      "soundEvents": []
+    },
+    {
+      "start": 23,
+      "end": 35,
+      "kind": "notation",
+      "title": "Fa sostenido · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Fa sostenido · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-0",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-138"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 35,
+      "end": 47,
+      "kind": "notation",
+      "title": "Do sostenido · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Do sostenido · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-0",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-138"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C#4",
+          "soundPitch": "C#4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "C#4",
+          "soundPitch": "C#4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 47,
+      "end": 59,
+      "kind": "notation",
+      "title": "Sol sostenido · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Sol sostenido · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-0",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-138"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G#4",
+          "soundPitch": "G#4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G#4",
+          "soundPitch": "G#4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 59,
+      "end": 71,
+      "kind": "notation",
+      "title": "Re sostenido · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Re sostenido · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-0",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-138"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D#4",
+          "soundPitch": "D#4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "D#4",
+          "soundPitch": "D#4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 71,
+      "end": 86.888889,
+      "kind": "explanation",
+      "title": "Lectura con sostenidos, bemoles y becuadros",
+      "sourceTopic": "alteraciones-entonadas-0",
+      "soundEvents": []
+    },
+    {
+      "start": 86.888889,
+      "end": 103.888889,
+      "kind": "explanation",
+      "title": "Lectura con sostenidos, bemoles y becuadros",
+      "sourceTopic": "alteraciones-entonadas-1",
+      "soundEvents": []
+    },
+    {
+      "start": 103.888889,
+      "end": 115.888889,
+      "kind": "notation",
+      "title": "La sostenido · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "La sostenido · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-139"
+      },
+      "soundEvents": [
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A#4",
+          "soundPitch": "A#4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "A#4",
+          "soundPitch": "A#4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 115.888889,
+      "end": 127.888889,
+      "kind": "notation",
+      "title": "Si bemol · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Si bemol · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Bb4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Bb4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-139"
+      },
+      "soundEvents": [
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 127.888889,
+      "end": 139.888889,
+      "kind": "notation",
+      "title": "Mi bemol · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Mi bemol · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Eb4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Eb4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-139"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 139.888889,
+      "end": 151.888889,
+      "kind": "notation",
+      "title": "La bemol · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "La bemol · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Ab4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Ab4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-139"
+      },
+      "soundEvents": [
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "Ab4",
+          "soundPitch": "Ab4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 151.888889,
+      "end": 167.777778,
+      "kind": "explanation",
+      "title": "Lectura con sostenidos, bemoles y becuadros",
+      "sourceTopic": "alteraciones-entonadas-1",
+      "soundEvents": []
+    },
+    {
+      "start": 167.777778,
+      "end": 184.777778,
+      "kind": "explanation",
+      "title": "Lectura con sostenidos, bemoles y becuadros",
+      "sourceTopic": "alteraciones-entonadas-2",
+      "soundEvents": []
+    },
+    {
+      "start": 184.777778,
+      "end": 196.777778,
+      "kind": "notation",
+      "title": "Re bemol · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Re bemol · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Db4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Db4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-2",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-139"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 196.777778,
+      "end": 208.777778,
+      "kind": "notation",
+      "title": "Sol bemol · ida y regreso",
+      "sourceTopic": "alteraciones-entonadas-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Sol bemol · ida y regreso",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Gb4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "Gb4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "alteraciones-entonadas-2",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-139"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 208.777778,
+      "end": 224.66666700000002,
+      "kind": "explanation",
+      "title": "Lectura con sostenidos, bemoles y becuadros",
+      "sourceTopic": "alteraciones-entonadas-2",
+      "soundEvents": []
+    },
+    {
+      "start": 224.66666700000002,
+      "end": 238.16666700000002,
+      "kind": "explanation",
+      "title": "Lectura con sostenidos, bemoles y becuadros",
+      "sourceTopic": "consolidacion",
+      "soundEvents": []
+    },
+    {
+      "start": 238.16666700000002,
+      "end": 250.16666700000002,
+      "kind": "notation",
+      "title": "Ejercicio 11 · Sol mayor",
+      "sourceTopic": "consolidacion",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Ejercicio 11 · Sol mayor",
+            "key": 1,
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "C5",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "F#4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "2": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "consolidacion",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "cromatica"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 6,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 7.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 250.16666700000002,
+      "end": 262.166667,
+      "kind": "notation",
+      "title": "Ejercicio 12 · Re menor",
+      "sourceTopic": "consolidacion",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Ejercicio 12 · Re menor",
+            "key": -1,
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C#4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                },
+                {
+                  "rest": true,
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "2": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "consolidacion",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "cromatica"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "C#4",
+          "soundPitch": "C#4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 262.166667,
+      "end": 268.166667,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

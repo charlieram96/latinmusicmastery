@@ -1,0 +1,16 @@
+'use client'
+import {HistoryDetail} from './history-detail'
+import {useTranslation} from '@/components/language-provider'
+export function HymnOrigins(){
+ const {locale}=useTranslation(),es=locale==='es'
+ return <div className="space-y-3">
+  <p className="text-sm leading-relaxed">{es?<><strong>Ut queant laxis</strong> es un himno en latín dedicado a <strong>San Juan Bautista</strong>. Guido de Arezzo utilizó sus seis primeras frases para enseñar las sílabas <strong>Ut, Re, Mi, Fa, Sol y La</strong>.</>:<><strong>Ut queant laxis</strong> is a Latin hymn honouring <strong>John the Baptist</strong>. Guido of Arezzo used its first six phrases to teach the syllables <strong>Ut, Re, Mi, Fa, Sol and La</strong>.</>}</p>
+  <div className="grid gap-3 sm:grid-cols-2">
+   <div className="rounded-xl border border-[#265b4d]/25 bg-[#265b4d]/[.07] px-4 py-3"><div className="flex items-center gap-3"><h4 className="font-bold">Guido de Arezzo <span className="text-xs font-normal text-muted-foreground">· {es?'siglo XI':'11th century'}</span></h4><HistoryDetail/></div><p className="mt-1 text-sm leading-relaxed">{es?'Monje y maestro de música. Relacionó las sílabas del himno con sonidos sucesivamente más agudos para facilitar el aprendizaje del canto.':'A monk and music teacher. He associated the hymn’s syllables with successively higher pitches to help students learn to sing.'}</p></div>
+   <div className="rounded-xl border border-primary/25 bg-primary/[.05] px-4 py-3"><div className="flex items-center gap-3"><h4 className="font-bold">{es?'San Juan Bautista':'John the Baptist'} <span className="text-xs font-normal text-muted-foreground">· {es?'siglo I':'1st century'}</span></h4><HistoryDetail person="john"/></div><p className="mt-1 text-sm leading-relaxed">{es?'Predicador judío que, según los Evangelios, bautizó a Jesús. El himno está dedicado a él; no creó los nombres de las notas. No es Juan el apóstol.':'A Jewish preacher who, according to the Gospels, baptized Jesus. The hymn honours him; he did not name the notes. He is distinct from John the Apostle.'}</p></div>
+  </div>
+  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{['Ut queant laxis','Resonare fibris','Mira gestorum','Famuli tuorum','Solve polluti','Labii reatum'].map((line,i)=><div key={line} className="rounded-xl border bg-background px-4 py-2"><strong className="text-xl text-primary">{['Ut','Re','Mi','Fa','Sol','La'][i]}</strong><p className="text-sm italic">{line}</p></div>)}</div>
+  <p className="text-sm leading-relaxed">{es?<><strong>Si</strong> se incorporó después a partir de las iniciales de <em>Sancte Iohannes</em> («San Juan»). <strong>Do</strong> se difundió como sustituto de Ut desde el siglo XVII.</>:<><strong>Si</strong> was added later from the initials of <em>Sancte Iohannes</em> (“Saint John”). <strong>Do</strong> became widespread as a replacement for Ut from the seventeenth century.</>}</p>
+  <p className="text-xs text-muted-foreground">{es?'Los iconos abren las imágenes históricas, con autor, fecha y procedencia.':'The icons open historical images with artist, date and source.'} <a className="text-primary underline" href="https://www.larousse.fr/encyclopedie/musdico/Ut_queant_laxis/170480" target="_blank" rel="noreferrer">{es?'Referencia del himno':'Hymn reference'} ↗</a></p>
+ </div>
+}

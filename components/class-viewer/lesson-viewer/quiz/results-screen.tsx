@@ -186,7 +186,8 @@ export function ResultsScreen({
   const scoreLabel = Number.isInteger(total) ? String(total) : total.toFixed(1)
 
   useEffect(() => {
-    playCue(pct >= 70 ? 'fanfare' : 'soft', prefs.sound)
+    const timer = setTimeout(() => playCue(pct >= 70 ? 'fanfare' : 'bad', prefs.sound), 0)
+    return () => clearTimeout(timer)
     // play once per mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

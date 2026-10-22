@@ -353,3 +353,44 @@ describe('useStudioDraft — task 8 fix round 1: registerPreFlush', () => {
     expect(fn).not.toHaveBeenCalled();
   });
 });
+
+it('undoes score and timing in actual edit order, then redoes the same sequence', async () => {
+  mount(<Editor />);
+  act(()=>edit('B'));
+  act(()=>api.setTiming({params:{flex:[{src:1,dst:1.2,anchor:false}]}}));
+  act(()=>edit('C'));
+  act(()=>api.undo());
+  await act(async()=>{await api.flush()});
+  expect(acts.saveStudioDraft.mock.calls.at(-1)![0]).toMatchObject({score:{title:'B'},timing:{params:{flex:[{dst:1.2}]}}});
+  act(()=>api.undo());
+  expect(api.timing).toEqual(EMPTY_TIMING);
+  act(()=>api.redo());
+  expect(api.timing.params).toMatchObject({flex:[{dst:1.2}]});
+  act(()=>api.redo());
+  await act(async()=>{await api.flush()});
+  expect(acts.saveStudioDraft.mock.calls.at(-1)![0].score.title).toBe('C');
+});
+it('a new edit after undo invalidates redo and pending timing is undone first',()=>{
+  mount(<Editor />);
+  act(()=>edit('B'));
+  const unregister=api.registerPreFlush(()=>api.setTiming({anchor:{seconds:3,qn:0}}));
+  act(()=>api.undo());
+  unregister();
+  expect(api.timing).toEqual(EMPTY_TIMING);
+  expect(api.canRedo).toBe(true);
+  act(()=>edit('C'));
+  expect(api.canRedo).toBe(false);
+});
+
+it('undoes a structural score edit and its timing together, then redoes both', async () => {
+  mount(<Editor />);
+  act(() => { api.checkpoint(); edit('Repeated'); api.setTiming({anchor:{seconds:2,qn:0}}); });
+  act(() => api.undo());
+  expect(api.timing).toEqual(EMPTY_TIMING);
+  await act(async () => { await api.flush(); });
+  expect(acts.saveStudioDraft.mock.calls.at(-1)![0].score.title).toBe('A');
+  act(() => api.redo());
+  expect(api.timing.anchor).toEqual({seconds:2,qn:0});
+  await act(async () => { await api.flush(); });
+  expect(acts.saveStudioDraft.mock.calls.at(-1)![0].score.title).toBe('Repeated');
+});

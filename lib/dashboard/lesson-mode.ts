@@ -2,5 +2,5 @@
 const LESSON_PATH = /^\/dashboard\/course\/[^/]+\/class\/[^/]+\/?$/
 
 export function isLessonModePath(pathname: string | null | undefined): boolean {
-  return !!pathname && LESSON_PATH.test(pathname)
+  return !!pathname && (LESSON_PATH.test(pathname) || pathname === '/solfeo-preview' || pathname === '/dashboard/course/solfeo-infantil-aplicado' || pathname === '/dashboard/course/solfeo-aplicado')
 }

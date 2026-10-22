@@ -17,9 +17,9 @@ import { useStudioText } from '@/components/playsense-studio/studio/use-studio-t
 // into the right rail + bottom dock.
 
 import { Redo2, Undo2 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { replaceSectionScore } from '@/app/actions/playsense-studio';
+import { replaceSectionScore, createSectionFromImport } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
 import { useStudioDraft } from '@/components/playsense-studio/studio/drafts/use-studio-draft';
 import { timingToTimeMap, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
@@ -53,12 +53,13 @@ export interface ScoreSectionEditorProps {
   trim?: MediaTrim;
   onTrimDrag?: (edge: 'in' | 'out', videoTimeSeconds: number) => void;
   /** Re-fetch sections (ranges / score swapped). Called after Replace score. */
-  onChanged: () => void;
+  onChanged: (selectedSectionId?: string) => void;
   /** The latest content actually sent to (or pending for, at unmount) this
    *  section's draft — lets the host cache it locally so reselecting this
    *  section later seeds from it without waiting for a refetch. */
   onDraftContent?: (c: { score: ScoreDocument; timing: StudioTiming }) => void;
   /** All of this class item's sections — drives the timeline lane + overlap guard. */
+  mediaPosition?: { current: number; duration?: number; pendingClickAnchor?:number; syncView?: {pps:number;scrollLeft:number} };
   sections: LaneSection[];
   onSelectSection: (sectionId: string) => void;
   // App-shell slots provided by VideoSectionsWorkspace (portal targets).
@@ -88,6 +89,7 @@ export function ScoreSectionEditor({
   onChanged,
   onDraftContent,
   sections,
+  mediaPosition,
   onSelectSection,
   appBarEl,
   metaEl,
@@ -98,7 +100,7 @@ export function ScoreSectionEditor({
   highwayOpen,
 }: ScoreSectionEditorProps) {
   const st = useStudioText();
-  const { state, dispatch, undo, redo, canUndo, canRedo, markClean, replaceScore } = useEditor(initialScore);
+  const { state, dispatch: dispatchScore, markClean, replaceScore } = useEditor(initialScore);
   const draft = useStudioDraft({
     owner: { kind: 'section', id: sectionId },
     label: state.score.title,
@@ -109,6 +111,11 @@ export function ScoreSectionEditor({
     initialTiming,
     onDraftContent,
   });
+  const {undo,redo,canUndo,canRedo}=draft;
+  const dispatch = useCallback((action: Parameters<typeof dispatchScore>[0]) => {
+    draft.checkpoint();
+    dispatchScore(action);
+  },[draft.checkpoint,dispatchScore]);
 
   // SyncPanel seeds from the draft's timing, not the mount-time props: Restore
   // and Discard replace draft.timing and bump draft.timingEpoch, remounting
@@ -118,7 +125,7 @@ export function ScoreSectionEditor({
 
   // App-bar slot SyncPanel portals its "Add score" chip into (state, not a ref,
   // so the portal renders once the node mounts).
-  const [scoreActionsEl, setScoreActionsEl] = useState<HTMLElement | null>(null);
+  const pendingSectionId = useRef<string | undefined>(undefined);
 
   // The Score ▾ menu's own chip: every dialog opened from inside it (Replace,
   // Export, and SyncPanel's portalled "Add score") returns focus here on
@@ -139,10 +146,9 @@ export function ScoreSectionEditor({
   // Cmd/Ctrl+Z = undo, +Shift = redo (or Ctrl+Y), Cmd/Ctrl+S = save now.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof Element && e.target.closest('[role="dialog"]')) return;
       const meta = e.metaKey || e.ctrlKey;
       if (!meta) return;
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target instanceof HTMLElement && e.target.isContentEditable)) return;
       if (e.key === 'z' || e.key === 'Z') {
         e.preventDefault();
         if (e.shiftKey) redo();
@@ -169,6 +175,7 @@ export function ScoreSectionEditor({
       )}
 
       <SyncPanel
+        editHistory={{undo,redo,canUndo,canRedo}}
         lessonMetronome={lessonMetronome}
         key={draft.timingEpoch}
         classItemId={classItemId}
@@ -187,9 +194,9 @@ export function ScoreSectionEditor({
         inspectorEl={inspectorEl}
         transportEl={transportEl}
         monitorEl={monitorEl}
-        scoreActionsEl={scoreActionsEl}
+        scoreActionsEl={null}
         scoreActionsCloseAutoFocus={returnFocusToScoreMenu}
-        sectionsContext={{ sections, activeSectionId: sectionId, onSelectSection }}
+        sectionsContext={{ sections, activeSectionId: sectionId, onSelectSection, mediaPosition }}
       />
 
       {/* App-bar: Score menu, History, undo/redo and the quiet save status. */}
@@ -198,7 +205,23 @@ export function ScoreSectionEditor({
           <>
             <ScoreMenu chipRef={scoreMenuChipRef}>
               {/* SyncPanel portals its "Add score" item here. */}
-              <span ref={setScoreActionsEl} className="contents" />
+              <ScoreImportDialog
+                classItemId={classItemId}
+                mode="section"
+                onConfirm={async (scoreDocument, sourceFilename) => {
+                  const saved = await draft.flush();
+                  if (saved.error) return saved;
+                  const result = await createSectionFromImport({ classItemId, scoreDocument, sourceFilename });
+                  pendingSectionId.current = result.sectionId;
+                  return result;
+                }}
+                onImported={() => {
+                  onChanged(pendingSectionId.current);
+                  pendingSectionId.current = undefined;
+                }}
+                onCloseAutoFocus={returnFocusToScoreMenu}
+                trigger={<button type="button" className="st-mpop-item">{st("Add score")}</button>}
+              />
               <ScoreImportDialog
                 classItemId={classItemId}
                 mode="replace"

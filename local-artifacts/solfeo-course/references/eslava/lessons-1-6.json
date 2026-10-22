@@ -1,0 +1,1027 @@
+{
+  "source": "User-supplied sheet, lessons 1–6",
+  "verification": "Hilarión Eslava, Método completo de solfeo, Biblioteca Universidad de Sevilla / Internet Archive A3420041, printed pages 3–4",
+  "meter": "2/2 (cut common time; two half-note beats)",
+  "lessons": [
+    {
+      "number": 1,
+      "systems": [
+        {
+          "bars": [
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C5",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C5",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ]
+          ]
+        }
+      ],
+      "after": [
+        "Todas las figuras tienen sus respectivos <i>silencios</i>: (2) el de redonda, que como ella, tiene un compás de duración, se señala así: {rest1} y se coloca debajo de cualquiera de las cinco líneas.",
+        "All note values have their corresponding <i>rests</i>: (2) the whole rest, which, like the whole note here, lasts one measure, is written thus: {rest1} and is placed below any of the five lines."
+      ]
+    },
+    {
+      "number": 2,
+      "systems": [
+        {
+          "bars": [
+            [
+              {
+                "rest": true,
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "rest": true,
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C5",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "rest": true,
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C5",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "rest": true,
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ]
+          ]
+        }
+      ],
+      "after": [
+        "La figura que vale la mitad de una <i>redonda</i>, se llama <i>blanca</i>. Véase: {halves} Entran dos en cada compás, y cada una de ellas vale una parte.",
+        "The note worth half a <i>whole note</i> is called a <i>half note</i>. See: {halves} Two fit in each measure, each worth one beat."
+      ]
+    },
+    {
+      "number": 3,
+      "systems": [
+        {
+          "bars": [
+            [
+              {
+                "pitch": "C4",
+                "dur": 2
+              },
+              {
+                "pitch": "C4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 2
+              },
+              {
+                "pitch": "D4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "E4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 2
+              },
+              {
+                "pitch": "F4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "G4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 2
+              },
+              {
+                "pitch": "A4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 2
+              },
+              {
+                "pitch": "B4",
+                "dur": 2
+              }
+            ]
+          ]
+        },
+        {
+          "bars": [
+            [
+              {
+                "pitch": "C5",
+                "dur": 2
+              },
+              {
+                "pitch": "C5",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 2
+              },
+              {
+                "pitch": "B4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 2
+              },
+              {
+                "pitch": "A4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "G4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 2
+              },
+              {
+                "pitch": "F4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "E4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 2
+              },
+              {
+                "pitch": "D4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ]
+          ]
+        }
+      ],
+      "after": [
+        "Cuando dos notas, que son de un mismo nombre y sonido, se hallan unidas por medio de una línea curva que se llama <i>ligadura</i>, no se pronuncia la 2ª sino que prolongándose la 1ª se reune á ésta el valor de aquella. Véase: {tie}",
+        "When two notes of the same name and pitch are joined by a curved line called a <i>tie</i>, the second is not rearticulated; instead, the first is prolonged by the value of the second. See: {tie}"
+      ]
+    },
+    {
+      "number": 4,
+      "systems": [
+        {
+          "bars": [
+            [
+              {
+                "pitch": "C4",
+                "dur": 2
+              },
+              {
+                "pitch": "C4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "F4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 2
+              },
+              {
+                "pitch": "B4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C5",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "rest": true,
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C5",
+                "dur": 2
+              },
+              {
+                "pitch": "C5",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 2
+              },
+              {
+                "pitch": "G4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "D4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ]
+          ],
+          "ties": [
+            [
+              18,
+              19
+            ]
+          ]
+        }
+      ],
+      "after": [
+        "El silencio de <i>blanca</i> se escribe así {rest2} y se coloca sobre cualquiera de las 5 líneas.",
+        "The <i>half rest</i> is written thus {rest2} and is placed on any of the five lines."
+      ]
+    },
+    {
+      "number": 5,
+      "systems": [
+        {
+          "bars": [
+            [
+              {
+                "rest": true,
+                "dur": 2
+              },
+              {
+                "pitch": "C4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 2
+              },
+              {
+                "pitch": "D4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 2
+              },
+              {
+                "pitch": "E4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "F4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 2
+              },
+              {
+                "pitch": "G4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "A4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 2
+              },
+              {
+                "pitch": "B4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 2
+              },
+              {
+                "pitch": "C5",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C5",
+                "dur": 1
+              }
+            ]
+          ]
+        },
+        {
+          "bars": [
+            [
+              {
+                "rest": true,
+                "dur": 2
+              },
+              {
+                "pitch": "C5",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C5",
+                "dur": 2
+              },
+              {
+                "pitch": "B4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 2
+              },
+              {
+                "pitch": "A4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 2
+              },
+              {
+                "pitch": "G4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "F4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 2
+              },
+              {
+                "pitch": "E4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "D4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 2
+              },
+              {
+                "pitch": "C4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ]
+          ],
+          "ties": [
+            [
+              16,
+              17
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "systems": [
+        {
+          "bars": [
+            [
+              {
+                "pitch": "C4",
+                "dur": 2
+              },
+              {
+                "pitch": "D4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 2
+              },
+              {
+                "rest": true,
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 2
+              },
+              {
+                "pitch": "E4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "D4",
+                "dur": 2
+              },
+              {
+                "rest": true,
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "F4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "rest": true,
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 2
+              },
+              {
+                "pitch": "G4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 2
+              },
+              {
+                "rest": true,
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "A4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "A4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 2
+              },
+              {
+                "pitch": "A4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 2
+              },
+              {
+                "pitch": "C5",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 2
+              },
+              {
+                "rest": true,
+                "dur": 2
+              }
+            ]
+          ]
+        },
+        {
+          "bars": [
+            [
+              {
+                "rest": true,
+                "dur": 2
+              },
+              {
+                "pitch": "C5",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "B4",
+                "dur": 2
+              },
+              {
+                "pitch": "C5",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "rest": true,
+                "dur": 2
+              },
+              {
+                "pitch": "B4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "A4",
+                "dur": 2
+              },
+              {
+                "pitch": "B4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "rest": true,
+                "dur": 2
+              },
+              {
+                "pitch": "A4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "A4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "F4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "F4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "F4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "D4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 2
+              },
+              {
+                "pitch": "D4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 2
+              },
+              {
+                "pitch": "D4",
+                "dur": 2
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ]
+          ],
+          "ties": [
+            [
+              24,
+              25
+            ],
+            [
+              25,
+              26
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

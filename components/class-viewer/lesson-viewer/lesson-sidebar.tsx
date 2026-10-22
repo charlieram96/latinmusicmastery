@@ -1,17 +1,21 @@
 'use client'
 
 // Redesigned, collapsible course sidebar for the lesson viewer.
-// Expanded: 320px module accordion with chip-labelled lesson rows.
+// Expanded: 288px module accordion with chip-labelled lesson rows.
 // Collapsed: 72px rail with the teacher avatar, an expand button, and
 // numbered lesson dots so navigation still works.
 
 import Link from 'next/link'
+import { FittedNavigationTitle } from '@/components/class-viewer/fitted-navigation-title'
+import { LessonArt, worldName } from '@/components/learning-mode/art'
+import { useLearningMode } from '@/components/learning-mode/store'
 import { useId, useState } from 'react'
 import {
   ChevronsLeft,
   ChevronsRight,
   ChevronDown,
   Play,
+  BookOpen,
   Check,
   Lock,
 } from 'lucide-react'
@@ -69,7 +73,8 @@ export function LessonSidebar({
   collapsed,
   onToggle,
 }: LessonSidebarProps) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const kids = useLearningMode() === 'kids'
   // 1-based lesson numbering that restarts at 01 within each module.
   const numbered = sections.map((s) => ({
     ...s,
@@ -79,7 +84,7 @@ export function LessonSidebar({
   if (collapsed) {
     const flat = numbered.flatMap((s) => s.classes)
     return (
-      <aside
+      <aside data-learning-sidebar
         className={cn(
           styles.side,
           'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-sunken sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
@@ -116,7 +121,9 @@ export function LessonSidebar({
               return (
                 <Link
                   key={c.id}
-                  href={`/dashboard/course/${courseId}/class/${c.id}`}
+                  aria-current={state === 'active' ? 'page' : undefined}
+                  data-current-location={state === 'active' ? 'lesson' : undefined}
+                  href={c.href ?? `/dashboard/course/${courseId}/class/${c.id}`}
                   title={t('dashboard.classViewer.sidebar.lessonTitle', { n: c.n, title: c.title })}
                   className={cn(
                     'grid h-9 w-9 place-items-center rounded-[9px] border text-[13px] font-bold font-heading transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
@@ -133,7 +140,7 @@ export function LessonSidebar({
                   {state === 'locked' ? (
                     <Lock className="h-3.5 w-3.5" />
                   ) : (
-                    String(c.n).padStart(2, '0')
+                    kids ? <LessonArt title={c.title} index={c.n - 1} /> : String(c.n).padStart(2, '0')
                   )}
                 </Link>
               )
@@ -163,7 +170,7 @@ export function LessonSidebar({
   }
 
   return (
-    <aside
+    <aside data-learning-sidebar
       className={cn(
         styles.side,
         'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-sunken sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
@@ -188,7 +195,7 @@ export function LessonSidebar({
               {courseTitle}
             </div>
             <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
-              {t('dashboard.classViewer.sidebar.learningPathway')}
+              {kids ? (locale === 'es' ? 'Mi aventura musical' : 'My music adventure') : t('dashboard.classViewer.sidebar.learningPathway')}
             </div>
           </div>
           <button
@@ -263,24 +270,21 @@ function SidebarModule({
   moduleIndex: number
   hasAccess: boolean
 }) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const kids = useLearningMode() === 'kids'
   const regionId = useId()
   const containsActive = section.classes.some((c) => c.id === currentClassId)
   const isCurrent = section.id === currentSectionId
   // Route changes remount this subtree, so a mount-time default is enough.
   const [open, setOpen] = useState(containsActive)
-
-  const pct =
-    section.totalItems > 0
-      ? Math.round((section.completedItems / section.totalItems) * 100)
-      : 0
-  const complete = section.totalItems > 0 && pct === 100
+  const highlightModule = containsActive ? !open : isCurrent
 
   return (
     <div
+      data-current-location={highlightModule ? 'module' : undefined}
       className={cn(
-        'mx-2 mb-1 mt-5 rounded-xl border border-transparent transition-colors',
-        containsActive || isCurrent ? 'bg-foreground/[0.02]' : 'border-foreground/[0.05]'
+        'learning-module mx-2 mb-1 mt-5 rounded-xl border border-transparent transition-colors',
+        highlightModule ? 'bg-foreground/[0.02]' : 'border-foreground/[0.05]'
       )}
     >
       {/* Header: the title block links to the module overview page; the
@@ -288,40 +292,28 @@ function SidebarModule({
           They are never nested so each stays a valid, focusable target. */}
       <div className="flex items-start rounded-xl transition-colors hover:bg-muted/30">
         <Link
-          href={moduleOverviewHref(courseId, section.id)}
+          href={section.href ?? moduleOverviewHref(courseId, section.id)}
           aria-current={isCurrent ? 'page' : undefined}
           className="group/link min-w-0 flex-1 rounded-xl px-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
+          {highlightModule && <span className="lmm-location-badge">{locale === 'es' ? 'Estás aquí' : 'You are here'}</span>}
+          <LessonArt title={section.title} index={moduleIndex} kind="world" />
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
             {t('dashboard.classViewer.sidebar.module', { n: moduleIndex + 1 })}
           </div>
           <div
             className={cn(
               'mt-1 font-heading text-[14px] font-bold leading-snug tracking-tight transition-colors group-hover/link:text-primary',
-              isCurrent && 'text-primary'
+              highlightModule && 'text-primary'
             )}
           >
-            {section.title}
+            {kids ? <><div className="kid-world-name">{worldName(section.title,moduleIndex,locale === 'es')}</div><div className="kid-world-topic">{section.title}</div></> : section.title}
           </div>
           {section.description && open && (
             <div className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
               {section.description}
             </div>
           )}
-          <div className="mt-3 flex items-center gap-2.5">
-            <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className={cn(
-                  'h-full rounded-full transition-[width] duration-500',
-                  complete ? 'bg-gold' : 'bg-primary'
-                )}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="text-[10.5px] font-semibold tabular-nums text-muted-foreground">
-              {section.completedItems}/{section.totalItems}
-            </span>
-          </div>
         </Link>
         <button
           type="button"
@@ -347,7 +339,7 @@ function SidebarModule({
         <div className="overflow-hidden">
           <div className="pb-3 pl-3 pr-1.5">
             <div className="mb-1.5 px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/80">
-              {t('dashboard.pages.achievements.overall.lessons')}
+              {kids ? (locale === 'es' ? 'Pequeñas aventuras' : 'Little adventures') : t('dashboard.pages.achievements.overall.lessons')}
             </div>
             {section.classes.map((c) => (
               <LessonRow
@@ -373,13 +365,15 @@ function LessonRow({
   cls: LessonSidebarClass & { n: number }
   state: RowState
 }) {
+  const kids = useLearningMode() === 'kids'
+  const { locale } = useTranslation()
   const progress =
     cls.totalItems > 0
       ? Math.max(0, Math.min(1, cls.completedItems / cls.totalItems))
       : 0
 
   return (
-    <div className="group relative mb-2.5 flex items-stretch">
+    <div data-learning-lesson className="group relative mb-2.5 flex items-stretch">
       {/* Left accent bar — a separate element beside the button. It has zero
           width by default (button is full-width), then expands on the active
           lesson or on hover, gently shrinking the button to make room. */}
@@ -394,9 +388,11 @@ function LessonRow({
       />
 
       <Link
-        href={`/dashboard/course/${courseId}/class/${cls.id}`}
+        aria-current={state === 'active' ? 'page' : undefined}
+        data-current-location={state === 'active' ? 'lesson' : undefined}
+        href={cls.href ?? `/dashboard/course/${courseId}/class/${cls.id}`}
         className={cn(
-          'flex min-w-0 flex-1 items-center gap-2 rounded-lg pr-2 transition-colors duration-150',
+          'flex h-12 min-w-0 flex-1 items-center gap-2 rounded-lg pr-2 transition-colors duration-150',
           state === 'active'
             ? 'bg-primary/[0.1]'
             : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
@@ -418,23 +414,16 @@ function LessonRow({
           {state === 'locked' ? (
             <Lock className="h-4 w-4" />
           ) : (
-            String(cls.n).padStart(2, '0')
+            kids ? <LessonArt title={cls.title} index={cls.n - 1} /> : String(cls.n).padStart(2, '0')
           )}
         </span>
 
-        <span
-          title={cls.title}
-          className={cn(
-            'min-w-0 flex-1 line-clamp-2 break-words py-2 text-[14px] leading-snug tracking-[-0.005em]',
-            state === 'active'
-              ? 'font-semibold text-foreground'
-              : 'font-medium text-foreground/90'
-          )}
-        >
-          {cls.title}
-        </span>
+        <FittedNavigationTitle text={cls.title} className={cn(
+          'min-w-0 flex-1 tracking-[-0.005em]',
+          state === 'active' ? 'font-semibold text-foreground' : 'font-medium text-foreground/90'
+        )} />
 
-        <LessonProgressButton state={state} progress={progress} />
+        <LessonProgressButton state={state} progress={progress} reading={cls.id.startsWith('local-solfeo-')} />
       </Link>
     </div>
   )
@@ -444,7 +433,9 @@ function LessonRow({
 export function LessonProgressButton({
   state,
   progress,
+  reading=false,
 }: {
+  reading?: boolean
   state: RowState
   progress: number
 }) {
@@ -496,7 +487,7 @@ export function LessonProgressButton({
         {state === 'completed' || progress >= 1 ? (
           <Check className={cn('h-3.5 w-3.5', state === 'active' ? 'text-white' : 'text-success')} />
         ) : (
-          <Play className="ml-0.5 h-3 w-3" fill="currentColor" />
+          <>{reading?<BookOpen className="h-3.5 w-3.5"/>:<Play className="ml-0.5 h-3 w-3" fill="currentColor" />}</>
         )}
       </span>
     </span>

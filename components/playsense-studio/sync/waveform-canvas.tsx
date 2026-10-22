@@ -35,9 +35,11 @@ export type DragTarget =
   | { kind: 'tail' }
   | { kind: 'trim'; edge: 'in' | 'out' }
   /** The selected note's onset handle (exists only while a note is selected). */
-  | { kind: 'note' };
+  | { kind: 'note'; qn?: number };
 
 export interface NoteTickHandle {
+  /** Stable musical identity for direct dragging without staff selection. */
+  qn?: number;
   videoTimeSeconds: number;
   /** Drawn in the accent colour so the admin can see which notes were adjusted. */
   nudged: boolean;
@@ -54,7 +56,7 @@ export interface WaveformCanvasProps {
   showNotes: boolean;
   /** The selected note's onset: drawn as a handle and draggable, regardless of showNotes. */
   selectedNote?: { videoTimeSeconds: number } | null;
-  onNoteDrag?: (videoTimeSeconds: number) => void;
+  onNoteDrag?: (videoTimeSeconds: number, qn?: number) => void;
   tailVideoTimeSeconds: number;
   pixelsPerSecond: number;
   scrollLeftPx: number;
@@ -242,6 +244,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   const ppsRef = useRef(pixelsPerSecond);
   const scrollRef = useRef(scrollLeftPx);
   const handlesRef = useRef(handles);
+  const showNotesRef = useRef(showNotes);
+  showNotesRef.current = showNotes;
   const ticksRef = useRef(noteTicks);
   const selectedNoteRef = useRef(selectedNote);
   const tailRef = useRef(tailVideoTimeSeconds);
@@ -476,7 +480,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     // grid so measure lines/chips stay legible. Toggleable via showNotes.
     const drawNotehead = (x: number, scale = 1) => {
       ctx.beginPath();
-      ctx.ellipse(x, waveTop + 14, 3.5 * scale, 2.5 * scale, -0.35, 0, Math.PI * 2);
+      ctx.arc(x, waveTop + 14, 4 * scale, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
       ctx.moveTo(x + 3 * scale, waveTop + 14);
@@ -497,7 +501,10 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         ctx.lineTo(x + 0.5, h);
       }
       ctx.stroke();
-      // Small noteheads distinguish score onsets from the audio peaks and grid.
+      // Solid handles identify every sounding onset, including off-beat notes.
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = theme.wave;
+      ctx.strokeStyle = theme.wave;
       for (const tick of ticksRef.current) {
         if (tick.nudged) continue;
         const x = videoTimeToX(tick.videoTimeSeconds);
@@ -572,7 +579,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         selected !== 'tail' &&
         selected.measureNumber === hnd.measureNumber &&
         selected.beatInMeasure === 1;
-      ctx.strokeStyle = isSel ? theme.selected : theme.measureLine;
+      ctx.strokeStyle = theme.measureLine;
       ctx.lineWidth = isSel ? 2.5 : 1.5;
       ctx.beginPath();
       ctx.moveTo(x + 0.5, LABEL_BAND - 2);
@@ -584,7 +591,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       ctx.font = '600 11px Inter, system-ui, sans-serif';
       const tw = ctx.measureText(label).width;
       const chipW = tw + 10;
-      ctx.fillStyle = isSel ? theme.selected : theme.measureFill;
+      ctx.fillStyle = theme.measureFill;
       roundRect(ctx, x, 2, chipW, LABEL_BAND - 6, 4);
       ctx.fill();
       ctx.fillStyle = theme.measureText;
@@ -905,7 +912,19 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       return Math.abs(videoTimeToX(anchorRef.current) - x) <= HANDLE_HIT_PX;
     };
 
-    const hitTest = (x: number): DragTarget | null => {
+    const hitTest = (x: number, y: number): DragTarget | null => {
+      // The upper note lane edits individual notes. The midline still edits
+      // beats, including when a note and beat share the same time.
+      if (showNotesRef.current && onNoteDragRef.current && Math.abs(y - (LABEL_BAND + 14)) <= 10) {
+        let nearest: NoteTickHandle | null = null;
+        let distance = HANDLE_HIT_PX;
+        for (const tick of ticksRef.current) {
+          if (tick.qn === undefined) continue;
+          const d = Math.abs(videoTimeToX(tick.videoTimeSeconds) - x);
+          if (d <= distance) { nearest = tick; distance = d; }
+        }
+        if (nearest) return { kind: 'note', qn: nearest.qn };
+      }
       let best: { target: DragTarget; dist: number } | null = null;
       // The note the admin just selected wins ties with markers.
       const selNote = selectedNoteRef.current;
@@ -1013,7 +1032,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         }
       }
 
-      const hit = hitTest(x);
+      const hit = hitTest(x, localY(e));
       if (hit) {
         target = hit;
         mode = 'pending-marker';
@@ -1061,7 +1080,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
           const ripple = dragAllRef.current !== e.altKey;
           onMarkerDragRef.current(target.ref, t, ripple ? 'all-after' : 'single', { snap: !e.metaKey });
         } else if (target.kind === 'note') {
-          onNoteDragRef.current?.(t);
+          onNoteDragRef.current?.(t, target.qn);
         }
       } else if (mode === 'scrubbing') {
         onSeekRef.current(xToVideoTime(x));

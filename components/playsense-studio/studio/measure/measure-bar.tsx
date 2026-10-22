@@ -8,7 +8,7 @@ import { useStudioText } from '@/components/playsense-studio/studio/use-studio-t
 
 import { useRef, type ReactNode, type Ref } from 'react';
 import {
-  GripVertical, ClipboardPaste, Copy, CopyPlus, Eraser, Magnet, Maximize2, Repeat, Repeat1, SlidersHorizontal, Trash2,
+  Unlink, GripVertical, ClipboardPaste, Copy, CopyPlus, Eraser, Magnet, Maximize2, Repeat, Repeat1, SlidersHorizontal, Trash2,
 } from 'lucide-react';
 import type { PopoverAnchor } from './popover';
 
@@ -34,6 +34,8 @@ export function MeasureBar({ ref, ...props }: {
   /** The repeat pass count when the selected bars are already in a repeat
    *  group; the Repeat button shows "×n" instead of "Repeat" (Task 7). */
   repeatCount?: number | null;
+  onUnlinkRepeat?: () => void;
+  onRemoveRepeat?: () => void;
   canLoop: boolean; problems: { dup: string | null; paste: string | null; clear: string | null; del: string | null };
   onEdit: () => void; onLoop: () => void; onRepeat: (a: PopoverAnchor) => void; onDup: () => void;
   onCopy: () => void; onPaste: () => void; onBar: (a: PopoverAnchor) => void; onClear: () => void; onDelete: () => void;
@@ -117,11 +119,13 @@ export function MeasureBar({ ref, ...props }: {
         problem: props.quantizeProblem,
       })}
       {btn('Repeat', 'Play these bars more than once', <Repeat className={icon} />, () => props.onRepeat(menuAnchor), {
-        text: props.repeatCount ? `×${props.repeatCount}` : 'Repeat',
+        text: props.repeatCount ? `${st('Repeat')} ×${props.repeatCount}` : 'Repeat',
       })}
+      {!!props.repeatCount && props.onUnlinkRepeat && btn('Unlink repeat', 'Keep all measures as independent measures', <Unlink className={icon} />, props.onUnlinkRepeat, {text:'Unlink repeat'})}
+      {!!props.repeatCount && props.onRemoveRepeat && btn('Remove repeat', 'Keep the first pass and remove the extra passes', <Repeat className={icon} />, props.onRemoveRepeat, {text:'Remove repeat'})}
       {btn('Duplicate', 'Duplicate (⌘D)', <CopyPlus className={icon} />, props.onDup, { problem: problems.dup })}
       {btn('Copy', 'Copy (⌘C)', <Copy className={icon} />, props.onCopy)}
-      {btn('Paste', 'Paste after (⌘V)', <ClipboardPaste className={icon} />, props.onPaste, { problem: problems.paste })}
+      {btn('Paste', 'Paste at selected measure (⌘V)', <ClipboardPaste className={icon} />, props.onPaste, { problem: problems.paste })}
       {btn('Bar properties', 'Time, key, clef, tempo, barlines', <SlidersHorizontal className={icon} />, () => props.onBar(menuAnchor))}
       <span className="st-fbar-sep" aria-hidden />
       {btn('Clear', 'Empty these bars, keep their timing', <Eraser className={icon} />, props.onClear, { problem: problems.clear })}

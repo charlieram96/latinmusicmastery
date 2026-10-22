@@ -98,7 +98,7 @@ describe('LessonActionBar', () => {
   it('shows the lesson message and the next destination by default', () => {
     act(() => root.render(<Harness part={false} />))
     expect(bar().textContent).toContain('Lesson in progress')
-    expect(bar().querySelector('[data-lesson-next]')?.getAttribute('href')).toBe('/dashboard/course/c/class/k?item=1')
+    expect(bar().querySelector('[data-lesson-next]')?.getAttribute('href')).toBe('/dashboard/course/c/class/k?itemId=b')
     expect(bar().getAttribute('data-tone')).toBe('neutral')
   })
 

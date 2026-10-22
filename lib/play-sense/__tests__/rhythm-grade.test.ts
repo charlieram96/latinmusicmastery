@@ -13,3 +13,11 @@ it('averages tiers and includes missed notes and extra hits without combo bonuse
  expect(rhythmGrade({...counts,perfectCount:2,okCount:2}).percentage).toBe(87.5)
  expect(rhythmGrade({...counts,perfectCount:2,okCount:2,extraHits:1}).percentage).toBe(70)
 })
+
+it('reproduces the reported 35 Perfect, 10 Good, 52 Miss take',()=>{
+ const grade=rhythmGrade({...counts,perfectCount:35,goodCount:10,missCount:52})
+ expect(grade.earned).toBe(4400)
+ expect(grade.possible).toBe(9700)
+ expect(grade.percentage).toBeCloseTo(45.3608247)
+ expect(Math.round(grade.percentage)).toBe(45)
+})

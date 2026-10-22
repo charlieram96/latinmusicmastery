@@ -1,0 +1,239 @@
+{
+  "classId": "local-solfeo-m08-c07",
+  "duration": 106.954833,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Ritardando, rallentando y accelerando",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 27.243354,
+      "kind": "explanation",
+      "title": "Ritardando, rallentando y accelerando",
+      "sourceTopic": "agogica-cambios",
+      "soundEvents": []
+    },
+    {
+      "start": 27.243354,
+      "end": 50.854465000000005,
+      "kind": "explanation",
+      "title": "Ritardando, rallentando y accelerando",
+      "sourceTopic": "agogica-cambios",
+      "soundEvents": []
+    },
+    {
+      "start": 50.854465000000005,
+      "end": 68.933507,
+      "kind": "explanation",
+      "title": "Ritardando, rallentando y accelerando",
+      "sourceTopic": "agogica-cambios",
+      "soundEvents": []
+    },
+    {
+      "start": 68.933507,
+      "end": 86.933507,
+      "kind": "notation",
+      "title": "Frase: tempo inicial, ralentización y recuperación",
+      "sourceTopic": "agogica-cambios",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 101,
+        "rows": [
+          {
+            "title": "Frase: tempo inicial, ralentización y recuperación",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 1
+                }
+              ]
+            ],
+            "tempo": "Andante · negra = 66",
+            "spans": [
+              {
+                "text": "rall.",
+                "from": 3,
+                "to": 4
+              }
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "agogica-cambios",
+        "rowHeights": [
+          101
+        ],
+        "sourcePageId": "flow-cont-146"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.8363636363636364,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.9090909090909092,
+          "duration": 0.8363636363636364,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.8181818181818183,
+          "duration": 1.6727272727272728,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 4.636363636363637,
+          "duration": 1.6727272727272728,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 6.454545454545455,
+          "duration": 2.09090909090909,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 8.727272727272727,
+          "duration": 0.8363636363636356,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 9.636363636363635,
+          "duration": 0.8363636363636356,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 10.545454545454543,
+          "duration": 1.6727272727272728,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 12.363636363636362,
+          "duration": 3.3454545454545457,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 66
+    },
+    {
+      "start": 86.933507,
+      "end": 100.933507,
+      "kind": "explanation",
+      "title": "Ritardando, rallentando y accelerando",
+      "sourceTopic": "agogica-cambios",
+      "soundEvents": []
+    },
+    {
+      "start": 100.933507,
+      "end": 106.933507,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

@@ -85,3 +85,14 @@ describe('ReadyCheck', () => {
     expect(host.querySelector('[data-ready-panel=timing] [role=progressbar]')?.getAttribute('aria-valuenow')).toBe('3')
   })
 })
+
+it('keeps demo and practice exits available while setup is incomplete', () => {
+  const onWatchDemo = vi.fn(), onCancelSetup = vi.fn()
+  act(() => root.render(<ReadyCheck {...base} forceFresh onWatchDemo={onWatchDemo} onCancelSetup={onCancelSetup} startLabel="Tu turno · Comenzar" />))
+  expect(start().disabled).toBe(true)
+  expect(start().textContent).toContain('Tu turno · Comenzar')
+  act(() => (host.querySelector('[data-ready-watch]') as HTMLButtonElement).click())
+  act(() => (host.querySelector('[data-ready-cancel]') as HTMLButtonElement).click())
+  expect(onWatchDemo).toHaveBeenCalledOnce()
+  expect(onCancelSetup).toHaveBeenCalledOnce()
+})

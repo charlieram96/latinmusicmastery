@@ -1,0 +1,551 @@
+{
+  "classId": "local-solfeo-m07-c05",
+  "duration": 199.361188,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Qué es una modulación",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 26,
+      "kind": "explanation",
+      "title": "Qué es una modulación",
+      "sourceTopic": "modulacion-concepto",
+      "soundEvents": []
+    },
+    {
+      "start": 26,
+      "end": 46.351521000000005,
+      "kind": "explanation",
+      "title": "Qué es una modulación",
+      "sourceTopic": "modulacion-concepto",
+      "soundEvents": []
+    },
+    {
+      "start": 46.351521000000005,
+      "end": 69.538959,
+      "kind": "explanation",
+      "title": "Qué es una modulación",
+      "sourceTopic": "modulacion-concepto",
+      "soundEvents": []
+    },
+    {
+      "start": 69.538959,
+      "end": 94.538959,
+      "kind": "explanation",
+      "title": "Qué es una modulación",
+      "sourceTopic": "modulacion-concepto",
+      "soundEvents": []
+    },
+    {
+      "start": 94.538959,
+      "end": 109.062084,
+      "kind": "explanation",
+      "title": "Qué es una modulación",
+      "sourceTopic": "modulacion-concepto",
+      "soundEvents": []
+    },
+    {
+      "start": 109.062084,
+      "end": 126.339862,
+      "kind": "explanation",
+      "title": "Qué es una modulación",
+      "sourceTopic": "centros-tonales",
+      "soundEvents": []
+    },
+    {
+      "start": 126.339862,
+      "end": 138.33986199999998,
+      "kind": "notation",
+      "title": "Compases 1-2",
+      "sourceTopic": "centros-tonales",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Compases 1-2",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F#4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 96,
+        "_sourcePage": "centros-tonales",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-140"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 4.75,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 5.375,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 138.33986199999998,
+      "end": 150.33986199999998,
+      "kind": "notation",
+      "title": "Compases 3-4",
+      "sourceTopic": "centros-tonales",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Compases 3-4",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 96,
+        "_sourcePage": "centros-tonales",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-140"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 150.33986199999998,
+      "end": 162.33986199999998,
+      "kind": "notation",
+      "title": "Compases 5-6",
+      "sourceTopic": "centros-tonales",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Compases 5-6",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "C5",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 96,
+        "_sourcePage": "centros-tonales",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-140"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 162.33986199999998,
+      "end": 174.33986199999998,
+      "kind": "notation",
+      "title": "Compases 7-8",
+      "sourceTopic": "centros-tonales",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 87,
+        "rows": [
+          {
+            "title": "Compases 7-8",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B3",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 1
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 96,
+        "_sourcePage": "centros-tonales",
+        "rowHeights": [
+          87
+        ],
+        "sourcePageId": "flow-cont-140"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 3.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 174.33986199999998,
+      "end": 193.33986199999998,
+      "kind": "explanation",
+      "title": "Qué es una modulación",
+      "sourceTopic": "centros-tonales",
+      "soundEvents": []
+    },
+    {
+      "start": 193.33986199999998,
+      "end": 199.33986199999998,
+      "kind": "completion",
+      "title": "¡Bien hecho!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

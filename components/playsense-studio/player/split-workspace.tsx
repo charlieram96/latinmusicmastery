@@ -26,11 +26,12 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeftRight, Columns2, Music2, PictureInPicture2, Rows2, type LucideIcon } from 'lucide-react';
+import { ArrowLeftRight, Columns2, Video, Music2, PictureInPicture2, Rows2, type LucideIcon } from 'lucide-react';
 import { useTranslation } from '@/components/language-provider';
 import { cn } from '@/lib/utils';
 import { lessonExerciseHeight, lessonStageHeight } from '@/lib/playsense-studio/lesson-viewport';
 import {
+  orderedPanes, exchangePanes, paneGrid,
   MUSIC_SPLIT_BOUNDS,
   SPLIT_BOUNDS,
   SPLIT_STEP,
@@ -66,7 +67,9 @@ const reducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export interface SplitWorkspaceProps {
+  arrangementHost?: HTMLElement | null;
   visiblePanes?: { video: boolean; score: boolean; highway: boolean };
+  musicLabel?: string;
   controller: WorkspaceController;
   /** The teacher video. Omitted → the music fills the workspace. */
   media?: ReactNode;
@@ -89,12 +92,16 @@ export interface SplitWorkspaceProps {
    * 'fill' — the parent sizes it.
    */
   frame?: 'card' | 'bleed' | 'fill';
+  /** Let document lessons grow with their content instead of clipping them to a video stage. */
+  sizing?: 'viewport' | 'content';
   initialHeight?: number;
   className?: string;
 }
 
 export function SplitWorkspace({
+  arrangementHost,
   visiblePanes,
+  musicLabel,
   controller,
   media,
   music,
@@ -104,15 +111,30 @@ export function SplitWorkspace({
   dock,
   frame = 'card',
   initialHeight = 560,
+  sizing = 'viewport',
   className,
 }: SplitWorkspaceProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { state, update, setLayout, defaults, beforeLayoutChangeRef } = controller;
   const hasMedia = media != null && media !== false;
-  const layout: WorkspaceLayout = !hasMedia ? 'music' : visiblePanes?.video && controller.layout === 'music' ? (controller.narrow ? 'stack' : 'side') : controller.layout;
+  const custom = !!visiblePanes;
+  const layout: WorkspaceLayout = custom ? (state.layout === 'stack' ? 'stack' : 'side') : !hasMedia ? 'music' : controller.layout;
   const threePanes = !!(hasMedia && highway && visiblePanes?.video && visiblePanes.score && visiblePanes.highway);
-  const [pairedSplit, setPairedSplit] = useState(50);
-  const lead = leadingSplit(state.split, state.swap);
+  const pairedSplit = state.musicSplit;
+  const setPairedSplit = (value: number | ((v: number) => number)) => update({musicSplit: typeof value === 'function' ? value(state.musicSplit) : value});
+  const panes = orderedPanes(state, {video: hasMedia && visiblePanes?.video !== false, score: visiblePanes?.score !== false, highway: !!highway && visiblePanes?.highway !== false});
+  const customThree = custom && panes.length === 3;
+  const primaryDivider = custom && !panes.includes('video') ? 'music' : 'split';
+  const dividerVertical = (which: 'split' | 'music') => custom
+    ? (customThree && which === 'music' ? layout === 'side' : layout === 'stack')
+    : which === 'music' ? (!threePanes || layout === 'side') : layout === 'stack';
+  const paneNames = {video: 'Video', score: musicLabel ?? (locale === 'es' ? 'Partitura' : 'Score'), highway: 'PlaySense'};
+  const [height, setHeight] = useState(initialHeight);
+  const requestedLead = leadingSplit(state.split, state.swap);
+  const scoreMinimumShare = Math.min(65, 330 / Math.max(1, height - 40) * 100);
+  const lead = !custom && layout === 'stack' && !threePanes
+    ? (state.swap ? Math.max(requestedLead, scoreMinimumShare) : Math.min(requestedLead, 100 - scoreMinimumShare))
+    : requestedLead;
 
   const frameRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<HTMLDivElement | null>(null);
@@ -139,7 +161,7 @@ export function SplitWorkspace({
   // Portal only after hydration (the server has no node to render into).
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
   useEffect(() => () => { dockNode?.remove(); }, [dockNode]);
-  const dockInMedia = hasMedia && (layout === 'side' || layout === 'stack');
+  const dockInMedia = hasMedia && (layout === 'side' || layout === 'stack' || layout === 'video');
   const mediaSlot = useRef<HTMLDivElement | null>(null);
   const footerSlot = useRef<HTMLDivElement | null>(null);
   useLayoutEffect(() => {
@@ -148,10 +170,9 @@ export function SplitWorkspace({
   });
 
   // ---- Height: fit to the viewport above the lesson footer ----
-  const [height, setHeight] = useState(initialHeight);
   useLayoutEffect(() => {
     const el = frameRef.current;
-    if (!el || frame === 'fill') return;
+    if (!el || frame === 'fill' || sizing === 'content') return;
     const bleed = frame === 'bleed';
     const lesson = el.closest<HTMLElement>('[data-lesson-shell]');
     if (!bleed && !lesson) return;
@@ -185,7 +206,7 @@ export function SplitWorkspace({
       window.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('resize', schedule);
     };
-  }, [frame, initialHeight]);
+  }, [frame, initialHeight, sizing]);
 
   // ---- FLIP: measure before a layout change, animate after it lands ----
   useEffect(() => {
@@ -251,14 +272,15 @@ export function SplitWorkspace({
   const startSplitDrag = (which: 'split' | 'music') => (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     const ws = wsRef.current;
-    const box = which === 'split' || threePanes ? ws : musicRef.current;
+    const box = custom || which === 'split' || threePanes ? ws : musicRef.current;
     if (!ws || !box) return;
     e.preventDefault();
     const div = e.currentTarget;
     div.focus({ preventScroll: true });
     const r = box.getBoundingClientRect();
-    const vertical = which === 'music' ? (!threePanes || layout === 'side') : layout === 'stack';
-    const bounds = which === 'split' ? SPLIT_BOUNDS : MUSIC_SPLIT_BOUNDS;
+    const vertical = dividerVertical(which);
+    const primary = custom ? which === primaryDivider : which === 'split';
+    const bounds = primary ? SPLIT_BOUNDS : MUSIC_SPLIT_BOUNDS;
     const swap = stateRef.current.swap;
     let value: number | null = null;
     ws.dataset.dragging = '';
@@ -266,7 +288,7 @@ export function SplitWorkspace({
     if (which === 'split' && pctRef.current) pctRef.current.textContent = `${Math.round(leadingSplit(stateRef.current.split, swap))}%`;
     const move = (ev: PointerEvent) => {
       value = splitFromPointer(vertical ? ev.clientY : ev.clientX, vertical ? r.top : r.left, vertical ? r.height : r.width, bounds);
-      ws.style.setProperty(which === 'split' ? '--ws-lead' : '--ws-staff', String(value));
+      ws.style.setProperty(primary ? '--ws-lead' : '--ws-staff', String(value));
       div.setAttribute('aria-valuenow', String(Math.round(value)));
       if (which === 'split' && pctRef.current) pctRef.current.textContent = `${Math.round(value)}%`;
     };
@@ -281,8 +303,8 @@ export function SplitWorkspace({
       delete ws.dataset.dragging;
       delete div.dataset.active;
       if (value == null) return;
-      if (which === 'music' && threePanes) setPairedSplit(value);
-      else update(which === 'split' ? { split: leadingSplit(value, swap) } : { musicSplit: value });
+      if (!primary && threePanes) setPairedSplit(value);
+      else update(primary ? { split: leadingSplit(value, swap) } : { musicSplit: value });
     };
     endDrag.current?.();
     endDrag.current = detach;
@@ -292,14 +314,15 @@ export function SplitWorkspace({
   };
 
   const onSplitKey = (which: 'split' | 'music') => (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    const vertical = which === 'music' ? (!threePanes || layout === 'side') : layout === 'stack';
+    const vertical = dividerVertical(which);
+    const primary = custom ? which === primaryDivider : which === 'split';
     const steps: Record<string, number> = vertical
       ? { ArrowUp: -SPLIT_STEP, ArrowDown: SPLIT_STEP }
       : { ArrowLeft: -SPLIT_STEP, ArrowRight: SPLIT_STEP };
     const delta = steps[e.key];
     if (!delta) return;
     e.preventDefault();
-    if (which === 'split') update({ split: leadingSplit(nudgeSplit(lead, delta), state.swap) });
+    if (primary) update({ split: leadingSplit(nudgeSplit(lead, delta), state.swap) });
     else if (threePanes) setPairedSplit(value => nudgeSplit(value, delta, MUSIC_SPLIT_BOUNDS));
     else update({ musicSplit: nudgeSplit(state.musicSplit, delta, MUSIC_SPLIT_BOUNDS) });
   };
@@ -379,28 +402,43 @@ export function SplitWorkspace({
 
   const splitActive = layout === 'side' || layout === 'stack';
 
+
+  const arrangementControls = custom && panes.length > 1 && <div className="ws-arrange" role="group" aria-label={locale === 'es' ? 'Organizar pantallas' : 'Arrange screens'}>
+        <label>{locale === 'es' ? 'Distribución' : 'Layout'}<select aria-label={locale === 'es' ? 'Distribución' : 'Layout'} value={layout} onChange={e=>setLayout(e.target.value as WorkspaceLayout)}>
+          <option value="side">{locale === 'es' ? 'Lado a lado' : 'Side by side'}</option>
+          <option value="stack">{locale === 'es' ? 'Arriba y abajo' : 'Top and bottom'}</option>
+        </select></label>
+        {panes.map((pane,i)=><label key={i}>{i+1}<select aria-label={`${locale === 'es' ? 'Panel' : 'Pane'} ${i+1}`} value={pane} onChange={e=>update({paneOrder:exchangePanes(state,pane,e.target.value as typeof pane)})}>
+          {panes.map(p=><option key={p} value={p}>{paneNames[p]}</option>)}
+        </select></label>)}
+        <button type="button" onClick={controller.swap}>{locale === 'es' ? 'Invertir lados' : 'Swap sides'}</button>
+      </div>;
+
   return (
     <div
       ref={frameRef}
       data-lesson-workspace=""
       data-frame={frame}
+      data-sizing={sizing}
       className={cn('ws-frame', className)}
-      style={frame === 'fill' ? undefined : { height }}
+      style={frame === 'fill' || sizing === 'content' ? undefined : { height }}
     >
+      {arrangementHost ? createPortal(arrangementControls, arrangementHost) : arrangementControls}
       <div
         ref={wsRef}
         className="ws"
         data-layout={layout}
+        data-custom-panes={custom ? panes.length : undefined}
         data-swap={state.swap}
         data-corner={state.corner}
         data-video-visible={visiblePanes?.video}
         data-score-visible={visiblePanes?.score}
         data-highway-visible={visiblePanes?.highway}
         data-three-panes={threePanes || undefined}
-        style={{ '--ws-lead': lead, '--ws-staff': threePanes ? pairedSplit : state.musicSplit, '--ws-pipw': state.pipWidth } as CSSProperties}
+        style={{ '--ws-lead': lead, '--ws-staff': threePanes ? pairedSplit : state.musicSplit, '--ws-pipw': state.pipWidth, ...(custom ? {gridTemplateAreas:paneGrid(panes, layout === 'stack' ? 'stack' : 'side',state.swap)} : {}) } as CSSProperties}
       >
         {hasMedia && (
-          <div ref={mediaRef} className="ws-pane ws-media" onPointerDown={onMediaPointerDown} onDoubleClick={onMediaDoubleClick}>
+          <div ref={mediaRef} className="ws-pane ws-media" style={custom ? {gridArea: 'v'} : undefined} onPointerDown={onMediaPointerDown} onDoubleClick={onMediaDoubleClick}>
             {media}
             {hasDock && dockInMedia && <div ref={mediaSlot} className="ws-dock-slot" data-ws-nodrag="" />}
             <span className="ws-pip-resize" aria-hidden="true" title={t('lessonWorkspace.resizePip')} />
@@ -409,9 +447,10 @@ export function SplitWorkspace({
         {hasMedia && (
           <div
             className="ws-div"
+            style={custom ? {display: panes.length < 2 || primaryDivider !== 'split' ? 'none' : undefined} : undefined}
             role="separator"
             tabIndex={splitActive ? 0 : -1}
-            aria-orientation={layout === 'stack' ? 'horizontal' : 'vertical'}
+            aria-orientation={dividerVertical('split') ? 'horizontal' : 'vertical'}
             aria-valuemin={SPLIT_BOUNDS.min}
             aria-valuemax={SPLIT_BOUNDS.max}
             aria-valuenow={Math.round(lead)}
@@ -426,32 +465,34 @@ export function SplitWorkspace({
           </div>
         )}
         <div ref={musicRef} className="ws-pane ws-music">
-          <div className="ws-staff">{music}</div>
+          <div className="ws-staff" style={custom ? {gridArea: 's'} : undefined}>{music}</div>
           {highway && (
             <>
               <div
                 className="ws-div2"
+                style={custom ? {gridArea: customThree ? 'e' : 'd', display: panes.length < 2 || (!customThree && primaryDivider !== 'music') ? 'none' : 'grid'} : undefined}
                 role="separator"
                 tabIndex={0}
-                aria-orientation={threePanes && layout === 'stack' ? 'vertical' : 'horizontal'}
-                aria-valuemin={MUSIC_SPLIT_BOUNDS.min}
-                aria-valuemax={MUSIC_SPLIT_BOUNDS.max}
-                aria-valuenow={Math.round(threePanes ? pairedSplit : state.musicSplit)}
+                aria-orientation={dividerVertical('music') ? 'horizontal' : 'vertical'}
+                aria-valuemin={custom && primaryDivider === 'music' ? SPLIT_BOUNDS.min : MUSIC_SPLIT_BOUNDS.min}
+                aria-valuemax={custom && primaryDivider === 'music' ? SPLIT_BOUNDS.max : MUSIC_SPLIT_BOUNDS.max}
+                aria-valuenow={Math.round(custom && primaryDivider === 'music' ? lead : threePanes ? pairedSplit : state.musicSplit)}
                 aria-label={t('lessonWorkspace.resizeMusic')}
                 title={t('lessonWorkspace.resizeHint')}
                 onPointerDown={startSplitDrag('music')}
                 onKeyDown={onSplitKey('music')}
-                onDoubleClick={() => threePanes ? setPairedSplit(50) : reset({ musicSplit: defaults.musicSplit })}
+                onDoubleClick={() => custom && primaryDivider === 'music' ? reset({split:defaults.split}) : threePanes ? setPairedSplit(50) : reset({ musicSplit: defaults.musicSplit })}
               >
                 <span className="ws-grip" />
               </div>
-              <div className="ws-highway">{highway}</div>
+              <div className="ws-highway" style={custom ? {gridArea: 'h'} : undefined}>{highway}</div>
             </>
           )}
         </div>
         {overlay}
       </div>
       {footer && <div className="ws-footer">{footer}</div>}
+      {!custom && layout === 'video' && <div className="ws-footer flex justify-center p-1"><WorkspaceLayoutSwitcher controller={controller}/></div>}
       {hasDock && !dockInMedia && <div ref={footerSlot} className="ws-footer ws-dock-slot" />}
       {hasDock && hydrated && dockNode && createPortal(dock, dockNode)}
     </div>
@@ -463,15 +504,16 @@ const LAYOUT_OPTIONS: { value: WorkspaceLayout; icon: LucideIcon }[] = [
   { value: 'stack', icon: Rows2 },
   { value: 'pip', icon: PictureInPicture2 },
   { value: 'music', icon: Music2 },
+  { value: 'video', icon: Video },
 ];
 
 /** Layout picker for a workspace. Render it wherever the view keeps its tools. */
 export function WorkspaceLayoutSwitcher({ controller, className, hideMusicOption = false }: { controller: WorkspaceController; className?: string; hideMusicOption?: boolean }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const groupRef = useRef<HTMLDivElement | null>(null);
   const indicatorRef = useRef<HTMLSpanElement | null>(null);
   const options = LAYOUT_OPTIONS.filter(
-    (o) => controller.layouts.includes(o.value) && !(hideMusicOption && o.value === 'music') && !(controller.narrow && o.value === 'side'),
+    (o) => controller.layouts.includes(o.value) && !(hideMusicOption && o.value === 'music') && !(controller.narrow && !controller.allowSideOnNarrow && o.value === 'side'),
   );
 
   // Slide the amber indicator under the pressed button (direct DOM write).
@@ -494,6 +536,15 @@ export function WorkspaceLayoutSwitcher({ controller, className, hideMusicOption
       aria-label={t('lessonWorkspace.layout')}
       className={cn('relative inline-flex flex-shrink-0 items-center gap-0.5 rounded-xl border border-border bg-secondary p-1', className)}
     >
+      {controller.layouts.includes('video') && controller.layouts.includes('music') && !hideMusicOption && <select
+        aria-label={locale === 'es' ? 'Mostrar video y partitura' : 'Show video and score'}
+        className="relative z-[1] max-w-[160px] rounded-lg border border-border bg-card px-2 py-1 text-xs text-foreground"
+        value={controller.layout === 'video' || controller.layout === 'music' ? controller.layout : 'both'}
+        onChange={event => controller.setLayout(event.target.value === 'both' ? (controller.narrow ? 'stack' : 'side') : event.target.value as WorkspaceLayout)}>
+        <option value="both">{locale === 'es' ? 'Video y partitura' : 'Video and score'}</option>
+        <option value="video">{t('lessonWorkspace.video')}</option>
+        <option value="music">{t('lessonWorkspace.music')}</option>
+      </select>}
       <span
         ref={indicatorRef}
         aria-hidden="true"

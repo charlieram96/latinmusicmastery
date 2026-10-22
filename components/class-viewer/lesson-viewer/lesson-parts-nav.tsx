@@ -48,13 +48,12 @@ export function LessonPartsNav({
       <div
         className={cn(
           styles.scrollHide,
-          'flex flex-1 items-stretch gap-1 overflow-hidden pl-1 pr-5 md:pl-5'
+          'flex flex-1 items-stretch gap-1 overflow-x-auto pl-1 pr-5 md:pl-5'
         )}
         role="tablist"
       >
         {items.map((item, i) => {
           const isActive = i === activeIndex
-          const done = completedItemIds.includes(item.id)
           return (
             <div key={item.id} className={cn('flex items-stretch', styles.snapStart)}>
               {i > 0 && (
@@ -79,21 +78,22 @@ export function LessonPartsNav({
               >
                 <span className="flex items-center gap-1.5 whitespace-nowrap font-heading text-[13.5px] font-bold tracking-[-0.005em]">
                   {labels[i]}
-                  {done && (
+                  {isActive && (
                     <Check
-                      className="h-3 w-3 text-success"
-                      aria-label={t('dashboard.pages.modules.completed')}
+                      data-active-tab-check
+                      className="h-3 w-3 text-primary"
+                      aria-hidden
                     />
                   )}
                 </span>
-                <span
+                {item.item_type === 'EXERCISE' && <span
                   className={cn(
-                    'max-w-[200px] truncate whitespace-nowrap text-[11.5px] font-normal',
+                    'max-w-[200px] whitespace-normal break-words text-[12px] font-normal',
                     isActive ? 'text-foreground/75' : 'text-muted-foreground/80'
                   )}
                 >
                   {item.title}
-                </span>
+                </span>}
                 <span
                   aria-hidden
                   className={cn(

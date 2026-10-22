@@ -1,3 +1,4 @@
+import { percussionLaneId } from '@/lib/play-sense/percussion-lanes'
 // components/play-sense/rhythm-highway/NoteManager.ts
 import { Container, Graphics } from 'pixi.js'
 import type { ExerciseDefinition, ExerciseEvent } from '@/lib/play-sense/types'
@@ -357,6 +358,10 @@ export class NoteManager {
 
   private getLaneIndex(event: ExerciseEvent | undefined): number {
     if (!event) return 0
+    if (event.strokeId) {
+      const index = this.laneSurfaces.indexOf(percussionLaneId(event))
+      if (index >= 0) return index
+    }
     if (event.surface) {
       const idx = this.laneSurfaces.indexOf(event.surface)
       if (idx >= 0) return idx

@@ -1,4 +1,6 @@
 'use client';
+import { applyMeasureSymbols } from '@/lib/playsense-studio/notation/measure-symbols';
+import {drawEmptyMeasure} from '@/lib/playsense-studio/notation/empty-measure';
 
 // PlaySense Studio — the measure strip's notation, drawn as ONE VexFlow SVG
 // across the render window (a viewport either side of the visible range), so
@@ -79,7 +81,7 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
   items.forEach((item, k) => {
     const x0 = item.startVideoTimeSeconds * pixelsPerSecond - win.start;
     const x1 = item.endVideoTimeSeconds * pixelsPerSecond - win.start;
-    if (x1 < 0 || x0 > width || x1 - x0 < MIN_RENDER_WIDTH) return;
+    if (x1 < 0 || x0 > width) return;
     try {
       // Put the opening clef/key before musical time zero, rather than
       // pushing every note to the right of its waveform reference.
@@ -87,30 +89,49 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
       const stave = new Stave(x0 - headerWidth, 0, x1 - x0 + headerWidth);
       // One continuous row: only the opening bar is a row start.
       applyStaveHeader(stave, staveHeader(item, { opening: item.isFirst, rowStart: false }));
+      if (item.isFirst || item.continuousBarlines) stave.setBegBarType(BarlineType.NONE);
       if (noteTimeForQN) {
-        // Sync separators share the waveform's time axis. Never offset the
-        // separator independently of the header, selection, or audio markers.
+        // Draw separators separately so downbeats stay exactly on audio time
+        // while the engraved barline has room before the notehead.
         if (!item.isFirst) stave.setBegBarType(BarlineType.NONE);
-        if (k < items.length - 1) stave.setEndBarType(BarlineType.NONE);
+        if (k < items.length - 1 || item.continuousBarlines) stave.setEndBarType(BarlineType.NONE);
       }
-      if (item.finalBarline) stave.setEndBarType(BarlineType.END);
+      if (item.endBarline === 'double') stave.setEndBarType(BarlineType.DOUBLE);
+      // Keep the final glyph wholly inside its section's clipping boundary.
+      // VexFlow's end modifier can extend past that boundary in sibling layers.
+      if (item.finalBarline) stave.setEndBarType(BarlineType.NONE);
       // Center the staff vertically: the middle line (line 2 = B4) at the
       // box's vertical center, so stems have even headroom above and below.
       stave.setY(Math.round(staffHeight / 2 - stave.getYForLine(2)));
+      applyMeasureSymbols(stave,item);
       stave.setContext(ctx).draw();
-      if (noteTimeForQN) {
-        const barX = syncBarBounds(x0,x1).left;
+      if (item.finalBarline && !item.repeatEnd) {
         ctx.save();
-        // A fine gray separator stays readable behind a downbeat notehead.
+        ctx.openGroup('sync-final-barline');
+        const top = stave.getYForLine(0);
+        const height = stave.getYForLine(4) - top;
+        ctx.fillRect(x1 - 8, top, 1, height);
+        ctx.fillRect(x1 - 5, top, 3, height);
+        ctx.closeGroup();
+        ctx.restore();
+      }
+      if (noteTimeForQN && !item.isFirst) {
+        const barX = item.continuousBarlines ? x0 : syncBarBounds(x0,x1).left - 14;
+        ctx.save();
+        ctx.openGroup('sync-bar-separator');
+        // Engraving clearance only: note positions and synchronization do not move.
         ctx.setStrokeStyle('#94a3b8');
         ctx.setLineWidth(0.75);
         ctx.beginPath();
         ctx.moveTo(barX, stave.getYForLine(0));
         ctx.lineTo(barX, stave.getYForLine(4));
         ctx.stroke();
+        ctx.closeGroup();
         ctx.restore();
       }
 
+      // Keep all five lines even where zoom makes notation too narrow.
+      if (x1-x0 < MIN_RENDER_WIDTH && (item.events.length || item.voice2Events?.length)) return;
       const bare = x1 - x0 < BARE_WIDTH;
       const strip = (ds: VexEventDescriptor[]): VexEventDescriptor[] =>
         bare ? ds.map((d) => ({ ...d, dynamic: undefined, text: undefined })) : ds;
@@ -119,11 +140,11 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
 
       // Voice 2 alone (voice 1 empty) still has notes to show.
       const built = buildMeasure([events, voice2], item.timeSignature, item.clef);
-      if (!built) return;
+      if (!built) { drawEmptyMeasure(ctx,stave,item.timeSignature,item.emptyText,{left:x0,right:x1}); return; }
       formatMeasure(built, Math.max(20, stave.getNoteEndX() - stave.getNoteStartX() - 8));
       if (noteTimeForQN) {
         // The sync editor uses a time axis, not engraving spacing: every
-        // attack, including the downbeat, is centered on its waveform time.
+        // attack follows its waveform time, with visual clearance at barlines.
         const positioned = new Set<ReturnType<StaveNote['getTickContext']>>();
         built.notes.forEach((notes, voice) => notes.forEach((note, index) => {
           note.setStave(stave);
@@ -131,7 +152,19 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
           const tick = note.getTickContext();
           if (!event || positioned.has(tick)) return;
           const timeX = noteTimeForQN(event.qnStart) * pixelsPerSecond - win.start;
-          const target = timeX;
+          // Continuous bars keep their authored time boundary. Give the glyph
+          // breathing room inside it instead of drawing a rest/note over the
+          // separator. This is engraving only; event and click times stay intact.
+          const halfGlyph = note.getGlyphWidth() / 2;
+          const openingGap = Math.min(36, (x1 - x0) * 0.12);
+          const left = x0 + halfGlyph + openingGap;
+          const right = x1 - halfGlyph - (item.finalBarline || item.repeatPass ? 28 : 24);
+          // Redistribute the whole bar into the inset, rather than clamping
+          // its first attacks onto the same x (which reverses/collapses beams).
+          const fraction = Math.max(0, Math.min(1, (timeX - x0) / (x1 - x0)));
+          const target = item.continuousBarlines && right >= left
+            ? left + fraction * (right - left)
+            : timeX;
           // Move the shared rhythmic context, preserving chord displacements,
           // beams, articulations and the formatter's voice collision handling.
           tick.setX(tick.getX() + target - note.getAbsoluteX() - note.getGlyphWidth() / 2);
@@ -238,6 +271,7 @@ export function ContinuousStaff({ items, noteTimeForQN, pixelsPerSecond, scrollL
   const scroll = useRef(scrollLeftPx);
   const frame = useRef(0);
   const clear = useRef<(() => void) | null>(null);
+  const publishedHits = useRef(new Map<number, MeasureHit[]>());
   useEffect(() => {
     scroll.current = scrollLeftPx;
   });
@@ -251,11 +285,31 @@ export function ContinuousStaff({ items, noteTimeForQN, pixelsPerSecond, scrollL
       const now = input.current;
       if (!now) return;
       clear.current?.();
-      clear.current = drawStaff(el, now, hitsCb.current);
+      // Publish the completed geometry, not the temporary empty state between
+      // drawings. Identical redraws must not trigger another parent update.
+      const nextHits = new Map<number, MeasureHit[]>();
+      clear.current = drawStaff(el, now, (index, hits) => {
+        if (hits) nextHits.set(index, hits);
+        else nextHits.delete(index);
+      });
+      const previousHits = publishedHits.current;
+      publishedHits.current = new Map(nextHits);
+      previousHits.forEach((_, index) => {
+        if (!nextHits.has(index)) hitsCb.current(index, null);
+      });
+      nextHits.forEach((hits, index) => {
+        const previous = previousHits.get(index);
+        const unchanged = previous?.length === hits.length && hits.every((hit, i) => {
+          const old = previous[i];
+          return hit.eventIndex === old.eventIndex && hit.voice === old.voice && hit.member === old.member
+            && hit.x === old.x && hit.y === old.y && hit.w === old.w && hit.h === old.h;
+        });
+        if (!unchanged) hitsCb.current(index, hits);
+      });
       // Place the new drawing now; the re-render below keeps it placed.
       el.style.width = `${now.win.end - now.win.start}px`;
       el.style.transform = `translateX(${now.win.start - scroll.current}px)`;
-      setDrawn(now.win);
+      setDrawn(previous => previous?.start === now.win.start && previous.end === now.win.end ? previous : now.win);
     };
     // The first drawing is immediate, so the staff never mounts blank.
     if (!clear.current) run();
@@ -267,6 +321,8 @@ export function ContinuousStaff({ items, noteTimeForQN, pixelsPerSecond, scrollL
     frame.current = 0;
     clear.current?.();
     clear.current = null;
+    publishedHits.current.forEach((_, index) => hitsCb.current(index, null));
+    publishedHits.current.clear();
   }, []);
 
   return (

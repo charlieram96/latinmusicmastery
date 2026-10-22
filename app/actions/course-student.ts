@@ -1,5 +1,7 @@
 'use server'
 
+import { applyLocalTimbalIntro } from '@/lib/courses/local-timbal-intro'
+
 import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { localizeSectionTree } from '@/lib/i18n/localize'
@@ -24,6 +26,8 @@ export async function getCourseStructureForStudent(courseId: string) {
     .order('order_index')
 
   if (error) return { error: error.message }
+
+  await applyLocalTimbalIntro(sections)
 
   // Localize the whole tree to the viewer's language before processing.
   const locale = await getServerLocale()

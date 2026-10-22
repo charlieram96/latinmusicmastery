@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/components/language-provider';
 import { AdminText } from '@/components/admin/admin-text'
 ;
 
@@ -37,6 +38,7 @@ export function PlaysenseStudioScoreAttach({
   itemType,
   onChanged,
 }: PlaysenseStudioScoreAttachProps) {
+  const { locale } = useTranslation();
   const [hasAttached, setHasAttached] = useState(currentScoreDocumentId !== null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -53,14 +55,12 @@ export function PlaysenseStudioScoreAttach({
         </div>
         <Link
           href={studioHref}
-          className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md border border-border hover:bg-muted transition text-sm"
+          className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md border-2 border-primary bg-primary/5 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition text-sm"
         >
           <StudioLinkLabel><AdminText text={"Open PlaySense Studio — manage scored sections"} /></StudioLinkLabel>
         </Link>
         <p className="text-xs text-muted-foreground">
-          A video can have multiple scored sections, each placed where the instructor plays. Add,
-          build, and sync them in PlaySense Studio; students see each section&apos;s notation only
-          while the video is inside its range.
+          {locale === 'es' ? 'Un video puede tener varias secciones con partitura. Añádelas, edítalas y sincronízalas en PlaySense Studio; el estudiante verá cada partitura durante su tramo del video.' : 'A video can have multiple scored sections. Add, build, and sync them in PlaySense Studio; students see each section’s notation during its video range.'}
         </p>
       </div>
     );
@@ -112,7 +112,7 @@ export function PlaysenseStudioScoreAttach({
       ) : (
         <Link
           href={studioHref}
-          className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md border border-border hover:bg-muted transition text-sm"
+          className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md border-2 border-primary bg-primary/5 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition text-sm"
         >
           <StudioLinkLabel><AdminText text={"Open PlaySense Studio to add a score"} /></StudioLinkLabel>
         </Link>

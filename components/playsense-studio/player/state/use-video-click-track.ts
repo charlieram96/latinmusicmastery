@@ -12,7 +12,7 @@
 // The rule that matters, copied deliberately:
 //   seeking / waiting / stalled / pause / ended -> TEAR DOWN, schedule nothing
 //   play / playing / seeked / ratechange        -> SCHEDULE, tear nothing down
-// (With smoothRateChanges, a ratechange on a running click re-anchors instead.)
+// A ratechange on a running click preserves phase by re-anchoring instead.
 // Inverting those is the classic "audio never comes back after a seek" bug.
 //
 // The structural rule that keeps it that way: the effect that binds media
@@ -22,7 +22,7 @@
 // `effectiveBpm`, so it tore the metronome down and restarted it on every
 // tempo change, which reset the phase on every section crossing.
 
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { ClickTrack } from '@/lib/playsense-studio/click-track';
 
 /** Correct above this much error. Tighter than the backing mixer's 80ms: that
@@ -54,17 +54,14 @@ export function useVideoClickTrack(options: {
   volume?: number;
   /** Nudge for the offset between the element's audio path and the context's. */
   offsetSeconds?: number;
-  /** Flex: the rate driver changes playbackRate at every flex boundary, and a
-   *  restart there (teardown + fade) clips the click. When true, a ratechange
-   *  while the click is running RE-ANCHORS instead — the beat times are
-   *  constants, only the media->context mapping changed. Off (the default),
-   *  a ratechange restarts exactly as before, so unflexed lessons are
-   *  untouched. */
+  /** Compatibility option: all running tempo changes now preserve click phase. */
   smoothRateChanges?: boolean;
 }) {
-  const { videoRef, grid, enabled, volume = 0.2, offsetSeconds = 0, smoothRateChanges = false } = options;
+  const { videoRef, grid, enabled, volume = 0.2, offsetSeconds = 0 } = options;
 
   const trackRef = useRef<ClickTrack | null>(null);
+  const stopRef=useRef<()=>void>(()=>{});
+  const stop=useCallback(()=>{stopRef.current();trackRef.current?.teardown();},[]);
   // Create and configure the same engine in every effect lifecycle, including
   // React's development remount. Creating it during render left a fresh engine
   // with no beat grid after StrictMode closed the original one.
@@ -78,10 +75,10 @@ export function useVideoClickTrack(options: {
   }, []);
 
   // The element mounts late through a portal, so poll the ref each commit; the
-  // updater bails when unchanged, so this costs nothing once bound.
+  // guard avoids scheduling a passive update when the element is unchanged.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   useEffect(() => {
-    setVideoEl((prev) => (prev === videoRef.current ? prev : videoRef.current));
+    if (videoEl !== videoRef.current) setVideoEl(videoRef.current);
   });
 
   // ---- Volatile inputs, each through its own imperative setter -----------
@@ -99,12 +96,8 @@ export function useVideoClickTrack(options: {
     trackRef.current?.setOffsetSeconds(offsetSeconds);
   }, [offsetSeconds]);
 
-  // Read by the ratechange listener; a ref so the transport effect below
-  // keeps its [videoEl, enabled] dependencies.
-  const smoothRateRef = useRef(smoothRateChanges);
-  useEffect(() => {
-    smoothRateRef.current = smoothRateChanges;
-  }, [smoothRateChanges]);
+  // All tempo changes preserve the running beat cursor. Restarting can replay
+  // a beat already heard while the media clock lags the audio context.
 
   // ---- Transport wiring: depends on [videoEl, enabled] only ---------------
   useEffect(() => {
@@ -117,29 +110,35 @@ export function useVideoClickTrack(options: {
       return;
     }
 
+    let disposed=false;
+    let generation=0;
     let lastResyncAt = 0;
     const samples: number[] = [];
 
     const schedule = () => {
+      if(disposed||video.paused||video.ended||video.seeking||videoRef.current!==video)return;
       track.start(video.currentTime, video.playbackRate);
       samples.length = 0;
       lastResyncAt = Date.now();
     };
 
     const resumeThenSchedule = () => {
+      if(disposed||video.paused||video.ended)return;
+      const token=++generation;
       const ctx = track.ensureContext();
       // Toggling the click on, and pressing play, are both real user gestures --
       // the only reliable place to lift the autoplay suspension.
-      if (ctx.state !== 'running') void ctx.resume().then(schedule).catch(() => {});
+      if (ctx.state !== 'running') void ctx.resume().then(()=>{if(token===generation)schedule();}).catch(() => {});
       else schedule();
     };
 
     const onResume = () => {
       if (!video.paused) resumeThenSchedule();
     };
-    const onTeardown = () => track.teardown();
+    const onTeardown = () => {generation++;track.teardown();};
+    stopRef.current=onTeardown;
     const onRateChange = () => {
-      if (smoothRateRef.current && track.isRunning && !video.paused) {
+      if (track.isRunning && !video.paused) {
         track.reanchor(video.currentTime, video.playbackRate);
         samples.length = 0;
         lastResyncAt = Date.now();
@@ -162,7 +161,8 @@ export function useVideoClickTrack(options: {
     video.addEventListener('stalled', onTeardown);
 
     const interval = setInterval(() => {
-      if (video.paused || !track.isRunning) return;
+      if(video.paused||video.ended||videoRef.current!==video){if(track.isRunning)onTeardown();return;}
+      if (!track.isRunning) return;
       const error = track.drift(video.currentTime);
       if (error == null) return;
       samples.push(error);
@@ -186,6 +186,7 @@ export function useVideoClickTrack(options: {
     document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
+      disposed=true;generation++;
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility);
       video.removeEventListener('play', resumeThenSchedule);
@@ -201,4 +202,5 @@ export function useVideoClickTrack(options: {
     };
   }, [videoEl, enabled]);
 
+  return {stop};
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { uploadLocalSolfeoMedia } from '@/lib/courses/upload-local-solfeo-media'
 import { AdminText } from '@/components/admin/admin-text'
 
 
@@ -48,6 +49,7 @@ export function AudioUpload({
     setProgress(0)
 
     try {
+      if(itemId.startsWith('local-solfeo-')) {const url=await uploadLocalSolfeoMedia(itemId,file);setPreviewUrl(url);onAudioUploaded(url);return}
       const supabase = createClient()
       const fileExt = file.name.split('.').pop()
       const fileName = `${itemId}-${Date.now()}.${fileExt}`

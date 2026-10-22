@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { CoachingCard } from './coaching-card'
 import { useTranslation } from '@/components/language-provider'
 import { videoPictureBounds } from '@/components/playsense-studio/shared/video-watermark'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
@@ -52,17 +53,7 @@ export function CascaraVideoCoaching({ exercise, state, getElapsedSeconds, tempo
 
   return <div ref={ref} className="lmm-coaching" style={{ visibility: 'hidden' }}>
     <AnimatePresence>
-    {cue && <motion.div key={cue.kind === 'count' ? 'count' : cue.key}
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      transition={{ duration: reducedMotion ? 0 : cue.kind === 'count' ? .12 : .65 }} className={`lmm-coaching-card lmm-coaching-${cue.kind}`}>
-      <div className="lmm-coaching-eyebrow">{cue.detail}</div>
-      {cue.number !== undefined ? <div className="lmm-coaching-count-row">
-        <strong className="lmm-coaching-number">{cue.number}</strong>
-        <div><span className="lmm-coaching-ready">{cue.text}</span><div className="lmm-coaching-dots" aria-hidden="true">
-          {Array.from({ length: exercise.timeSignature[0] }, (_, i) => <i key={i} data-active={i + 1 === cue.number} />)}
-        </div></div>
-      </div> : <div className="lmm-coaching-title font-heading">{cue.text}</div>}
-    </motion.div>}
+    {cue && <CoachingCard key={cue.kind === 'count' ? 'count' : cue.key} cue={cue} beats={exercise.timeSignature[0]} />}
     </AnimatePresence>
     <AnimatePresence>
       {notationFrame.visible && <motion.div className="lmm-cascara-notation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : .65 }}>

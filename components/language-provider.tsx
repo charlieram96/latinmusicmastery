@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   DEFAULT_LOCALE,
@@ -41,7 +41,8 @@ function writeCookie(value: Locale) {
 export function LanguageProvider({ initialLocale, children }: LanguageProviderProps) {
   const router = useRouter()
   // Server refreshes can change the cookie locale without remounting this layout.
-  const locale = initialLocale ?? DEFAULT_LOCALE
+  const [locale, setLocaleState] = useState(initialLocale ?? DEFAULT_LOCALE)
+  useEffect(() => { setLocaleState(initialLocale ?? DEFAULT_LOCALE) }, [initialLocale])
 
   useEffect(() => {
     let cancelled = false
@@ -83,6 +84,7 @@ export function LanguageProvider({ initialLocale, children }: LanguageProviderPr
 
   const setLocale = useCallback((next: Locale) => {
     if (!isLocale(next)) return
+    setLocaleState(next)
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next)
       writeCookie(next)

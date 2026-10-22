@@ -1,4 +1,7 @@
 'use server';
+import { usesLocalSolfeo } from '@/lib/courses/local-solfeo-draft';
+import { localPreviewDraft, saveLocalPreviewDraft } from '@/lib/playsense-studio/drafts/local-preview';
+import { localStudio, findLocalSection, saveLocalDraft } from '@/lib/courses/local-solfeo-studio';
 
 // PlaySense Studio drafts (spec §9). Autosave writes here, never to the live
 // rows students read; publishStudioDraft (below) is the only path from a draft
@@ -54,11 +57,14 @@ export async function saveStudioDraft(input: {
   score: ScoreDocument;
   timing: StudioTiming;
 }): Promise<{ updatedAt?: string; error?: string }> {
+  if (await usesLocalSolfeo(input.owner.id)) {const v=validate(input.score,input.timing);if(v.error)return {error:v.error};return saveLocalDraft(input.owner.id,v.score!,v.timing!);}
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
   const v = validate(input.score, input.timing);
   if (v.error) return { error: v.error };
+  const localUpdatedAt = new Date().toISOString();
+  if (await saveLocalPreviewDraft(input.owner, { score: v.score!, timing: v.timing!, updatedAt: localUpdatedAt })) return { updatedAt: localUpdatedAt };
 
   const meta = await listVersionMeta(supabase, input.owner);
   if (meta.error) return { error: meta.error };
@@ -81,11 +87,14 @@ export async function saveStudioDraft(input: {
 export async function getStudioDrafts(
   owners: StudioDraftOwner[]
 ): Promise<{ data?: Record<string, StudioDraft>; error?: string }> {
+  if (owners.length && await usesLocalSolfeo(owners[0].id)) return localStudio(owners[0].id,store=>({data:Object.fromEntries(owners.flatMap(o=>{const d=findLocalSection(store,o.id).draft;return d?[[ownerKey(o),d]]:[]}))}));
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
   const out: Record<string, StudioDraft> = {};
   for (const owner of owners) {
+    const local = await localPreviewDraft(owner);
+    if (local) { out[ownerKey(owner)] = local; continue; }
     const meta = await listVersionMeta(supabase, owner);
     if (meta.error) return { error: meta.error };
     const d = unpublishedDraft(meta.data ?? []);
@@ -104,6 +113,7 @@ export async function getStudioDrafts(
 export async function listStudioVersions(
   owner: StudioDraftOwner
 ): Promise<{ data?: StudioVersionListItem[]; error?: string }> {
+  if (await usesLocalSolfeo(owner.id)) return localStudio(owner.id,store=>({data:[...findLocalSection(store,owner.id).versions].reverse()}));
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
@@ -122,6 +132,7 @@ export async function restoreStudioVersion(input: {
   owner: StudioDraftOwner;
   versionId: string;
 }): Promise<{ data?: StudioDraft; error?: string }> {
+  if (await usesLocalSolfeo(input.owner.id)) return localStudio(input.owner.id,store=>{const s=findLocalSection(store,input.owner.id);const v=s.versions.find(v=>v.id===input.versionId);if(!v)return {error:'Version not found'};s.draft={score:v.score,timing:v.timing,updatedAt:new Date().toISOString()};return {data:s.draft};},true);
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
@@ -133,6 +144,8 @@ export async function restoreStudioVersion(input: {
   if (error) return { error: error.message };
   if (!row || row.owner_kind !== input.owner.kind || row.owner_id !== input.owner.id) return { error: 'Version not found' };
   const content = { score: row.score as unknown as ScoreDocument, timing: row.timing as unknown as StudioTiming };
+  const localRestored = { ...content, updatedAt: new Date().toISOString() };
+  if (await saveLocalPreviewDraft(input.owner, localRestored)) return { data: localRestored };
   // Always a fresh row: a restore is its own history entry.
   const ins = await insertVersion(supabase, input.owner, 'draft', content, admin.userId);
   if (ins.error) return { error: ins.error };
@@ -143,9 +156,19 @@ export async function restoreStudioVersion(input: {
 export async function discardStudioDraft(
   owner: StudioDraftOwner
 ): Promise<{ data?: StudioDraft | null; error?: string }> {
+  if (await usesLocalSolfeo(owner.id)) return localStudio(owner.id,store=>{const s=findLocalSection(store,owner.id);s.draft=null;return {data:{score:s.score,timing:s.timing,updatedAt:''}};},true);
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
+  if (await localPreviewDraft(owner)) {
+    const resolved = await resolveOwner(supabase, owner);
+    if (resolved.error) return { error: resolved.error };
+    const live = await loadLiveContent(supabase, resolved.data!);
+    if (live.error) return { error: live.error };
+    const data = { ...live.data!, updatedAt: new Date().toISOString() };
+    await saveLocalPreviewDraft(owner, data);
+    return { data };
+  }
   const cleared = await clearUnpublishedDrafts(supabase, owner);
   if (cleared.error) return { error: cleared.error };
   const resolved = await resolveOwner(supabase, owner);
@@ -192,6 +215,8 @@ function normalizeGradedDraft(target: ResolvedOwner['target'], content: StudioCo
 export async function publishStudioDraft(
   owner: StudioDraftOwner
 ): Promise<{ publishedAt?: string; error?: string }> {
+  if (await localPreviewDraft(owner)) return { error: 'This preview is local only. It has not been published to the website.' };
+  if (await usesLocalSolfeo(owner.id)) return localStudio(owner.id,store=>{const s=findLocalSection(store,owner.id);if(!s.draft)return {error:'Nothing to apply'};const now=new Date().toISOString();s.score=s.draft.score;s.timing=s.draft.timing;s.draft=null;s.versions.forEach(v=>v.isLive=false);s.versions.push({id:'local-solfeo-version-'+Date.now(),kind:'published',createdAt:now,updatedAt:now,isLive:true,score:s.score,timing:s.timing});return {publishedAt:now};},true);
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
@@ -272,6 +297,7 @@ export async function publishStudioDraft(
 export async function getPublishPreview(
   owners: StudioDraftOwner[]
 ): Promise<{ data?: Record<string, string[]>; error?: string }> {
+  if (owners.length && await usesLocalSolfeo(owners[0].id)) return localStudio(owners[0].id,store=>({data:Object.fromEntries(owners.map(o=>{const s=findLocalSection(store,o.id);return [ownerKey(o),s.draft?summarizeChanges({score:s.score,timing:s.timing},s.draft):[]]}))}));
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };

@@ -1,3 +1,4 @@
+import { StudentFullscreenSlot } from '@/components/dashboard/dashboard-layout-client'
 import { createClient } from '@/lib/supabase/server'
 import { MobileSidebarTrigger } from '@/components/dashboard/mobile-sidebar-trigger'
 import { HeaderTitle } from '@/components/dashboard/header-title'
@@ -37,6 +38,7 @@ export async function DashboardHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           <HeaderSearch />
+      <StudentFullscreenSlot />
           <HeaderStreak userId={user.id} />
           <HeaderNotifications userId={user.id} />
           <AccountMenu

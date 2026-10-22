@@ -1,0 +1,296 @@
+{
+  "classId": "local-solfeo-m08-c02",
+  "duration": 69.863917,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Reguladores: crescendo y diminuendo",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 15.5,
+      "kind": "explanation",
+      "title": "Reguladores: crescendo y diminuendo",
+      "sourceTopic": "dinamica",
+      "soundEvents": []
+    },
+    {
+      "start": 15.5,
+      "end": 28.5,
+      "kind": "explanation",
+      "title": "Reguladores: crescendo y diminuendo",
+      "sourceTopic": "dinamica",
+      "soundEvents": []
+    },
+    {
+      "start": 28.5,
+      "end": 39.842583,
+      "kind": "explanation",
+      "title": "Reguladores: crescendo y diminuendo",
+      "sourceTopic": "dinamica",
+      "soundEvents": []
+    },
+    {
+      "start": 39.842583,
+      "end": 51.842583,
+      "kind": "notation",
+      "title": "Crescendo · aumento gradual de intensidad",
+      "sourceTopic": "dinamica",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 107,
+        "rows": [
+          {
+            "title": "Crescendo · aumento gradual de intensidad",
+            "hairpin": "cresc",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4,
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "dynamic": "mf"
+                },
+                {
+                  "rest": true,
+                  "dur": 2
+                },
+                {
+                  "rest": true,
+                  "dur": 4
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "1": "final"
+            },
+            "hairpinFrom": 0,
+            "hairpinTo": 4,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "dinamica",
+        "rowHeights": [
+          107
+        ],
+        "sourcePageId": "dinamica"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.07,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.12000000000000001,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.22000000000000003,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.27,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 51.842583,
+      "end": 63.842583,
+      "kind": "notation",
+      "title": "Diminuendo · disminución gradual de intensidad",
+      "sourceTopic": "dinamica",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 107,
+        "rows": [
+          {
+            "title": "Diminuendo · disminución gradual de intensidad",
+            "hairpin": "dim",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "dynamic": "mf"
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4,
+                  "dynamic": "p"
+                },
+                {
+                  "rest": true,
+                  "dur": 2
+                },
+                {
+                  "rest": true,
+                  "dur": 4
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "1": "final"
+            },
+            "hairpinFrom": 0,
+            "hairpinTo": 4,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "dinamica",
+        "rowHeights": [
+          107
+        ],
+        "sourcePageId": "dinamica"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.27,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.22000000000000003,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.12,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.07,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 63.842583,
+      "end": 69.84258299999999,
+      "kind": "completion",
+      "title": "¡Un paso más en tu música!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

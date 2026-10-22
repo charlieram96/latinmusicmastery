@@ -36,7 +36,7 @@ export function StudioDrawer({ widthPx, header, onMobileClose, children }: Studi
                   {<AdminText text={header.label} />}
                 </p>
               )}
-              <p className="truncate text-[13px] font-semibold leading-4 text-foreground">
+              <p className="whitespace-normal break-words text-[13px] font-semibold leading-4 text-foreground">
                 {header.title}
               </p>
             </div>

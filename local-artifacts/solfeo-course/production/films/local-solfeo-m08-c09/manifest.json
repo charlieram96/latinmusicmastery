@@ -1,0 +1,1430 @@
+{
+  "classId": "local-solfeo-m08-c09",
+  "duration": 386.726208,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Adornos y su interpretación",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 21.835062999999998,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "adornos",
+      "soundEvents": []
+    },
+    {
+      "start": 21.835062999999998,
+      "end": 33.835063,
+      "kind": "notation",
+      "title": "Trino: alternancia con la nota superior",
+      "sourceTopic": "adornos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Trino: alternancia con la nota superior",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2,
+                  "mark": "tr"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "adornos",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-149"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1.125,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.25,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1.375,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.5,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1.625,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.75,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1.875,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.125,
+          "duration": 0.12,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 33.835063,
+      "end": 45.835063,
+      "kind": "notation",
+      "title": "Grupeto: recorrido alrededor de la nota principal",
+      "sourceTopic": "adornos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Grupeto: recorrido alrededor de la nota principal",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2,
+                  "mark": "turn"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "adornos",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-149"
+      },
+      "soundEvents": [
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1,
+          "duration": 0.3,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.3125,
+          "duration": 0.3,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.625,
+          "duration": 0.3,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.9375,
+          "duration": 0.3,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 45.835063,
+      "end": 57.835063,
+      "kind": "notation",
+      "title": "Mordente: movimiento breve con la nota vecina",
+      "sourceTopic": "adornos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Mordente: movimiento breve con la nota vecina",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2,
+                  "mark": "mordent"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "adornos",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-149"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.096,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.1,
+          "duration": 0.096,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.2000000000000002,
+          "duration": 1.008,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 57.835063,
+      "end": 79.394063,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "adornos",
+      "soundEvents": []
+    },
+    {
+      "start": 79.394063,
+      "end": 96.282952,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "apoyaturas",
+      "soundEvents": []
+    },
+    {
+      "start": 96.282952,
+      "end": 108.282952,
+      "kind": "notation",
+      "title": "Apoyatura escrita antes de Do: Re pequeño",
+      "sourceTopic": "apoyaturas",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Apoyatura escrita antes de Do: Re pequeño",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 2,
+                  "grace": {
+                    "pitch": "D4"
+                  }
+                }
+              ]
+            ],
+            "meter": "2/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "apoyaturas",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-151"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1,
+          "duration": 0.6,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.625,
+          "duration": 0.6,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 108.282952,
+      "end": 120.282952,
+      "kind": "notation",
+      "title": "Realización elegida: Re negra y Do negra, total una blanca",
+      "sourceTopic": "apoyaturas",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Realización elegida: Re negra y Do negra, total una blanca",
+            "bars": [
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "meter": "2/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "apoyaturas",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-151"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 120.282952,
+      "end": 132.282952,
+      "kind": "notation",
+      "title": "Nota de adorno breve: corchea pequeña atravesada",
+      "sourceTopic": "apoyaturas",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Nota de adorno breve: corchea pequeña atravesada",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 2,
+                  "grace": {
+                    "pitch": "D4",
+                    "slash": true
+                  }
+                }
+              ]
+            ],
+            "meter": "2/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "apoyaturas",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-151"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1,
+          "duration": 0.08639999999999999,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.09,
+          "duration": 1.1136,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 132.282952,
+      "end": 147.616285,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "apoyaturas",
+      "soundEvents": []
+    },
+    {
+      "start": 147.616285,
+      "end": 158.227396,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "apoyaturas",
+      "soundEvents": []
+    },
+    {
+      "start": 158.227396,
+      "end": 176.227396,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "adornos-realizados",
+      "soundEvents": []
+    },
+    {
+      "start": 176.227396,
+      "end": 188.227396,
+      "kind": "notation",
+      "title": "Mordente inferior sobre Mi",
+      "sourceTopic": "adornos-realizados",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "Mordente inferior sobre Mi",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4,
+                  "mark": "mordent"
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 98,
+        "_sourcePage": "adornos-realizados",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-152"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 0.096,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.1,
+          "duration": 0.096,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.2000000000000002,
+          "duration": 0.408,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 188.227396,
+      "end": 200.227396,
+      "kind": "notation",
+      "title": "Realización breve: Mi-Re-Mi",
+      "sourceTopic": "adornos-realizados",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Realización breve: Mi-Re-Mi",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 16
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 16
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 98,
+        "_sourcePage": "adornos-realizados",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-152"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.15625,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 200.227396,
+      "end": 212.227396,
+      "kind": "notation",
+      "title": "Grupeto sobre Mi",
+      "sourceTopic": "adornos-realizados",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "Grupeto sobre Mi",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4,
+                  "mark": "turn"
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 98,
+        "_sourcePage": "adornos-realizados",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-152"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 0.15,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.15625,
+          "duration": 0.15,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3125,
+          "duration": 0.15,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.46875,
+          "duration": 0.15,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 212.227396,
+      "end": 224.227396,
+      "kind": "notation",
+      "title": "Realización elegida: Fa-Mi-Re-Mi",
+      "sourceTopic": "adornos-realizados",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Realización elegida: Fa-Mi-Re-Mi",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 16
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 16
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 16
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2,
+                3
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 98,
+        "_sourcePage": "adornos-realizados",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-152"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.15625,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3125,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.46875,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 224.227396,
+      "end": 239.227396,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "adornos-realizados",
+      "soundEvents": []
+    },
+    {
+      "start": 239.227396,
+      "end": 262.342125,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "glissando",
+      "soundEvents": []
+    },
+    {
+      "start": 262.342125,
+      "end": 274.342125,
+      "kind": "notation",
+      "title": "Deslizamiento ascendente",
+      "sourceTopic": "glissando",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Deslizamiento ascendente",
+            "gliss": [
+              [
+                0,
+                1
+              ]
+            ],
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "glissando",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-150"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 1.1785714285714286,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3571428571428572,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 1.5357142857142856,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.7142857142857144,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.8928571428571428,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 2.071428571428571,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 274.342125,
+      "end": 286.342125,
+      "kind": "notation",
+      "title": "Deslizamiento descendente",
+      "sourceTopic": "glissando",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Deslizamiento descendente",
+            "gliss": [
+              [
+                0,
+                1
+              ]
+            ],
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "glissando",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-150"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Gb4",
+          "soundPitch": "Gb4",
+          "start": 1.1785714285714286,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.3571428571428572,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.5357142857142856,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Eb4",
+          "soundPitch": "Eb4",
+          "start": 1.7142857142857144,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.8928571428571428,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Db4",
+          "soundPitch": "Db4",
+          "start": 2.071428571428571,
+          "duration": 0.17142857142857143,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 286.342125,
+      "end": 303.342125,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "glissando",
+      "soundEvents": []
+    },
+    {
+      "start": 303.342125,
+      "end": 315.342125,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "glissando",
+      "soundEvents": []
+    },
+    {
+      "start": 315.342125,
+      "end": 332.455188,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "octavas",
+      "soundEvents": []
+    },
+    {
+      "start": 332.455188,
+      "end": 344.455188,
+      "kind": "notation",
+      "title": "Escrito Do4-Re4-Mi4; suena Do5-Re5-Mi5",
+      "sourceTopic": "octavas",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "Escrito Do4-Re4-Mi4; suena Do5-Re5-Mi5",
+            "spans": [
+              {
+                "text": "8va",
+                "hook": true
+              }
+            ],
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 1
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "octavas",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-150"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C5",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D5",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E5",
+          "start": 3.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 344.455188,
+      "end": 356.455188,
+      "kind": "notation",
+      "title": "Escrito Do5-Re5-Mi5; suena Do4-Re4-Mi4",
+      "sourceTopic": "octavas",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 90,
+        "rows": [
+          {
+            "title": "Escrito Do5-Re5-Mi5; suena Do4-Re4-Mi4",
+            "spans": [
+              {
+                "text": "8va bassa",
+                "hook": true,
+                "below": true
+              }
+            ],
+            "bars": [
+              [
+                {
+                  "pitch": "C5",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D5",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E5",
+                  "dur": 1
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "octavas",
+        "rowHeights": [
+          90
+        ],
+        "sourcePageId": "flow-cont-150"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D5",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E5",
+          "soundPitch": "E4",
+          "start": 3.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 356.455188,
+      "end": 370.23296600000003,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "octavas",
+      "soundEvents": []
+    },
+    {
+      "start": 370.23296600000003,
+      "end": 380.70488300000005,
+      "kind": "explanation",
+      "title": "Adornos y su interpretación",
+      "sourceTopic": "octavas",
+      "soundEvents": []
+    },
+    {
+      "start": 380.70488300000005,
+      "end": 386.70488300000005,
+      "kind": "completion",
+      "title": "¡Sigues progresando!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

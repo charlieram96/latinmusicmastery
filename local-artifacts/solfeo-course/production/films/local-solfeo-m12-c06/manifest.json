@@ -1,0 +1,64 @@
+{
+  "classId": "local-solfeo-m12-c06",
+  "duration": 56.71925,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Dictado 5: tresillo y puntillo",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 21,
+      "kind": "explanation",
+      "title": "Dictado 5: tresillo y puntillo",
+      "sourceTopic": "dictado-modelo-5",
+      "soundEvents": []
+    },
+    {
+      "start": 21,
+      "end": 38.356646,
+      "kind": "explanation",
+      "title": "Dictado 5: tresillo y puntillo",
+      "sourceTopic": "dictado-modelo-5",
+      "soundEvents": []
+    },
+    {
+      "start": 38.356646,
+      "end": 50.697917,
+      "kind": "explanation",
+      "title": "Dictado 5: tresillo y puntillo",
+      "sourceTopic": "dictado-modelo-5",
+      "soundEvents": []
+    },
+    {
+      "start": 50.697917,
+      "end": 56.697917,
+      "kind": "completion",
+      "title": "¡Un paso más en tu música!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

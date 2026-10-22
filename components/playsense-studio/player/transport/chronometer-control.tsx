@@ -19,9 +19,10 @@
 // CSS pendulum, and it is exactly why the scheduler must never see it: a
 // rounded tempo is cumulative phase error for a phase-locked click.
 
+import { createPortal } from 'react-dom';
 import {useStudioText} from '../../studio/use-studio-text';
 import { Bell, BellOff, Minus, Plus } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 
 const MIN_RATE = 0.1;
 const MAX_RATE = 2;
@@ -63,6 +64,26 @@ export function ChronometerControl({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [compactBounds, setCompactBounds] = useState<CSSProperties | null>(null);
+  useLayoutEffect(() => {
+    if (!open || !ref.current?.closest('[data-kids-score-workspace]')) {
+      setCompactBounds(null);
+      return;
+    }
+    const position = () => {
+      const trigger = ref.current!.getBoundingClientRect();
+      const frame = ref.current!.closest('.ws-media, .ws-frame, [data-kids-score-workspace]')!.getBoundingClientRect();
+      const width = Math.min(220, frame.width - 16);
+      const headerBottom = ref.current!.closest('.lx')?.querySelector('[data-lesson-top-bar]')?.getBoundingClientRect().bottom ?? 0;
+      const top = Math.max(8, headerBottom + 8, frame.top + 8);
+      setCompactBounds({ position: 'fixed', bottom: 'auto', right: 'auto', width, left: Math.max(frame.left + 8, Math.min(trigger.left, frame.right - width - 8)), top, maxHeight: Math.max(80, Math.min(trigger.top - top - 6, frame.height - 16)), zIndex: 100, overflowY: 'auto' });
+    };
+    position();
+    window.addEventListener('resize', position);
+    window.addEventListener('scroll', position, true);
+    return () => { window.removeEventListener('resize', position); window.removeEventListener('scroll', position, true); };
+  }, [open]);
   const effectiveBpm = Math.round(baseBpm * playbackRate);
   const beatSeconds = effectiveBpm > 0 ? 60 / effectiveBpm : 0;
   const active = Math.abs(playbackRate - 1) > 0.001;
@@ -73,7 +94,7 @@ export function ChronometerControl({
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node) && !panelRef.current?.contains(e.target as Node)) setOpen(false);
     };
     window.addEventListener('pointerdown', onDown);
     return () => window.removeEventListener('pointerdown', onDown);
@@ -86,36 +107,12 @@ export function ChronometerControl({
     animationPlayState: isPlaying ? 'running' : 'paused',
   } as const;
 
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="st-iconbtn"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        title="Chronometer — tempo & speed"
-        style={
-          active
-            ? {
-                width: 'auto',
-                paddingInline: 8,
-                color: 'hsl(var(--primary))',
-                background: 'color-mix(in srgb, hsl(var(--primary)) 12%, transparent)',
-              }
-            : { width: 'auto', paddingInline: 8 }
-        }
-      >
-        <span className="flex items-center gap-1.5">
-          <Pendulum size="sm" swingStyle={swingStyle} />
-          <span className="font-mono text-[12px] font-semibold tabular-nums leading-none">
-            {effectiveBpm}
-          </span>
-        </span>
-      </button>
-
-      {open && (
+  const panel = (
         <div
+          ref={panelRef}
+          data-kids-score-popover={compactBounds ? "" : undefined}
+          style={compactBounds ?? undefined}
+          onKeyDown={event => { if (event.key === "Escape") setOpen(false); }}
           role="dialog"
           aria-label="Chronometer"
           className="st-chrono-pop absolute bottom-full right-0 z-20 mb-2 w-[236px] rounded-xl border border-border bg-popover/95 p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-md"
@@ -233,7 +230,37 @@ export function ChronometerControl({
             </p>
           )}
         </div>
-      )}
+  );
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="st-iconbtn"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        title="Chronometer — tempo & speed"
+        style={
+          active
+            ? {
+                width: 'auto',
+                paddingInline: 8,
+                color: 'hsl(var(--primary))',
+                background: 'color-mix(in srgb, hsl(var(--primary)) 12%, transparent)',
+              }
+            : { width: 'auto', paddingInline: 8 }
+        }
+      >
+        <span className="flex items-center gap-1.5">
+          <Pendulum size="sm" swingStyle={swingStyle} />
+          <span className="font-mono text-[12px] font-semibold tabular-nums leading-none">
+            {effectiveBpm}
+          </span>
+        </span>
+      </button>
+
+      {open && (compactBounds ? createPortal(panel, document.body) : panel)}
     </div>
   );
 }

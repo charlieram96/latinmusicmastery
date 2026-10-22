@@ -1,9 +1,16 @@
 'use client'
+import {useAudioSource,useSelectedAudio} from '@/components/playsense-studio/shared/use-audio-source';
 
+import {finalBarClickStops} from '@/lib/playsense-studio/final-bar-click-stops'
+import {readClickAnchors} from '@/lib/playsense-studio/click-anchors'
+import { TimbalitoGuide, useTimbalito } from '@/components/learning-mode/timbalito'
+import { useLearningMode } from '@/components/learning-mode/store'
 import { sessionLatencyMs } from '@/lib/audio/session-latency'
 import { LoopbackLatency } from '@/components/settings/loopback-latency'
 import { useSpacePlayback } from '@/hooks/use-space-playback'
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
+import { ExerciseVideoGuidance } from '@/components/playsense-studio/shared/exercise-video-guidance';
+import { exerciseVideoGuidance } from '@/lib/playsense-studio/exercise-video-guidance';
 import { CascaraVideoCoaching } from './cascara-video-coaching';
 import { CASCARA_COACHING_ID } from '@/lib/play-sense/cascara-coaching';
 import { VideoFullscreenButton } from '@/components/playsense-studio/shared/video-fullscreen-button';
@@ -31,6 +38,7 @@ import { getBestAttemptAccuracy, saveAttempt } from '@/app/actions/play-sense'
 import { buildBarResults, reachedResults, takeBaseline } from '@/lib/play-sense/bar-results'
 import { computeStats } from '@/lib/play-sense/scoring'
 import { audioErrorKey } from '@/lib/play-sense/audio-errors'
+import { barPracticeClip } from '@/lib/play-sense/bar-practice'
 import { PartDone } from './part-done'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -77,8 +85,7 @@ const MEDIA_CLASS = 'h-full w-full bg-black object-contain'
 // which also forces pitch preservation (the follow trims the rate ±3 %).
 function applyMediaProps(el: HTMLVideoElement, url: string, audible: boolean, label: string): void {
   if (el.getAttribute('src') !== url) el.src = url
-  el.muted = !audible
-  el.toggleAttribute('muted', !audible)
+  // useSelectedAudio owns muting so an imported clip only covers its own range.
   el.setAttribute('playsinline', '')
   el.preload = 'auto'
   el.className = MEDIA_CLASS
@@ -117,6 +124,7 @@ interface ScoreExerciseGameProps {
    *  engine clock from `play.bar1Seconds` (or the trim-in point when bar 1
    *  is unset). See `mediaAudible` for the one exception. */
   exerciseVideo?: {
+    metronomeAnchorSeconds?: number | null
     url: string
     /** Trim in-point: where the usable region of the video starts. */
     startSeconds: number
@@ -158,6 +166,8 @@ function ScoreExerciseSession({
   mediaAudible: authoredMediaAudible = false,
 }: ScoreExerciseGameProps) {
   const { t, locale } = useTranslation()
+  const learningMode = useLearningMode()
+  const timbalito = useTimbalito()
   const st = useStudioText()
   const [previewVideoAudible, setPreviewVideoAudible] = useState(preview || authoredMediaAudible)
   const [videoVolume, setVideoVolume] = useState(1)
@@ -181,21 +191,12 @@ function ScoreExerciseSession({
   // Play opens with the staff and highway filling the stage and the teacher
   // video floating bottom right (24 % wide); the student can re-lay it out.
   // Remembered per staff layout, like watch (lmm-workspace:play:stacked / :horizontal).
+  const [arrangementHost, setArrangementHost] = useState<HTMLDivElement | null>(null)
   const [visibleScreens, setVisibleScreens] = useState({ video: true, score: true, highway: true })
   const [staffLayout, setStaffLayout] = useStaffLayoutPreference()
-  const workspace = useWorkspaceLayout(`play:${staffLayout}`, STUDENT_WORKSPACE, { layouts: STUDENT_LAYOUTS })
-  // Without a teacher video there is nothing to lay out: the music fills the
-  // workspace (staff over highway), and the score's shape must not follow a
-  // stored layout the student can neither see nor change here.
-  const hasVideo = !!exerciseVideo
-  const scoreWorkspace = useMemo(
-    // Read-only: nothing here may rewrite the layout saved for exercises that do have a video.
-    () => hasVideo ? workspace : {
-      ...workspace, layout: 'music' as const, state: { ...workspace.state, layout: 'music' as const, swap: false },
-      setLayout: () => {}, swap: () => {}, update: () => {}, beforeLayoutChangeRef: { current: null },
-    },
-    [hasVideo, workspace],
-  )
+  const workspace = useWorkspaceLayout(`play:${staffLayout}`, STUDENT_WORKSPACE, { layouts: STUDENT_LAYOUTS, allowSideOnNarrow: true })
+  // The same arrangement applies with or without a teacher video.
+  const scoreWorkspace = useMemo(() => ({...workspace, layout: workspace.state.layout}), [workspace])
   // The student's mix over the backing tracks: every track plays, each at the
   // level the student set (on top of the authored level) or muted. Remembered
   // per viewer; hydrated after mount so the server and first client render agree.
@@ -248,19 +249,22 @@ function ScoreExerciseSession({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   useEffect(() => () => { videoRef.current?.pause() }, [])
   const videoUrl = exerciseVideo?.url ?? null
+  const audioSource=useAudioSource(authoredExercise.id,"exercise",videoUrl)
+  const replacementAudioError=useSelectedAudio(videoRef,audioSource.settings,{volume:videoVolume,muted:!mediaAudible,loaded:audioSource.loaded})
   const videoLabel = t('dashboard.classViewer.exercise.referenceVideo')
   const ensureMediaEl = useCallback((): HTMLVideoElement | null => {
     if (!videoUrl) return null
     const el = videoRef.current ?? document.createElement('video')
+    if (!videoRef.current) el.muted = true
     el.setAttribute('controlsList', 'nodownload noremoteplayback')
     el.disablePictureInPicture = true
     el.disableRemotePlayback = true
     el.oncontextmenu = event => event.preventDefault()
     videoRef.current = el
-    applyMediaProps(el, videoUrl, mediaAudible, videoLabel)
+    applyMediaProps(el, videoUrl, mediaAudible && audioSource.loaded && audioSource.settings.selected!=="imported", videoLabel)
     el.volume = videoVolumeRef.current
     return el
-  }, [videoUrl, mediaAudible, videoLabel])
+  }, [videoUrl, mediaAudible, videoLabel,audioSource.loaded,audioSource.settings.selected])
   useEffect(() => {
     if (videoRef.current) ensureMediaEl()
   }, [ensureMediaEl])
@@ -320,9 +324,11 @@ function ScoreExerciseSession({
 
   // An explicit (possibly empty) selection only when backing tracks are
   // authored; otherwise the legacy path (exercise.audioUrl) stays in charge.
+  const metronomeClickStopSeconds=useMemo(()=>score?finalBarClickStops(score,exerciseVideo?.timeMap?.waypoints??[]).map(t=>(t-(exerciseVideo?.timeMap?.waypoints.length?(bar1??0):0))/tempoRate):[],[score,exerciseVideo?.timeMap,bar1,tempoRate])
+  const metronomeClickAnchors=useMemo(()=>readClickAnchors(exerciseVideo?.timeMap?.params)?.map(a=>({...a,seconds:(a.seconds-(bar1??0))/tempoRate})),[exerciseVideo?.timeMap?.params,bar1,tempoRate])
   const session = useExerciseSession(backingTracks
-    ? { backingTracks: placedTracks, backingMix: playbackMix, countInBars, playbackOnly: preview, defaultAudioMetronome: !preview, metronomeVolume: clickVolume, playbackRate: tempoRate }
-    : { countInBars, playbackOnly: preview, defaultAudioMetronome: !preview, metronomeVolume: clickVolume, playbackRate: tempoRate })
+    ? { backingTracks: placedTracks, backingMix: playbackMix, countInBars, playbackOnly: preview, defaultAudioMetronome: !preview, metronomeVolume: clickVolume, metronomeClickStopSeconds, metronomeClickAnchors, metronomeOffsetSeconds: exerciseVideo?.metronomeAnchorSeconds == null ? 0 : exerciseVideo.metronomeAnchorSeconds - (bar1 ?? 0), playbackRate: tempoRate }
+    : { countInBars, playbackOnly: preview, defaultAudioMetronome: !preview, metronomeVolume: clickVolume, metronomeClickStopSeconds, metronomeClickAnchors, metronomeOffsetSeconds: exerciseVideo?.metronomeAnchorSeconds == null ? 0 : exerciseVideo.metronomeAnchorSeconds - (bar1 ?? 0), playbackRate: tempoRate })
   const [readySeconds, setReadySeconds] = useState<number | null>(null)
   const pendingStart = useRef(false)
   const startSession = useRef(session.startExercise)
@@ -360,6 +366,7 @@ function ScoreExerciseSession({
     countInSeconds: getSessionCountInSeconds(authoredExercise, countInBars),
     preroll: play?.preroll ?? true,
     loopSeconds: getLoopDuration(authoredExercise),
+    loopCount: Math.max(1, authoredExercise.loopCount || 1),
   } : null, [exerciseVideo, bar1, play, authoredExercise, countInBars])
 
   // Each frame, ask where the video should be at the engine time and trim its
@@ -605,7 +612,9 @@ function ScoreExerciseSession({
         <ReadyCheck
           key={calibrationAttempt}
           forceFresh={calibrationAttempt > 0}
-          onCancelSetup={calibrationAttempt > 0 ? () => { session.retry(); testedMode.current=null; setCalibrationAttempt(0) } : undefined}
+          onCancelSetup={calibrationAttempt > 0 ? () => { session.cancelCalibration(); session.retry(); testedMode.current=null; setCalibrationAttempt(0); setReadyConfirmed(true) } : undefined}
+          onWatchDemo={onWatchDemo ? () => { cancelReady(); session.cancelCalibration(); onWatchDemo() } : undefined}
+          startLabel={locale === 'es' ? 'Tu turno · Comenzar' : 'Your turn · Start'}
           onProfileRestored={()=>setReadyConfirmed(true)}
           getTimingElapsed={session.getTimingElapsed}
           timingHits={session.timingHits}
@@ -687,6 +696,7 @@ function ScoreExerciseSession({
       <div className="ps-lesson-results">
         <PartDone
           onRecalibrate={preview ? undefined : recalibrate}
+          practice={exerciseVideo && bar1 !== null ? { score: score ?? undefined, videoUrl: exerciseVideo.url, clipForBar: bar => barPracticeClip(authoredExercise, bar, bar1, exerciseVideo.startSeconds, exerciseVideo.trimOutSeconds, exerciseVideo.metronomeAnchorSeconds) } : undefined}
           stats={shown}
           bars={buildBarResults(session.exercise, session.eventResults, { reached })}
           previousBest={takeBaseline(savedBest, visitBaseline)}
@@ -777,7 +787,7 @@ function ScoreExerciseSession({
 
   const hasStaff = showCanvas && !!score
   const scoreEl = hasStaff && score ? (
-    <div className="ps-exercise-score-panel flex min-h-0 min-w-0 flex-1 flex-col"><ScoreHeading score={score} bpm={exercise.bpm}/>
+    <div tabIndex={0} role="region" aria-label={locale === 'es' ? 'Partitura desplazable' : 'Scrollable score'} className="ps-exercise-score-panel flex min-h-0 min-w-0 flex-1 flex-col"><ScoreHeading score={score} bpm={exercise.bpm}/>
     <ExerciseScore score={score} currentMs={staffMs} getCurrentMs={getStaffMs}
       playing={session.sessionState === 'playing' || session.sessionState === 'paused'} pass={Math.floor(session.playheadProgress * loopCount) + 1}
       getPass={() => Math.floor(Math.max(0, session.getElapsedSeconds()) / exerciseDurationSec * loopCount) + 1}
@@ -921,6 +931,7 @@ function ScoreExerciseSession({
 
   return (
     <div className="ps-lesson-game rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+      {(audioSource.error||replacementAudioError)&&<p role="alert" className="text-destructive">{audioSource.error||replacementAudioError}</p>}
       {hardwareTestOpen && <LoopbackLatency getLiveAudioInput={session.getLiveAudioInput} deviceLabel={session.micDeviceLabel ?? ''} onClose={()=>setHardwareTestOpen(false)} />}
       {isActive && inLesson && exerciseVideo && <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} hideMusicOption /></WorkspaceToolsPortal>}
       {isActive && !inLesson && (
@@ -939,7 +950,7 @@ function ScoreExerciseSession({
         </div>
       )}
 
-      {isActive && <div role="group" aria-label="Visible screens" className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2">
+      {isActive && <div role="group" aria-label="Visible screens" className="relative z-10 flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2">
         {([{ key: 'video', label: 'Video', available: !!exerciseVideo }, { key: 'score', label: 'Score', available: hasStaff }, { key: 'highway', label: 'PlaySense', available: true }] as const).filter(item => item.available).map(item => {
           const active = visibleScreens[item.key]
           const count = Number(!!exerciseVideo && visibleScreens.video) + Number(hasStaff && visibleScreens.score) + Number(visibleScreens.highway)
@@ -948,21 +959,34 @@ function ScoreExerciseSession({
             setVisibleScreens(current => ({ ...current, [item.key]: !active }))
           }}>{active ? '✓ ' : ''}{st(item.label)}</Button>
         })}
+        {exerciseVideo && hasStaff && <select aria-label={locale === 'es' ? 'Mostrar video y partitura' : 'Show video and score'}
+          className="max-w-[160px] rounded-lg border border-border bg-card px-2 py-1 text-xs"
+          value={visibleScreens.highway ? 'custom' : visibleScreens.video && visibleScreens.score ? 'both' : visibleScreens.video ? 'video' : 'music'}
+          onChange={event => { if (event.target.value !== 'custom') setVisibleScreens({video:event.target.value !== 'music',score:event.target.value !== 'video',highway:false}) }}>
+          {visibleScreens.highway && <option value="custom">{locale === 'es' ? 'Vista con PlaySense' : 'View with PlaySense'}</option>}
+          <option value="both">{locale === 'es' ? 'Video y partitura' : 'Video and score'}</option>
+          <option value="video">{locale === 'es' ? 'Solo video' : 'Video only'}</option>
+          <option value="music">{locale === 'es' ? 'Solo partitura' : 'Score only'}</option>
+        </select>}
+        {learningMode === 'kids' && <div ref={setArrangementHost} className="ml-auto min-w-0 max-w-full overflow-x-auto" data-kids-arrangement-slot/>}
+        {learningMode === 'kids' && timbalito && <div className="ml-auto"><TimbalitoGuide toolbar/></div>}
       </div>}
 
       {/* The lesson workspace: staff over the highway, the demo video
           floating in a corner (or beside them — the student's choice). */}
       <ExerciseScoreWorkspaceBridge controller={scoreWorkspace}>
       <SplitWorkspace
+        arrangementHost={learningMode === 'kids' ? arrangementHost : undefined}
         controller={workspace}
+        musicLabel={hasStaff ? undefined : 'PlaySense'}
         visiblePanes={{ video: visibleScreens.video, score: hasStaff ? visibleScreens.score : visibleScreens.highway, highway: hasStaff && visibleScreens.highway }}
         frame="fill"
         // Only once the session is live: a paused video beside "Preparing…" reads as broken.
         media={exerciseVideo && showCanvas && (
           // The kept <video> (see ensureMediaEl): muted unless mediaAudible —
           // a jam's own track — and following the engine clock.
-          <div ref={mountMedia} className="relative h-full min-h-0 w-full" data-exercise-media=""><VideoWatermark /><VideoFullscreenButton />
-            {(score?.videoCoaching === 'cascara-v1' || (preview && authoredExercise.id === CASCARA_COACHING_ID && score?.videoCoaching !== null)) && bar1 !== null && <CascaraVideoCoaching exercise={authoredExercise} state={session.sessionState} getElapsedSeconds={getElapsedSeconds} tempoRate={tempoRate} bar1={bar1} pausedSeconds={session.sessionState === 'paused' ? session.playheadProgress * exerciseDurationSec * tempoRate : 0} />}
+          <div ref={mountMedia} className="relative h-full min-h-0 w-full" data-exercise-media=""><VideoWatermark /><VideoFullscreenButton /><ExerciseVideoGuidance itemId={authoredExercise.id} videoRef={videoRef} state={session.sessionState} onStart={startFromReady} />
+            {!exerciseVideoGuidance[authoredExercise.id] && (score?.videoCoaching === 'cascara-v1' || (preview && authoredExercise.id === CASCARA_COACHING_ID && score?.videoCoaching !== null)) && bar1 !== null && <CascaraVideoCoaching exercise={authoredExercise} state={session.sessionState} getElapsedSeconds={getElapsedSeconds} tempoRate={tempoRate} bar1={bar1} pausedSeconds={session.sessionState === 'paused' ? session.playheadProgress * exerciseDurationSec * tempoRate : 0} />}
           </div>
         )}
         music={hasStaff ? scoreEl : stageEl}

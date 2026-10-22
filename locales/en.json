@@ -23,11 +23,12 @@
     "larger": "Larger notation"
   },
   "lessonWorkspace": {
+    "video": "Video only",
     "layout": "Workspace layout",
     "side": "Side by side",
     "stack": "Stacked",
     "pip": "Picture in picture",
-    "music": "Music only",
+    "music": "Score only",
     "swap": "Swap sides",
     "resize": "Resize video and music",
     "resizeMusic": "Resize staff and highway",

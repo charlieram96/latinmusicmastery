@@ -33,7 +33,7 @@ describe('responsive measure rows', () => {
     const widths = [280, 200, 200, 200, 200, 200]
     expect(packScoreRows(widths, 840 / 1.2)[0].widths.length).toBe(3)
     expect(packScoreRows(widths, 840 / 1.6)[0].widths.length).toBe(2)
-    expect(packScoreRows([700, 200, 200], 450)).toEqual([{ startIndex: 0, widths: [700] }, { startIndex: 1, widths: [225, 225] }])
+    expect(packScoreRows([700, 200, 200], 450)).toEqual([{ startIndex: 0, widths: [700] }, { startIndex: 1, widths: [200, 200] }])
   })
 
   it('retains order, the final gap, and empty-score handling', () => {
@@ -80,7 +80,7 @@ describe('row-start header space', () => {
     const [row, second] = packScoreRows([200, 200, 200, 200], 700, [0, 50, 50, 50])
     expect(row.widths.length).toBe(3)
     expect(row.widths[1]).toBeCloseTo(row.widths[2]) // bar 1 sits mid-row: no extra
-    expect(second.widths[0]).toBeCloseTo(700)
+    expect(second.widths[0]).toBeCloseTo(row.widths[1] + 50) // same music width, plus row clef
   })
   it('passes the extra through the lesson packer', () => {
     const rows = packLessonScoreRows([200, 200, 200, 200], 450, { leading: false, trailing: false }, [0, 0, 60, 60])

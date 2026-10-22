@@ -1,4 +1,5 @@
 'use client'
+import { formatMediaDuration } from '@/lib/utils'
 
 // No-score video lesson workspace.
 //
@@ -33,9 +34,7 @@ const INFO_LAYOUTS: readonly WorkspaceLayout[] = ['side', 'stack']
 
 function formatDuration(seconds: number | null): string | null {
   if (!seconds || seconds <= 0) return null
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
+  return formatMediaDuration(seconds)
 }
 
 export function VideoInfoSplit({

@@ -1,3 +1,4 @@
+import { usesLocalSolfeo, readLocalSolfeo, LOCAL_SOLFEO_COURSE_ID } from '@/lib/courses/local-solfeo-draft'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
@@ -61,6 +62,22 @@ export default async function BrowseCoursesPage() {
     teacherImage: c.teacher?.image_url ?? null,
     createdAt: c.created_at,
   }))
+
+  if (await usesLocalSolfeo(LOCAL_SOLFEO_COURSE_ID)) {
+    const draft = await readLocalSolfeo()
+    const existing = courses.findIndex(c => c.id === LOCAL_SOLFEO_COURSE_ID)
+    if (existing !== -1) courses.splice(existing, 1)
+    courses.unshift({
+      id: LOCAL_SOLFEO_COURSE_ID, slug: null, title: 'Solfeo Aplicado',
+      href: '/dashboard/course/solfeo-aplicado',
+      description: (locale === 'es' ? draft.description_es : draft.description) ?? null,
+      thumbnailUrl: draft.thumbnail_url ?? '/local-course-assets/solfeo-aplicado-cover.png',
+      instrument: 'Theoretical', styleName: locale === 'es' ? 'Teoría musical' : 'Music theory',
+      countryName: null, difficulty: 'beginner', isFundamentals: true,
+      lessons: draft.sections.reduce((total, section) => total + section.classes.length, 0),
+      teacherName: 'Raffy Pérez', teacherImage: null, createdAt: '2026-10-06T00:00:00Z',
+    })
+  }
 
   return <CoursesView courses={courses} />
 }

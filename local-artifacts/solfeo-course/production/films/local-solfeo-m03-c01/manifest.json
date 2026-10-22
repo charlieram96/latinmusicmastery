@@ -1,0 +1,216 @@
+{
+  "classId": "local-solfeo-m03-c01",
+  "duration": 79.583104,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Tono y semitono: T y ST",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 26,
+      "kind": "explanation",
+      "title": "Tono y semitono: T y ST",
+      "sourceTopic": "tonos",
+      "soundEvents": []
+    },
+    {
+      "start": 26,
+      "end": 48.222222,
+      "kind": "notation",
+      "title": "Do mayor: tonos y semitonos",
+      "sourceTopic": "tonos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 109,
+        "rows": [
+          {
+            "title": "Do mayor: tonos y semitonos",
+            "events": [
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "D4",
+                "dur": 1
+              },
+              {
+                "pitch": "E4",
+                "dur": 1
+              },
+              {
+                "pitch": "F4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "A4",
+                "dur": 1
+              },
+              {
+                "pitch": "B4",
+                "dur": 1
+              },
+              {
+                "pitch": "C5",
+                "dur": 1
+              }
+            ],
+            "intervals": [
+              "T",
+              "T",
+              "S",
+              "T",
+              "T",
+              "T",
+              "S"
+            ],
+            "explainSemitones": true,
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 120,
+        "_sourcePage": "tonos",
+        "rowHeights": [
+          109
+        ],
+        "sourcePageId": "tonos"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 48.222222,
+      "end": 61.561764000000004,
+      "kind": "explanation",
+      "title": "Tono y semitono: T y ST",
+      "sourceTopic": "tonos",
+      "soundEvents": []
+    },
+    {
+      "start": 61.561764000000004,
+      "end": 73.56176400000001,
+      "kind": "notation",
+      "title": "Tono y semitono: T y ST",
+      "sourceTopic": "tonos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "stair",
+        "height": 205,
+        "_sourcePage": "tonos",
+        "sourcePageId": "tonos"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 73.56176400000001,
+      "end": 79.56176400000001,
+      "kind": "completion",
+      "title": "¡Bien hecho!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

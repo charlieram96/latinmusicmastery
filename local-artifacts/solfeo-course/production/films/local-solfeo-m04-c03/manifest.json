@@ -1,0 +1,241 @@
+{
+  "classId": "local-solfeo-m04-c03",
+  "duration": 78.021333,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Puntillo y ligadura de prolongación",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 22,
+      "kind": "explanation",
+      "title": "Puntillo y ligadura de prolongación",
+      "sourceTopic": "puntillos",
+      "soundEvents": []
+    },
+    {
+      "start": 22,
+      "end": 34,
+      "kind": "notation",
+      "title": "Negra con puntillo + corchea = dos negras",
+      "sourceTopic": "puntillos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Negra con puntillo + corchea = dos negras",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "dot": true
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 8
+                }
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "puntillos",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-62"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.8625,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 34,
+      "end": 46,
+      "kind": "notation",
+      "title": "Ligadura: dos notas de la misma altura, un solo ataque",
+      "sourceTopic": "puntillos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 86,
+        "rows": [
+          {
+            "title": "Ligadura: dos notas de la misma altura, un solo ataque",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "ties": [
+              [
+                0,
+                1
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "puntillos",
+        "rowHeights": [
+          86
+        ],
+        "sourcePageId": "flow-cont-62"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 2.475,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 46,
+      "end": 60,
+      "kind": "explanation",
+      "title": "Puntillo y ligadura de prolongación",
+      "sourceTopic": "puntillos",
+      "soundEvents": []
+    },
+    {
+      "start": 60,
+      "end": 72,
+      "kind": "notation",
+      "title": "Doble puntillo: siete semicorcheas + una semicorchea",
+      "sourceTopic": "puntillos",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Doble puntillo: siete semicorcheas + una semicorchea",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "dots": 2
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 16
+                }
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 98,
+        "_sourcePage": "puntillos",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-63"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 1.00625,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.09375,
+          "duration": 0.14375000000000002,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 72,
+      "end": 78,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

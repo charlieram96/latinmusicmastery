@@ -46,7 +46,7 @@ const noop = () => {};
 function renderStrip(
   track: Track,
   keyFifths = 0,
-  opts: { onNoteSelection?: EditableMeasureStripProps['onNoteSelection']; selectedMeasures?: [number, number] | null; flags?: Record<number, string>; pixelsPerSecond?: number } = {},
+  opts: { onWheelZoom?: EditableMeasureStripProps['onWheelZoom']; onScrollByPx?: EditableMeasureStripProps['onScrollByPx']; onNoteSelection?: EditableMeasureStripProps['onNoteSelection']; selectedMeasures?: [number, number] | null; flags?: Record<number, string>; pixelsPerSecond?: number } = {},
 ) {
   const items: MeasureStripItem[] = extractTrackEvents(track, [4, 4], keyFifths).map((b, i) => ({
     measureIndex: i,
@@ -68,6 +68,7 @@ function renderStrip(
   act(() => {
     root.render(
       <EditableMeasureStrip
+        onWheelZoom={opts.onWheelZoom} onScrollByPx={opts.onScrollByPx}
         onNoteSelection={opts.onNoteSelection}
         measures={items} pixelsPerSecond={opts.pixelsPerSecond ?? 100} scrollLeftPx={0} selected={null}
         selectedMeasures={opts.selectedMeasures ?? null}
@@ -85,6 +86,41 @@ const base = (measures: Track['measures']): Track => ({
 });
 
 describe('EditableMeasureStrip', () => {
+  it('coalesces a pinch burst and uses the current callback after a render', () => {
+    const first = vi.fn(), latest = vi.fn();
+    const track = base([]);
+    renderStrip(track, 0, { onWheelZoom: first });
+    const surface = host.querySelector('.st-sync-selection')!;
+    act(() => {
+      for (let i = 0; i < 100; i++) surface.dispatchEvent(new WheelEvent('wheel', {ctrlKey: true, deltaY: -1, clientX: 120, cancelable: true}));
+    });
+    expect(first).not.toHaveBeenCalled();
+    // Render before the pending frame: the gesture must survive callback changes.
+    renderStrip(track, 0, { onWheelZoom: latest });
+    expect(first).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledTimes(1);
+    expect(latest.mock.calls[0][0]).toBeCloseTo(Math.exp(.3));
+    expect(latest.mock.calls[0][1]).toBe(120);
+    flushFrames();
+    expect(latest).toHaveBeenCalledTimes(1);
+  });
+
+  it('batches horizontal pan without intercepting normal vertical scrolling', () => {
+    const pan = vi.fn(), zoom = vi.fn();
+    renderStrip(base([]), 0, {onScrollByPx: pan, onWheelZoom: zoom});
+    const surface = host.querySelector('.st-sync-selection')!;
+    act(() => {
+      surface.dispatchEvent(new WheelEvent('wheel', {deltaX: 5, cancelable: true}));
+      surface.dispatchEvent(new WheelEvent('wheel', {deltaX: 7, cancelable: true}));
+      const vertical = new WheelEvent('wheel', {deltaY: 20, cancelable: true});
+      surface.dispatchEvent(vertical);
+      expect(vertical.defaultPrevented).toBe(false);
+    });
+    flushFrames();
+    expect(pan).toHaveBeenCalledExactlyOnceWith(12);
+    expect(zoom).not.toHaveBeenCalled();
+  });
+
   it('selects a voice-two note, highlights it and clears it on an outside click', () => {
     const selected = vi.fn();
     renderStrip(base([{ number: 1, voices: [{ number: 1, events: [] }, { number: 2, events: [{ kind: 'note', midi: 60, durationQN: 4 }] }] }]), 0, { onNoteSelection: selected });
@@ -167,6 +203,6 @@ describe('EditableMeasureStrip', () => {
   it('gives the narrow placeholder its own dashed left border, overriding the base rule', () => {
     const css = readFileSync(resolve(process.cwd(), 'app/globals.css'), 'utf8');
     const rule = css.match(/\.st-mbox\.is-narrow\s*\{([^}]*)\}/)?.[1] ?? '';
-    expect(rule).toMatch(/border-left:\s*1px dashed hsl\(var\(--border\)\)/);
+    expect(rule).toMatch(/border:\s*1px dashed hsl\(var\(--primary\) \/ \.65\)/);
   });
 });

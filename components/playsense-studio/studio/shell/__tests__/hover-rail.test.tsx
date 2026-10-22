@@ -28,8 +28,8 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.useRealTimers(); });
 
 const rail = () => host.querySelector('.st-hrail') as HTMLElement;
-const enter = () => act(() => { rail().dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body })); });
-const leave = () => act(() => { rail().dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })); });
+const enter = () => act(() => { rail().dispatchEvent(new MouseEvent('mouseenter', { relatedTarget: document.body })); });
+const leave = () => act(() => { rail().dispatchEvent(new MouseEvent('mouseleave', { relatedTarget: document.body })); });
 
 describe('HoverRail', () => {
   it('opens as soon as the pointer enters', () => {
@@ -54,6 +54,23 @@ describe('HoverRail', () => {
     act(() => { input.focus(); });
     leave();
     act(() => { vi.advanceTimersByTime(RAIL_CLOSE_DELAY_MS + 50); });
+    expect(rail().classList.contains('is-open')).toBe(true);
+  });
+  it('does not close after a field blurs while the mouse remains over the panel', () => {
+    enter();
+    const input=host.querySelector('input')!;
+    act(()=>input.focus());
+    act(()=>input.blur());
+    act(()=>vi.advanceTimersByTime(RAIL_CLOSE_DELAY_MS+50));
+    expect(rail().classList.contains('is-open')).toBe(true);
+    leave();
+    act(()=>vi.advanceTimersByTime(RAIL_CLOSE_DELAY_MS+50));
+    expect(rail().classList.contains('is-open')).toBe(false);
+  });
+  it('ignores synthetic mouseout transitions into controls inside the panel', () => {
+    enter();
+    act(()=>rail().dispatchEvent(new MouseEvent('mouseout',{bubbles:true,relatedTarget:host.querySelector('input')})));
+    act(()=>vi.advanceTimersByTime(RAIL_CLOSE_DELAY_MS+50));
     expect(rail().classList.contains('is-open')).toBe(true);
   });
   it('an icon click opens the rail and scrolls to its section', () => {

@@ -76,10 +76,10 @@ export function useBackingMixer(options: {
 
 
   // The element mounts late (it is portalled), so poll the ref each commit the
-  // way useVideoTransportClock does; the updater bails when unchanged.
+  // way useVideoTransportClock does; guard before scheduling any state update.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   useEffect(() => {
-    setVideoEl((prev) => (prev === videoRef.current ? prev : videoRef.current));
+    if (videoEl !== videoRef.current) setVideoEl(videoRef.current);
   });
 
   // ---- Decode ------------------------------------------------------------

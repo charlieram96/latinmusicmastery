@@ -1,0 +1,155 @@
+{
+  "classId": "local-solfeo-m09-c04",
+  "title": {
+    "es": "9.4 · Dal Segno: volver al signo",
+    "en": "9.4 · Dal Segno: returning to the sign"
+  },
+  "videoUrl": "/local-course-assets/solfeo/films/local-solfeo-m09-c04-sync-v3.mp4",
+  "posterUrl": "/local-course-assets/solfeo/films/local-solfeo-m09-c04.png",
+  "duration": 54.595758,
+  "sections": [],
+  "questions": [
+    {
+      "id": "local-solfeo-m09-c04-exercise-q1",
+      "class_item_id": "local-solfeo-m09-c04-exercise",
+      "order_index": 0,
+      "question": "¿Adónde devuelve D.S.?",
+      "question_es": "¿Adónde devuelve D.S.?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Siempre al primer compás"
+          },
+          {
+            "id": "choice-1",
+            "text": "Al final"
+          },
+          {
+            "id": "choice-2",
+            "text": "Al segno"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-2",
+      "explanation": "La respuesta es Al segno.",
+      "explanation_es": "La respuesta es Al segno.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m09-c04-exercise-q2",
+      "class_item_id": "local-solfeo-m09-c04-exercise",
+      "order_index": 1,
+      "question": "¿Qué identifica el segno?",
+      "question_es": "¿Qué identifica el segno?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "La tónica"
+          },
+          {
+            "id": "choice-1",
+            "text": "El punto de regreso indicado por D.S."
+          },
+          {
+            "id": "choice-2",
+            "text": "La duración de una negra"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-1",
+      "explanation": "La respuesta es El punto de regreso indicado por D.S..",
+      "explanation_es": "La respuesta es El punto de regreso indicado por D.S..",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m09-c04-exercise-q3",
+      "class_item_id": "local-solfeo-m09-c04-exercise",
+      "order_index": 2,
+      "question": "D.S. al Fine termina…",
+      "question_es": "D.S. al Fine termina…",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "En Fine después del retorno al segno"
+          },
+          {
+            "id": "choice-1",
+            "text": "Antes de volver al segno"
+          },
+          {
+            "id": "choice-2",
+            "text": "Siempre en la coda"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-0",
+      "explanation": "La respuesta es En Fine después del retorno al segno.",
+      "explanation_es": "La respuesta es En Fine después del retorno al segno.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m09-c04-exercise-q4",
+      "class_item_id": "local-solfeo-m09-c04-exercise",
+      "order_index": 3,
+      "question": "¿Puede el segno estar después del primer compás?",
+      "question_es": "¿Puede el segno estar después del primer compás?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "No"
+          },
+          {
+            "id": "choice-1",
+            "text": "Solo en clave de Fa"
+          },
+          {
+            "id": "choice-2",
+            "text": "Sí"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-2",
+      "explanation": "La respuesta es Sí.",
+      "explanation_es": "La respuesta es Sí.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    }
+  ],
+  "nextHref": "/solfeo-preview?class=local-solfeo-m09-c05",
+  "metronome": {
+    "trimInSeconds": 0,
+    "trimOutSeconds": null,
+    "bpm": 100,
+    "anchorSeconds": null,
+    "segments": [
+      {
+        "from": 37.574416,
+        "to": 41.174416,
+        "bpm": 100
+      }
+    ]
+  }
+}

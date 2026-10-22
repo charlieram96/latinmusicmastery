@@ -1,0 +1,170 @@
+{
+  "classId": "local-solfeo-m09-c01",
+  "duration": 77.189813,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Barras de repetición",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 24,
+      "kind": "explanation",
+      "title": "Barras de repetición",
+      "sourceTopic": "barras",
+      "soundEvents": []
+    },
+    {
+      "start": 24,
+      "end": 36,
+      "kind": "notation",
+      "title": "Barras de repetición",
+      "sourceTopic": "barras",
+      "diagram": {
+        "type": "diagram",
+        "kind": "navigation",
+        "height": 155,
+        "mode": "bars",
+        "_sourcePage": "barras",
+        "sourcePageId": "barras"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "E4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "C4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 36,
+      "end": 47.166667000000004,
+      "kind": "explanation",
+      "title": "Barras de repetición",
+      "sourceTopic": "barras",
+      "soundEvents": []
+    },
+    {
+      "start": 47.166667000000004,
+      "end": 59.166667000000004,
+      "kind": "notation",
+      "title": "Barras de repetición",
+      "sourceTopic": "barras",
+      "diagram": {
+        "type": "diagram",
+        "kind": "navigation",
+        "height": 155,
+        "mode": "endings",
+        "_sourcePage": "barras",
+        "sourcePageId": "barras"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "E4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "C4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "C4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 59.166667000000004,
+      "end": 71.16848,
+      "kind": "explanation",
+      "title": "Barras de repetición",
+      "sourceTopic": "barras",
+      "soundEvents": []
+    },
+    {
+      "start": 71.16848,
+      "end": 77.16848,
+      "kind": "completion",
+      "title": "¡Un paso más en tu música!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

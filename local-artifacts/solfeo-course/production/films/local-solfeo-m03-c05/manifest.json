@@ -1,0 +1,256 @@
+{
+  "classId": "local-solfeo-m03-c05",
+  "duration": 85.238444,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "El teclado y las distancias entre sonidos",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 23.414646,
+      "kind": "explanation",
+      "title": "El teclado y las distancias entre sonidos",
+      "sourceTopic": "teclado-enarmonico",
+      "soundEvents": []
+    },
+    {
+      "start": 23.414646,
+      "end": 33.414646000000005,
+      "kind": "photo",
+      "title": "La altura en el teclado",
+      "soundEvents": []
+    },
+    {
+      "start": 33.414646000000005,
+      "end": 49.814646,
+      "kind": "notation",
+      "title": "El teclado y las distancias entre sonidos",
+      "sourceTopic": "teclado-enarmonico",
+      "diagram": {
+        "type": "diagram",
+        "kind": "enharmonic-keyboard",
+        "height": 440,
+        "_sourcePage": "teclado-enarmonico",
+        "sourcePageId": "teclado-enarmonico"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "E4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "F4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "G4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 4
+        },
+        {
+          "pitch": "A4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 5
+        },
+        {
+          "pitch": "B4",
+          "start": 4.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 6
+        },
+        {
+          "pitch": "C5",
+          "start": 5.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 7
+        },
+        {
+          "pitch": "B#3",
+          "start": 5.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 8
+        },
+        {
+          "pitch": "C##4",
+          "start": 6.3999999999999995,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 9
+        },
+        {
+          "pitch": "D##4",
+          "start": 7,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 10
+        },
+        {
+          "pitch": "E#4",
+          "start": 7.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 11
+        },
+        {
+          "pitch": "F##4",
+          "start": 8.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 12
+        },
+        {
+          "pitch": "G##4",
+          "start": 8.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 13
+        },
+        {
+          "pitch": "A##4",
+          "start": 9.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 14
+        },
+        {
+          "pitch": "B#4",
+          "start": 10,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 15
+        },
+        {
+          "pitch": "Dbb4",
+          "start": 10.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 16
+        },
+        {
+          "pitch": "Ebb4",
+          "start": 11.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 17
+        },
+        {
+          "pitch": "Fb4",
+          "start": 11.799999999999999,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 18
+        },
+        {
+          "pitch": "Gbb4",
+          "start": 12.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 19
+        },
+        {
+          "pitch": "Abb4",
+          "start": 13,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 20
+        },
+        {
+          "pitch": "Bbb4",
+          "start": 13.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 21
+        },
+        {
+          "pitch": "Cb5",
+          "start": 14.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 22
+        },
+        {
+          "pitch": "Dbb5",
+          "start": 14.799999999999999,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 23
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 49.814646,
+      "end": 67.217104,
+      "kind": "explanation",
+      "title": "El teclado y las distancias entre sonidos",
+      "sourceTopic": "teclado-enarmonico",
+      "soundEvents": []
+    },
+    {
+      "start": 67.217104,
+      "end": 79.217104,
+      "kind": "explanation",
+      "title": "El teclado y las distancias entre sonidos",
+      "sourceTopic": "teclado-enarmonico",
+      "soundEvents": []
+    },
+    {
+      "start": 79.217104,
+      "end": 85.217104,
+      "kind": "completion",
+      "title": "¡Bien hecho!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

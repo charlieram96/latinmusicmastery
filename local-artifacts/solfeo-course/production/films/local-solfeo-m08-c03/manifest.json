@@ -1,0 +1,611 @@
+{
+  "classId": "local-solfeo-m08-c03",
+  "duration": 172.054313,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Legato, staccato y ligadura de fraseo",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 25.016146,
+      "kind": "explanation",
+      "title": "Legato, staccato y ligadura de fraseo",
+      "sourceTopic": "articulacion",
+      "soundEvents": []
+    },
+    {
+      "start": 25.016146,
+      "end": 37.016146,
+      "kind": "photo",
+      "title": "De la lectura al sonido",
+      "soundEvents": []
+    },
+    {
+      "start": 37.016146,
+      "end": 49.016146,
+      "kind": "notation",
+      "title": "Legato: arco sobre o bajo notas de distinta altura",
+      "sourceTopic": "articulacion",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "Legato: arco sobre o bajo notas de distinta altura",
+            "slurs": [
+              [
+                0,
+                3
+              ]
+            ],
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "articulacion",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-147"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.61875,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.61875,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.61875,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 49.016146,
+      "end": 61.016146,
+      "kind": "notation",
+      "title": "Staccato: puntos",
+      "sourceTopic": "articulacion",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "Staccato: puntos",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4,
+                  "mark": "staccato"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4,
+                  "mark": "staccato"
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4,
+                  "mark": "staccato"
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4,
+                  "mark": "staccato"
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "articulacion",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-147"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.28125,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.28125,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.28125,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.875,
+          "duration": 0.28125,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 61.016146,
+      "end": 73.01614599999999,
+      "kind": "notation",
+      "title": "Portato: puntos dentro de una ligadura",
+      "sourceTopic": "articulacion",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 107,
+        "rows": [
+          {
+            "title": "Portato: puntos dentro de una ligadura",
+            "slurs": [
+              [
+                0,
+                3
+              ]
+            ],
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4,
+                  "mark": "staccato"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4,
+                  "mark": "staccato"
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4,
+                  "mark": "staccato"
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4,
+                  "mark": "staccato"
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "articulacion",
+        "rowHeights": [
+          107
+        ],
+        "sourcePageId": "flow-cont-147"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.28125,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.28125,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.28125,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.875,
+          "duration": 0.28125,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 73.01614599999999,
+      "end": 93.01614599999999,
+      "kind": "explanation",
+      "title": "Legato, staccato y ligadura de fraseo",
+      "sourceTopic": "articulacion",
+      "soundEvents": []
+    },
+    {
+      "start": 93.01614599999999,
+      "end": 111.01614599999999,
+      "kind": "explanation",
+      "title": "Legato, staccato y ligadura de fraseo",
+      "sourceTopic": "fraseo",
+      "soundEvents": []
+    },
+    {
+      "start": 111.01614599999999,
+      "end": 123.01614599999999,
+      "kind": "notation",
+      "title": "Frase de cuatro notas",
+      "sourceTopic": "fraseo",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "Frase de cuatro notas",
+            "slurs": [
+              [
+                0,
+                3
+              ]
+            ],
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "fraseo",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-148"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.61875,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.61875,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.61875,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 123.01614599999999,
+      "end": 135.016146,
+      "kind": "notation",
+      "title": "Tenuto y calderón",
+      "sourceTopic": "fraseo",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "Tenuto y calderón",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2,
+                  "mark": "tenuto"
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 2,
+                  "mark": "fermata"
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "fraseo",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-148"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 1.2375,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.25,
+          "duration": 1.725,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 135.016146,
+      "end": 147.016146,
+      "kind": "notation",
+      "title": "Respiración y cesura: indicaciones sobre el pentagrama",
+      "sourceTopic": "fraseo",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "Respiración y cesura: indicaciones sobre el pentagrama",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4,
+                  "mark": ","
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4,
+                  "mark": "//"
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "fraseo",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-148"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 147.016146,
+      "end": 166.03297899999998,
+      "kind": "explanation",
+      "title": "Legato, staccato y ligadura de fraseo",
+      "sourceTopic": "fraseo",
+      "soundEvents": []
+    },
+    {
+      "start": 166.03297899999998,
+      "end": 172.03297899999998,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

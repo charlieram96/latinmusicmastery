@@ -1,0 +1,305 @@
+{
+  "classId": "local-solfeo-m02-c03",
+  "duration": 211.164396,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Figuras, silencios y silencio de compás",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 25,
+      "kind": "explanation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "silencio-compas",
+      "soundEvents": []
+    },
+    {
+      "start": 25,
+      "end": 37,
+      "kind": "notation",
+      "title": "2/4 · blanca y silencio de blanca: dos pulsos",
+      "sourceTopic": "silencio-compas",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "2/4 · blanca y silencio de blanca: dos pulsos",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "rest": true,
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 102,
+        "_sourcePage": "silencio-compas",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-9"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 37,
+      "end": 49,
+      "kind": "notation",
+      "title": "3/4 · blanca con puntillo y silencio equivalente: tres pulsos",
+      "sourceTopic": "silencio-compas",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "3/4 · blanca con puntillo y silencio equivalente: tres pulsos",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2,
+                  "dot": true
+                }
+              ],
+              [
+                {
+                  "rest": true,
+                  "dur": 2,
+                  "dot": true
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 102,
+        "_sourcePage": "silencio-compas",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-9"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 1.725,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 49,
+      "end": 61,
+      "kind": "notation",
+      "title": "4/4 · redonda y silencio de redonda: cuatro pulsos",
+      "sourceTopic": "silencio-compas",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "4/4 · redonda y silencio de redonda: cuatro pulsos",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 1
+                }
+              ],
+              [
+                {
+                  "rest": true,
+                  "dur": 1
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 102,
+        "_sourcePage": "silencio-compas",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-9"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 61,
+      "end": 73,
+      "kind": "explanation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "silencio-compas",
+      "soundEvents": []
+    },
+    {
+      "start": 73,
+      "end": 98,
+      "kind": "explanation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "silencio-compas",
+      "soundEvents": []
+    },
+    {
+      "start": 98,
+      "end": 119.166667,
+      "kind": "explanation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "figuras-silencios-equivalencias",
+      "soundEvents": []
+    },
+    {
+      "start": 119.166667,
+      "end": 131.16666700000002,
+      "kind": "notation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "figuras-silencios-equivalencias",
+      "diagram": {
+        "type": "diagram",
+        "kind": "rest-comparison",
+        "height": 425,
+        "mode": "equivalence",
+        "_sourcePage": "figuras-silencios-equivalencias",
+        "sourcePageId": "flow-cont-10"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 131.16666700000002,
+      "end": 146.74631300000001,
+      "kind": "explanation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "figuras-silencios-equivalencias",
+      "soundEvents": []
+    },
+    {
+      "start": 146.74631300000001,
+      "end": 158.801869,
+      "kind": "explanation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "figuras-silencios-equivalencias",
+      "soundEvents": []
+    },
+    {
+      "start": 158.801869,
+      "end": 177.80972300000002,
+      "kind": "explanation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "figuras-silencios-conteo",
+      "soundEvents": []
+    },
+    {
+      "start": 177.80972300000002,
+      "end": 189.80972300000002,
+      "kind": "notation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "figuras-silencios-conteo",
+      "diagram": {
+        "type": "diagram",
+        "kind": "rest-comparison",
+        "height": 425,
+        "mode": "count",
+        "_sourcePage": "figuras-silencios-conteo",
+        "sourcePageId": "flow-cont-11"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 189.80972300000002,
+      "end": 205.14305600000003,
+      "kind": "explanation",
+      "title": "Figuras, silencios y silencio de compás",
+      "sourceTopic": "figuras-silencios-conteo",
+      "soundEvents": []
+    },
+    {
+      "start": 205.14305600000003,
+      "end": 211.14305600000003,
+      "kind": "completion",
+      "title": "¡Sigues progresando!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

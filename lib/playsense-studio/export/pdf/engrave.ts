@@ -7,6 +7,7 @@ import type { ScoreDocument } from '@/components/playsense-studio/shared/score-m
 import { extractTrackEvents, scoreTieIndices, type VexEventDescriptor } from '@/lib/playsense-studio/score-to-vexflow';
 import { formatMeasureVoice } from '@/components/playsense-studio/player/notation/renderers/staff-renderer';
 import { hasFinalBarline } from '@/lib/playsense-studio/barlines';
+import { applyMeasureSymbols } from '@/lib/playsense-studio/notation/measure-symbols';
 import { MEASURE_WIDTH } from '@/lib/playsense-studio/notation-layout';
 import type { RowPlan, RowPlanRow } from './row-plan';
 
@@ -120,10 +121,12 @@ export function engraveTrackRows(plan: RowPlan, trackIndex: number): EngravedTra
       if (printRepeats && repeat?.offset === 0) stave.setBegBarType(BarlineType.REPEAT_BEGIN);
       if (printRepeats && closesRepeat) stave.setEndBarType(BarlineType.REPEAT_END);
       else if (hasFinalBarline(track.measures, blockIndex)) stave.setEndBarType(BarlineType.END);
+      else if (block.measure.endBarline === 'double') stave.setEndBarType(BarlineType.DOUBLE);
+      applyMeasureSymbols(stave, block.measure);
       // Every printed row restates the clef (once, at the row's first measure);
       // only the true first row also carries the time signature.
       if (col === 0) stave.addClef(block.clef);
-      if (showHeader) stave.addTimeSignature(`${block.timeSignature[0]}/${block.timeSignature[1]}`);
+      if (showHeader && !block.measure.senzaMisura) stave.addTimeSignature(`${block.timeSignature[0]}/${block.timeSignature[1]}`);
       else if (col === 0) stave.setNoteStartX(stave.getNoteStartX() + 8);
       stave.setContext(ctx).draw();
 

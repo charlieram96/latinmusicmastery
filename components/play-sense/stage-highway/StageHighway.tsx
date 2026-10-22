@@ -1,11 +1,18 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from '@/components/language-provider'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Activity, RotateCcw, Sparkles } from 'lucide-react'
 import type { ExerciseDefinition, HitGrade, SessionState } from '@/lib/play-sense/types'
 import { getExerciseDuration } from '@/lib/play-sense/exercise-utils'
 import type { StageRenderer } from './StageRenderer'
-import type { StageFrame } from './model'
+import { createStageModel, type StageFrame } from './model'
+import { percussionLaneId } from '@/lib/play-sense/percussion-lanes'
+import { useLaneOrder, useHiddenInstruments } from './use-lane-order'
+import { InstrumentLayout } from './instrument-layout'
+import { getInstrumentCategory } from '@/lib/play-sense/types'
+import { CITY_CELEBRATIONS, STAGE_CITIES, type StageCity } from './cities'
+import { useStageCity } from './use-stage-city'
 import { useStageTheme } from './use-stage-theme'
 import { STAGE_THEMES, STAGE_THEME_IDS, type StageThemeId } from './themes'
 import { PerformanceHud } from '../performance-hud'
@@ -13,6 +20,7 @@ import { StageLoading } from './stage-loading'
 import './highway.css'
 
 export interface StageHighwayProps {
+  layoutScope?: 'admin' | 'student'
   exercise: ExerciseDefinition
   sessionState: SessionState
   playheadProgress: number
@@ -43,8 +51,12 @@ export interface StageHighwayProps {
 export function StageHighway(props: StageHighwayProps) {
   const { exercise, sessionState, currentScore, currentCombo, currentAccuracy, countdownBeat,
     dimAlpha = 0, showHud = true, hideCountdown = false, fill = false, showThemePicker = true } = props
+  const {locale}=useTranslation()
+  const [city, setCity] = useStageCity()
   const [selectedTheme, setSelectedTheme] = useStageTheme()
   const theme = props.theme ?? selectedTheme
+  const [hiddenInstruments, setHiddenInstruments] = useHiddenInstruments(exercise.instrument,props.layoutScope ?? 'student')
+  const [laneOrder, setLaneOrder] = useLaneOrder(exercise.instrument,props.layoutScope ?? 'student')
   const [ready, setReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [retry, setRetry] = useState(0)
@@ -63,12 +75,19 @@ export function StageHighway(props: StageHighwayProps) {
     const host = container.current
     if (!host) return
     let disposed = false
-    let renderer: StageRenderer | undefined
+    let renderer: Pick<StageRenderer, 'destroy'> | undefined
     setReady(false); setError(null)
-    import('./StageRenderer').then(({ StageRenderer }) => {
+    // Every instrument shares the same Three.js environment and rendering path.
+    const rendererModule = import('./StageRenderer').then(module=>module.StageRenderer)
+    rendererModule.then(async (Renderer) => {
+      await document.fonts.load('64px LMMStageNotation')
       if (disposed) return
-      renderer = new StageRenderer(host, exercise, {
+      renderer = new Renderer(host, exercise, {
         theme,
+        city,
+        laneOrder,
+        hiddenInstruments,
+        locale,
         explore: props.explore,
         quality: lowQuality ? 'low' : props.quality ?? 'standard',
         reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -89,15 +108,24 @@ export function StageHighway(props: StageHighwayProps) {
       if (!disposed) { setError('This browser could not open the 3D stage. Try compatibility mode or a browser with hardware acceleration enabled.'); latest.current.onStatus?.('error') }
     })
     return () => { disposed = true; renderer?.destroy() }
-  }, [exercise, theme, retry, lowQuality, props.quality, props.explore])
+  }, [exercise, laneOrder, hiddenInstruments, locale, city, theme, retry, lowQuality, props.quality, props.explore])
 
+  const lanes = useMemo(()=>createStageModel(exercise,laneOrder,locale).lanes,[exercise,laneOrder,locale])
+  const celebration = CITY_CELEBRATIONS[city]
+  const celebrationLocale = locale === 'es' ? 'es' : 'en'
   const lastResult = props.eventResults[props.eventResults.length - 1]
   return (
     <div className={`ps-highway ${fill ? 'ps-highway-fill' : ''}`} style={{ '--ps-accent': STAGE_THEMES[theme].accent } as React.CSSProperties}>
       <div ref={container} className="ps-highway-canvas" />
+      {ready && exercise.instrument==='timbale' && <div key={city} className={`ps-city-sky-sign ps-city-sky-sign-${city}`} aria-hidden="true">
+        <i className="ps-sky-burst ps-sky-burst-left" /><i className="ps-sky-burst ps-sky-burst-right" />
+        <strong>{celebration.title[celebrationLocale]}</strong><span>{celebration.line[celebrationLocale]}</span>
+      </div>}
+      {<label className="ps-city-picker">{locale==='es'?'Ciudad':'City'}<select aria-label={locale==='es'?'Ciudad del escenario':'Stage city'} value={city} disabled={sessionState==='playing'||sessionState==='countdown'} onChange={event=>setCity(event.target.value as StageCity)}>{STAGE_CITIES.map(item=><option key={item.id} value={item.id}>{locale==='es'?item.es:item.en}</option>)}</select></label>}
       {showThemePicker && STAGE_THEME_IDS.length > 1 && !props.theme && <div className="ps-theme-picker" role="group" aria-label="Stage appearance">
         {STAGE_THEME_IDS.map(id => <button type="button" key={id} aria-pressed={theme === id} onClick={() => setSelectedTheme(id)}>{STAGE_THEMES[id].name}</button>)}
       </div>}
+      {getInstrumentCategory(exercise.instrument) === 'percussion' && <InstrumentLayout hidden={hiddenInstruments} onVisibilityChange={setHiddenInstruments} scoreInstruments={exercise.events.map(percussionLaneId)} lanes={lanes} disabled={sessionState==='playing'||sessionState==='countdown'} onChange={setLaneOrder} />}
       {showHud && <div className="ps-game-scoreboard"><PerformanceHud score={currentScore} combo={currentCombo} accuracy={currentAccuracy}
         hasResults={props.eventResults.length > 0} playing={sessionState === 'playing'} compact /></div>}
       {showHud && sessionState === 'playing' && lastResult && <div key={`${lastResult.eventIndex}:${lastResult.grade}`} className={`ps-judgment ps-judgment-${lastResult.grade}`}>{lastResult.grade === 'ok' ? 'Keep going' : lastResult.grade}</div>}

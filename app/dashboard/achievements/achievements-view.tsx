@@ -1,5 +1,6 @@
 'use client'
 
+import { QuizRewards } from '@/components/solfeo-kids/quiz-rewards'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -85,6 +86,7 @@ export function AchievementsView({
         description={t('dashboard.pages.achievements.subtitle')}
       />
 
+      <QuizRewards/>
       {/* Overall Progress Card */}
       <Card className="mb-8 overflow-hidden">
         <div className="bg-card p-6">

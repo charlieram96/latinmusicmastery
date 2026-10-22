@@ -1,0 +1,1005 @@
+{
+  "19d7db0f-a8f7-476e-b1b4-96ccfe923184": {
+    "version": 1,
+    "title": "Relleno mano izquierda cáscara",
+    "classItemId": "19d7db0f-a8f7-476e-b1b4-96ccfe923184",
+    "sectionIds": [
+      "c86cef70-38a7-4eb5-8283-ed423448e9b3",
+      "38da3dd8-7052-4b5b-944e-32d855cd2138",
+      "fa03aded-ffcd-495c-b2fb-c277aca642d0"
+    ],
+    "durationSeconds": 79.712967,
+    "backupPath": "/Users/raffymac/Desktop/lmm/latinmusicmastery/local-artifacts/studio-preview/backups/19d7db0f-a8f7-476e-b1b4-96ccfe923184-1792360479910.json",
+    "sections": [
+      {
+        "sectionId": "c86cef70-38a7-4eb5-8283-ed423448e9b3",
+        "sectionIndex": 0,
+        "label": "Relleno Mano Izq Cascara",
+        "videoStartSeconds": null,
+        "videoEndSeconds": null,
+        "metronomeAnchorSeconds": null,
+        "metronomeAnchorQn": null,
+        "scoreDocument": {
+          "id": "c86cef70-38a7-4eb5-8283-ed423448e9b3",
+          "title": "Relleno Mano Izq Cascara",
+          "composer": "Composer / arranger",
+          "parsedScore": {
+            "schemaVersion": 1,
+            "title": "Relleno Mano Izq Cascara",
+            "composer": "Composer / arranger",
+            "sourceFormat": "musicxml",
+            "initialTempo": 120,
+            "initialTimeSignature": [
+              4,
+              4
+            ],
+            "initialKeyFifths": 0,
+            "tracks": [
+              {
+                "index": 0,
+                "instrument": "perc-timbal",
+                "displayName": "Cáscara timbal",
+                "tuning": null,
+                "stringMultiplicity": 1,
+                "channel": null,
+                "defaultView": "staff",
+                "measures": [
+                  {
+                    "number": 1,
+                    "clef": "percussion",
+                    "tempoChange": 120,
+                    "keyFifths": 0,
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "rest",
+                            "id": "x665981af-1",
+                            "durationQN": 2,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "rest",
+                            "id": "x665981af-2",
+                            "durationQN": 1,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-3",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 1,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "number": 2,
+                    "clef": "percussion",
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "note",
+                            "id": "x665981af-4",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-5",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-6",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-7",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-8",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-9",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-10",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-11",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "number": 3,
+                    "clef": "percussion",
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "note",
+                            "id": "x665981af-12",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-13",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-14",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-15",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-16",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-17",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-18",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x665981af-19",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "number": 4,
+                    "clef": "percussion",
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "note",
+                            "id": "x665981af-20",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 1,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "rest",
+                            "id": "x665981af-21",
+                            "durationQN": 1,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "rest",
+                            "id": "x665981af-22",
+                            "durationQN": 2,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "tracks": [],
+        "activeTimeMap": null
+      },
+      {
+        "sectionId": "38da3dd8-7052-4b5b-944e-32d855cd2138",
+        "sectionIndex": 1,
+        "label": "Relleno Mano Izq Cascara",
+        "videoStartSeconds": null,
+        "videoEndSeconds": null,
+        "metronomeAnchorSeconds": null,
+        "metronomeAnchorQn": null,
+        "scoreDocument": {
+          "id": "38da3dd8-7052-4b5b-944e-32d855cd2138",
+          "title": "Relleno Mano Izq Cascara",
+          "composer": "Composer / arranger",
+          "parsedScore": {
+            "schemaVersion": 1,
+            "title": "Relleno Mano Izq Cascara",
+            "composer": "Composer / arranger",
+            "sourceFormat": "musicxml",
+            "initialTempo": 120,
+            "initialTimeSignature": [
+              4,
+              4
+            ],
+            "initialKeyFifths": 0,
+            "tracks": [
+              {
+                "index": 0,
+                "instrument": "perc-timbal",
+                "displayName": "Cáscara timbal",
+                "tuning": null,
+                "stringMultiplicity": 1,
+                "channel": null,
+                "defaultView": "staff",
+                "measures": [
+                  {
+                    "number": 1,
+                    "clef": "percussion",
+                    "tempoChange": 120,
+                    "keyFifths": 0,
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "rest",
+                            "id": "x084e722a-1",
+                            "durationQN": 2,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "rest",
+                            "id": "x084e722a-2",
+                            "durationQN": 1,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-3",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 1,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "number": 2,
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-4",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-5",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-6",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-7",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-8",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-9",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-10",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-11",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "number": 3,
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-12",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-13",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-14",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-15",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-16",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-17",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-18",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-19",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "number": 4,
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "note",
+                            "id": "x084e722a-20",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 1,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "rest",
+                            "id": "x084e722a-21",
+                            "durationQN": 1,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "rest",
+                            "id": "x084e722a-22",
+                            "durationQN": 2,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "tracks": [],
+        "activeTimeMap": null
+      },
+      {
+        "sectionId": "fa03aded-ffcd-495c-b2fb-c277aca642d0",
+        "sectionIndex": 2,
+        "label": "Relleno Mano Izq Cascara",
+        "videoStartSeconds": null,
+        "videoEndSeconds": null,
+        "metronomeAnchorSeconds": null,
+        "metronomeAnchorQn": null,
+        "scoreDocument": {
+          "id": "fa03aded-ffcd-495c-b2fb-c277aca642d0",
+          "title": "Relleno Mano Izq Cascara",
+          "composer": "Composer / arranger",
+          "parsedScore": {
+            "schemaVersion": 1,
+            "title": "Relleno Mano Izq Cascara",
+            "composer": "Composer / arranger",
+            "sourceFormat": "musicxml",
+            "initialTempo": 120,
+            "initialTimeSignature": [
+              4,
+              4
+            ],
+            "initialKeyFifths": 0,
+            "tracks": [
+              {
+                "index": 0,
+                "instrument": "perc-timbal",
+                "displayName": "Cáscara timbal",
+                "tuning": null,
+                "stringMultiplicity": 1,
+                "channel": null,
+                "defaultView": "staff",
+                "measures": [
+                  {
+                    "number": 1,
+                    "clef": "percussion",
+                    "tempoChange": 120,
+                    "keyFifths": 0,
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "rest",
+                            "id": "xde321421-1",
+                            "durationQN": 2,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "rest",
+                            "id": "xde321421-2",
+                            "durationQN": 1,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-3",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 1,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "number": 2,
+                    "clef": "percussion",
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "note",
+                            "id": "xde321421-4",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-5",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-6",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-7",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-8",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-9",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-10",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-11",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "number": 3,
+                    "clef": "percussion",
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "note",
+                            "id": "xde321421-12",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-13",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-14",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-15",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-16",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-17",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-18",
+                            "midi": 68,
+                            "percussion": {
+                              "staffLine": "f/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara-low"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "note",
+                            "id": "xde321421-19",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 0.5,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "number": 4,
+                    "clef": "percussion",
+                    "voices": [
+                      {
+                        "number": 1,
+                        "events": [
+                          {
+                            "kind": "note",
+                            "id": "xde321421-20",
+                            "midi": 65,
+                            "percussion": {
+                              "staffLine": "a/4",
+                              "notehead": "plus",
+                              "strokeId": "cascara"
+                            },
+                            "durationQN": 1,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "rest",
+                            "id": "xde321421-21",
+                            "durationQN": 1,
+                            "dotted": false
+                          },
+                          {
+                            "kind": "rest",
+                            "id": "xde321421-22",
+                            "durationQN": 2,
+                            "dotted": false
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "tracks": [],
+        "activeTimeMap": null
+      }
+    ],
+    "musicRanges": {
+      "0f97a446-d5b6-45fd-a537-3f946563f1b5": {
+        "start": 7.599800000000003,
+        "end": 28.453425311846217
+      },
+      "22ed2ca1-43dd-4bfb-9c2d-1ead4c737b63": {
+        "start": 28.7338,
+        "end": 45.48730000000001
+      }
+    },
+    "editableEmptyMeasures": true
+  }
+}

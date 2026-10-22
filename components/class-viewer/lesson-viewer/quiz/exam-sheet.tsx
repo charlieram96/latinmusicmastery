@@ -55,7 +55,7 @@ export function ExamSheet({
   const submit = () => {
     const mean = engine.checkMany(questions.map((q) => q.id))
     setSubmitted(true)
-    playCue(mean >= 0.7 ? 'fanfare' : 'soft', prefs.sound)
+    playCue(mean >= 0.7 ? 'fanfare' : 'bad', prefs.sound)
     onSubmit()
   }
   const restart = () => {
@@ -181,7 +181,7 @@ export function ExamSheet({
           {!submitted ? (
             <>
               <div className="flex items-center gap-3.5">
-                <ScoreRing pct={(answered / Math.max(1, questions.length)) * 100} size={64} stroke={7} />
+                <ScoreRing pct={(answered / Math.max(1, questions.length)) * 100} size={64} stroke={7} label={t('dashboard.classViewer.quiz.sheet.answered')} />
                 <div>
                   <span className="block font-heading text-[22px] font-extrabold tabular-nums tracking-[-0.02em]">{answered} / {questions.length}</span>
                   <small className="text-xs text-muted-foreground">{t('dashboard.classViewer.quiz.sheet.answered').toLowerCase()}</small>

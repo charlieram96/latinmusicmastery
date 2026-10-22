@@ -1,4 +1,6 @@
 'use client';
+import { applyMeasureSymbols } from '@/lib/playsense-studio/notation/measure-symbols';
+import {drawEmptyMeasure} from '@/lib/playsense-studio/notation/empty-measure';
 import {playbackTrack} from '@/lib/playsense-studio/playback-tempo';
 
 import { measureLengthInQN, qnToMs, walkMeasures } from '@/lib/playsense-studio/time-mapping';
@@ -16,6 +18,7 @@ import type { StaffRendererProps } from './staff-renderer';
 export interface MultiStaffRendererProps extends StaffRendererProps {
   pages?: boolean;
   onSelectionChange?: (hits: ScoreHit[]) => void;
+  onOpenHit?: (hit: ScoreHit) => void;
   onNoteInput?: (hit: ScoreHit, line: number) => boolean;
   onSelectMeasure?: (trackIndex: number, measureIndex: number) => void;
 }
@@ -32,7 +35,7 @@ export function MultiStaffRenderer(props: MultiStaffRendererProps) {
     if (!line || !container) return;
     const p = playback.current;
     const bar = layout.current.find(b => p.currentMs < b.end) ?? layout.current.at(-1);
-    if (!bar || !p.showCursor) { line.style.display = 'none'; return; }
+    if (!bar || !p.showCursor || p.currentMs < 0 || p.currentMs > bar.end) { line.style.display = 'none'; return; }
     const fraction = Math.max(0, Math.min(1, (p.currentMs - bar.start) / Math.max(1, bar.end - bar.start)));
     const before = bar.anchors.filter(a => a.ms <= p.currentMs).at(-1);
     const after = bar.anchors.find(a => a.ms > p.currentMs);
@@ -48,6 +51,8 @@ export function MultiStaffRenderer(props: MultiStaffRendererProps) {
   };
   useEffect(updateCursor, [props.currentMs, props.showCursor, props.autoFollow]);
   const selected = useRef(new Set<string>());
+  const openHit = useRef(props.onOpenHit);
+  openHit.current = props.onOpenHit;
   const noteInput = useRef(props.onNoteInput);
   noteInput.current = props.onNoteInput;
   const onSelectionChange = useRef(props.onSelectionChange);
@@ -132,27 +137,29 @@ export function MultiStaffRenderer(props: MultiStaffRendererProps) {
           if (group && sourceIndex === group.start + group.length - 1) stave.setEndBarType(BarlineType.REPEAT_END);
           else if (hasFinalBarline(tracks[i].measures, sourceIndex)) stave.setEndBarType(BarlineType.END);
           else if (tracks[i].measures[sourceIndex].endBarline === 'double') stave.setEndBarType(BarlineType.DOUBLE);
+          applyMeasureSymbols(stave, tracks[i].measures[sourceIndex]);
           const built = buildMeasure([block.events, block.voice2Events], block.timeSignature, block.clef);
           return { stave, built, block, track: indices[i] };
         }).filter(e => e !== null);
         const noteX = Math.max(...entries.map(e => e.stave.getNoteStartX()));
         const timing = timings[sourceIndex]?.state;
-        if (timing) layout.current.push({anchors:[],start:timing.cumulativeMs,end:timing.cumulativeMs + qnToMs(measureLengthInQN(timing.timeSignature), timing.tempo),x:noteX * scale,right:(x + barWidth - 8) * scale,y:entries[0].stave.getYForLine(0)*scale,height:(entries.at(-1)!.stave.getYForLine(4)-entries[0].stave.getYForLine(0))*scale,bands:entries.map(e=>({y:e.stave.getYForLine(0)*scale,height:(e.stave.getYForLine(4)-e.stave.getYForLine(0))*scale}))});
+        if (timing) layout.current.push({anchors:[],start:timing.cumulativeMs,end:timing.cumulativeMs + qnToMs(measureLengthInQN(timing.timeSignature, tracks[0].measures[sourceIndex]), timing.tempo),x:noteX * scale,right:(x + barWidth - 8) * scale,y:entries[0].stave.getYForLine(0)*scale,height:(entries.at(-1)!.stave.getYForLine(4)-entries[0].stave.getYForLine(0))*scale,bands:entries.map(e=>({y:e.stave.getYForLine(0)*scale,height:(e.stave.getYForLine(4)-e.stave.getYForLine(0))*scale}))});
         const formatter = new Formatter();
-        for (const { stave, built } of entries) {
+        for (const { stave, built, block } of entries) {
           stave.setNoteStartX(noteX).setContext(ctx).draw();
           for (const modifier of stave.getModifiers()) {
             if (modifier instanceof Barline && [BarlineType.REPEAT_BEGIN, BarlineType.REPEAT_END].includes(modifier.getType())) {
               modifier.getSVGElement()?.setAttribute('data-score-repeat-sign', '');
             }
           }
+          if (!built) drawEmptyMeasure(ctx,stave,block.timeSignature,block.measure.emptyText);
           if (built) {
             built.notes.flat().forEach(n => { n.setStave(stave); n.setStyle({ fillStyle: props.pages ? '#24221f' : 'currentColor', strokeStyle: props.pages ? '#24221f' : 'currentColor' }); });
             formatter.joinVoices(built.voices);
           }
         }
         const voices = entries.flatMap(e => e.built?.voices ?? []);
-        if (voices.length) formatter.format(voices, Math.max(80, x + barWidth - noteX - 20));
+        if (voices.length) formatter.format(voices, Math.max(80, x + barWidth - noteX - 36));
         entries.forEach(({ stave, built, track, block }) => {
           if (!built) return;
           drawMeasure(ctx, stave, built);
@@ -203,14 +210,15 @@ export function MultiStaffRenderer(props: MultiStaffRendererProps) {
       }
 
       // Keep the full performance clock; later passes return to the same engraving.
-      layout.current = timings.flatMap(({state}, index) => {
+      layout.current = timings.flatMap(({state, measure}, index) => {
         const original = geometry.get(sourceFor(index));
         if (!original) return [];
-        const end = state.cumulativeMs + qnToMs(measureLengthInQN(state.timeSignature), state.tempo);
+        const end = state.cumulativeMs + qnToMs(measureLengthInQN(state.timeSignature, measure), state.tempo);
         const ratio = (end-state.cumulativeMs)/(original.end-original.start);
         return [{...original, start: state.cumulativeMs, end,
           anchors: original.anchors.map(a => ({x:a.x, ms:state.cumulativeMs+(a.ms-original.start)*ratio}))}];
       });
+      playback.current.onDurationKnown?.((layout.current.at(-1)?.end ?? 0) + (props.trailingGapMs ?? 0));
       placed.forEach(lane => {
         drawSpanSegments(ctx, spanSegments(score.spans, lane));
         for (let i = 0; i + 1 < lane.length; i++) {
@@ -226,16 +234,24 @@ export function MultiStaffRenderer(props: MultiStaffRendererProps) {
       });
       // HTML hit areas share the SVG scale and scroll surface. Keyboard users
       // can select a measure with Enter or Space. Native pinch zoom is untouched.
-      if (onSelect.current) {
+      if (onSelect.current || playback.current.onSeek) {
         const surface = document.createElement('div');
         surface.style.position = 'relative';
         surface.style.width = `${width * scale}px`;
         const svg = el.querySelector('svg')!;
         el.appendChild(surface); surface.appendChild(svg);
         cleanupSelection = installScoreSelection(surface, hits, selected.current, selection => {
+          if (!onSelect.current && selection.length === 1) {
+            const hit = selection[0], state = timings[hit.measure]?.state;
+            if (state) {
+              const events = score.tracks[hit.track].measures[hit.measure].voices[hit.voice ?? 0]?.events ?? [];
+              const offset = hit.kind === 'note' ? events.slice(0, hit.event ?? 0).reduce((sum,e) => sum + e.durationQN, 0) : 0;
+              playback.current.onSeek?.({qn: state.cumulativeQN + offset, measure: hit.measure + 1, beat: 1 + offset / (4 / state.timeSignature[1])});
+            }
+          }
           onSelectionChange.current?.(selection);
           if (!onSelectionChange.current && selection.length === 1 && selection[0].kind === 'measure') onSelect.current?.(selection[0].track, selection[0].measure);
-        }, {measureHeaderHeight: 0, onInput: (hit,line) => noteInput.current?.(hit,line) ?? false});
+        }, {measureHeaderHeight: 0, onInput: (hit,line) => noteInput.current?.(hit,line) ?? false, onOpen: hit => openHit.current?.(hit)});
       }
       const surface = el.querySelector('svg')?.parentElement;
       if (surface) {
@@ -250,6 +266,6 @@ export function MultiStaffRenderer(props: MultiStaffRendererProps) {
     render();
     const observer = new ResizeObserver(render); observer.observe(el);
     return () => { observer.disconnect(); cleanupSelection(); el.replaceChildren(); };
-  }, [props.score, props.trackIndex, props.zoom, props.pages, !!props.onSelectMeasure]);
+  }, [props.score, props.trackIndex, props.zoom, props.pages, !!props.onSelectMeasure, !!props.onSeek, props.trailingGapMs]);
   return <div ref={host} role="region" aria-label="Instrument staves" className={`min-h-0 overflow-auto ${props.className ?? ''}`} style={{ height: '100%', overscrollBehaviorX: 'none' }} />;
 }

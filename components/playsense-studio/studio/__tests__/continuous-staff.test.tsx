@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import {emptyRestDuration} from '@/lib/playsense-studio/notation/empty-measure';
 import React, { act } from 'react';
-import { StaveNote } from 'vexflow';
+import { BarlineType, Stave, StaveNote } from 'vexflow';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Span, Track } from '@/components/playsense-studio/shared/score-model/types';
@@ -199,6 +200,12 @@ describe('Sync rhythmic alignment', () => {
       act(()=>root.render(show(qn=>qn/2)));
       // Render window starts at -800, hence local SVG coordinates include 800.
       expect(centers).toHaveLength(4);
+      const separators=host.querySelectorAll('.vf-sync-bar-separator path');
+      expect(separators).toHaveLength(1);
+      separators.forEach((line,i)=>{
+        const coords=(line.getAttribute('d')??'').match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+        expect(centers[(i+1)*2]-coords[0]).toBeCloseTo(14,5);
+      });
       centers.forEach((x,i)=>expect(x-800).toBeCloseTo([0,150,300,450][i],5));
       centers.length=0;
       const stretched=items.map((item,i)=>({...item,
@@ -216,4 +223,82 @@ describe('Sync rhythmic alignment', () => {
       centers.forEach((x,i)=>expect(x-800).toBeCloseTo([0,320,600,840][i],5));
     } finally { spy.mockRestore(); }
   });
+});
+
+it('renders a double bar assigned by the palette even on the synchronized timeline', () => {
+ const end=vi.spyOn(Stave.prototype,'setEndBarType');
+ act(()=>root.render(<ContinuousStaff items={items.map((item,i)=>({...item,endBarline:i===0?'double':undefined}))} noteTimeForQN={qn=>qn/2} pixelsPerSecond={150} scrollLeftPx={0} viewportWidth={800} height={220} onHitsReady={()=>{}}/>));
+ expect(end).toHaveBeenCalledWith(BarlineType.DOUBLE);
+ end.mockRestore();
+});
+
+it('keeps a downbeat quarter rest clear of a continuous bar without changing its timing', () => {
+  const restTrack: Track={...track,measures:track.measures.map((m,i)=>i===1?{...m,voices:[{number:1,events:[{kind:'rest',id:'rest-start',durationQN:1},note('after-rest',64)]}]}:m)};
+  const bars=extractTrackEvents(restTrack,[4,4],0).map((b,i)=>({...items[i],events:b.events,continuousBarlines:true}));
+  const original=JSON.stringify(bars);
+  const got=new Map<number,MeasureHit[]>();
+  act(()=>root.render(<ContinuousStaff items={bars} noteTimeForQN={qn=>qn/2} pixelsPerSecond={150} scrollLeftPx={0} viewportWidth={800} height={220} onHitsReady={(i,hits)=>{if(hits)got.set(i,hits);}}/>));
+  const rest=got.get(1)![0];
+  expect(rest.x + 3).toBeGreaterThanOrEqual(36); // Selection hit includes 3 px of padding.
+  expect(JSON.stringify(bars)).toBe(original);
+  const separator=host.querySelector('.vf-sync-bar-separator path')!;
+  expect((separator.getAttribute('d')??'').match(/-?\d+(?:\.\d+)?/g)!.map(Number)[0]).toBe(1100);
+});
+
+it('spaces all eight eighth notes in order after the opening margin', () => {
+  const eighths: Track={...track,measures:[{number:1,voices:[{number:1,events:Array.from({length:8},(_,i)=>({...note(`e${i}`,60+i%2),durationQN:0.5}))}]}]};
+  const extracted=extractTrackEvents(eighths,[4,4],0)[0];
+  const bar={...items[0],events:extracted.events,continuousBarlines:true};
+  let hits:MeasureHit[]=[];
+  act(()=>root.render(<ContinuousStaff items={[bar]} noteTimeForQN={qn=>qn/2} pixelsPerSecond={150} scrollLeftPx={0} viewportWidth={800} height={220} onHitsReady={(_,h)=>{if(h)hits=h;}}/>));
+  expect(hits).toHaveLength(8);
+  const gaps=hits.slice(1).map((h,i)=>h.x-hits[i].x);
+  gaps.forEach(gap=>{expect(gap).toBeGreaterThan(20);expect(gap).toBeCloseTo(gaps[0],5);});
+  expect(host.querySelectorAll('.vf-beam')).toHaveLength(4);
+});
+
+it.each([[4,4,'wr',0],[2,4,'hr',0],[3,4,'hr',1]])('renders a default rest for an empty %i/%i bar', (n,d,duration,dots) => {
+ const bar={...items[0],events:[],voice2Events:[],timeSignature:[n,d] as [number,number]};
+ act(()=>root.render(<ContinuousStaff items={[bar]} pixelsPerSecond={150} scrollLeftPx={0} viewportWidth={800} height={220} onHitsReady={()=>{}}/>));
+ expect(host.querySelector('.vf-empty-measure-rest')).not.toBeNull();
+ expect(emptyRestDuration([n,d])).toEqual({duration,dots});
+});
+it('replaces only the automatic rest with authored text and size', () => {
+ const bar={...items[0],events:[],voice2Events:[],emptyText:{text:'Instructor hablando',fontSize:24}};
+ act(()=>root.render(<ContinuousStaff items={[bar]} pixelsPerSecond={150} scrollLeftPx={0} viewportWidth={800} height={220} onHitsReady={()=>{}}/>));
+ expect(host.querySelector('.vf-empty-measure-rest')).toBeNull();
+ expect(host.querySelector('.vf-measure-text')?.textContent).toBe('Instructor hablando');
+ expect(host.querySelector('.vf-measure-text text')?.getAttribute('font-size')).toBe('24pt');
+});
+
+it('settles after hit reporting even when the parent recreates drawing inputs on each update', () => {
+  let frames: FrameRequestCallback[] = [];
+  const request = vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => { frames.push(cb); return frames.length; });
+  const cancel = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+  const reports = vi.fn();
+  let setScale: React.Dispatch<React.SetStateAction<number>>;
+  function Parent() {
+    const [, update] = React.useState(0);
+    const [scale, changeScale] = React.useState(150);
+    setScale = changeScale;
+    return <ContinuousStaff items={items.map(item => ({...item}))} spans={[]}
+      pixelsPerSecond={scale} scrollLeftPx={0} viewportWidth={800} height={220}
+      onHitsReady={(index, hits) => { reports(index, hits); update(v => v + 1); }} />;
+  }
+  const drain = () => { for (let i = 0; i < 8 && frames.length; i++) act(() => {
+    const due = frames; frames = []; due.forEach(cb => cb(performance.now()));
+  }); };
+  try {
+    act(() => root.render(<Parent/>));
+    drain();
+    expect(frames).toHaveLength(0);
+    expect(reports).toHaveBeenCalledTimes(2);
+    expect(reports.mock.calls.every(([, hits]) => hits !== null)).toBe(true);
+    reports.mockClear();
+    act(() => setScale(180));
+    drain();
+    expect(frames).toHaveLength(0);
+    expect(reports).toHaveBeenCalledTimes(2);
+    expect(reports.mock.calls.every(([, hits]) => hits !== null)).toBe(true);
+  } finally {request.mockRestore(); cancel.mockRestore();}
 });

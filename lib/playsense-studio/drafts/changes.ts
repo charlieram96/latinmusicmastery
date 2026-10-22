@@ -13,6 +13,7 @@ const round = (n: number) => Math.round(n * 1000) / 1000;
 const timingCanon = (t: StudioTiming) =>
   canon({
     method: t.method,
+    clickAnchors: t.params.clickAnchors,
     nudges: t.params.nudges ?? [],
     flex: readFlex(t.params).map((f) => [round(f.src), round(f.dst), f.anchor]),
     waypoints: t.waypoints.map((w) => [round(w.musicalPositionQN), round(w.videoTimeSeconds)]),

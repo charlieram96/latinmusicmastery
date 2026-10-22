@@ -128,3 +128,17 @@ describe('the old placement (Review Focus 1)', () => {
     }
   })
 })
+
+ describe('finite exercise ending', () => {
+  it('holds the final frame in silence throughout the late-input grading window', () => {
+    const m = media({ loopCount: 2 })
+    expect(expectedMediaTime(m, 8)).toEqual({ media: 10, playing: true })
+    expect(expectedMediaTime(m, 15.99).playing).toBe(true)
+    for (const end of [16, 16.01, 16.35, 20]) {
+      expect(expectedMediaTime(m, end)).toEqual({ media: 18, playing: false })
+    }
+  })
+  it('respects trim-out at the final boundary', () => {
+    expect(expectedMediaTime(media({ loopCount: 1, trimOut: 15 }), 8)).toEqual({ media: 15, playing: false })
+  })
+})

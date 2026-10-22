@@ -23,7 +23,7 @@ vi.mock('@/components/playsense-studio/player/state/use-backing-mixer', () => ({
 }));
 // Capture the lane's callbacks instead of driving a canvas.
 type LaneProps = {
-  onClipChange: (trackId: string, clip: { timelineStartSeconds: number; trimInSeconds: number; trimOutSeconds: number | null }) => void;
+  onClipChange: (trackId: string, clip: { timelineStartSeconds: number; trimInSeconds: number; trimOutSeconds: number | null }, part?: string) => void;
   onClipCommit: (trackId: string, part: string, moved: boolean) => void;
 };
 let lane: LaneProps | null = null;
@@ -91,6 +91,30 @@ describe('BackingLanesPanel position_qn', () => {
     act(() => lane!.onClipCommit('t1', 'body', true));
     act(() => vi.advanceTimersByTime(700));
   }
+
+  it('moves and saves all linked tracks together, keeps offsets and leaves unlinked tracks alone', () => {
+    const tracks = [TRACK, {...TRACK,id:'t2',timelineStartSeconds:2}, {...TRACK,id:'t3',timelineStartSeconds:5}];
+    act(() => root.render(<BackingLanesPanel classItemId="ci" tracks={tracks} timeMap={null}
+      view={{...VIEW,backingFlexLinks:['t1','t2']}} />));
+    moveClipTo(3);
+    expect(placement.mock.calls.map(([v]) => [v.trackId,v.timelineStartSeconds])).toEqual([['t1',3],['t2',5]]);
+    placement.mockClear();
+    // Moving the later member past zero must clamp the entire group.
+    act(() => lane!.onClipChange('t2',{timelineStartSeconds:0,trimInSeconds:0,trimOutSeconds:null},'body'));
+    act(() => lane!.onClipCommit('t2','body',true));
+    act(() => vi.advanceTimersByTime(700));
+    expect(placement.mock.calls.map(([v]) => [v.trackId,v.timelineStartSeconds])).toEqual([['t1',0],['t2',2]]);
+  });
+
+  it('trims only the chosen track even when it belongs to a linked group', () => {
+    act(() => root.render(<BackingLanesPanel classItemId="ci" tracks={[TRACK,{...TRACK,id:'t2'}]} timeMap={null}
+      view={{...VIEW,backingFlexLinks:['t1','t2']}} />));
+    act(() => lane!.onClipChange('t1',{timelineStartSeconds:1,trimInSeconds:1,trimOutSeconds:20},'in'));
+    act(() => lane!.onClipCommit('t1','in',true));
+    act(() => vi.advanceTimersByTime(700));
+    expect(placement).toHaveBeenCalledTimes(1);
+    expect(placement.mock.calls[0][0]).toMatchObject({trackId:'t1',trimInSeconds:1,trimOutSeconds:20});
+  });
 
   it('offers link-all and individual links without changing clip placement', () => {
     const onBackingFlexLinksChange = vi.fn();

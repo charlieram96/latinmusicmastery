@@ -1,7 +1,7 @@
 'use client';
 
 // Bar-level keys in the strip: ←/→ move the selection (⇧ extends), ⏎ opens,
-// ⌘C/⌘V/⌘D copy, paste after and duplicate, ⌫ deletes, L loops the selected
+// ⌘C/⌘V/⌘D copy, paste at selection and duplicate, ⌫ deletes, L loops the selected
 // bars (when the strip can loop), Esc clears. Off while a
 // note is selected (note keys own the arrows then) and while typing anywhere;
 // ⏎ leaves a focused button alone and ⌘C leaves a page text selection alone.

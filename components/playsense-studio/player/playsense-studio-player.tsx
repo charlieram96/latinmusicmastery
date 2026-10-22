@@ -1,4 +1,8 @@
 'use client';
+import {useAudioSource,useSelectedAudio} from '../shared/use-audio-source';
+import { localizedScoreText } from '@/lib/playsense-studio/score-text';
+import {finalBarClickStops,stopClicksAtFinalBars} from '@/lib/playsense-studio/final-bar-click-stops';
+import {readClickAnchors, sectionClickAnchors, anchoredClickGrid} from '@/lib/playsense-studio/click-anchors';
 
 // PlaySense Studio top-level player.
 //
@@ -25,10 +29,20 @@
 // usable as soon as a score document is attached, with sync polish coming
 // from M7's authoring tools.
 
+import { useContext } from 'react';
+import { TheaterClassContext, TimbalTheater } from '@/components/learning-mode/theater/timbal-theater';
+import { timbalScene } from '@/components/learning-mode/theater/timbal-scenes';
+import { useLearningMode } from '@/components/learning-mode/store';
+import { useManualLessonMedia } from '@/components/playsense-studio/shared/manual-lesson-navigation';
 import { useSpacePlayback } from '@/hooks/use-space-playback'
+import {sectionClickGrid} from '@/lib/playsense-studio/section-click-grid';
+import {scoreMetronomeGrid} from '@/lib/playsense-studio/score-metronome-grid';
 import {lessonMetronomeGrid,type LessonMetronome} from '@/lib/playsense-studio/lesson-metronome';
+import {useTranslation} from '@/components/language-provider';
 import {ScoreHeading} from '../shared/score-heading';
 import {scorePlaybackRate} from '@/lib/playsense-studio/playback-tempo';
+import { LESSON_PLAYBACK_DEFAULTS } from '@/lib/playsense-studio/lesson-playback-defaults';
+import { PrecountControl } from '../shared/precount-control';
 import { useTransportCountIn } from './state/use-transport-count-in';
 import {
   useCallback,
@@ -41,7 +55,6 @@ import {
 import { Minus, Plus } from 'lucide-react';
 import { SplitWorkspace, WorkspaceLayoutSwitcher } from './split-workspace';
 import { useWorkspaceLayout } from './use-workspace-layout';
-import { SectionChips } from './section-chips';
 import { WATCH_WORKSPACE } from '@/lib/playsense-studio/workspace-layout';
 import { DownloadMenu } from '@/components/playsense-studio/export/download-menu';
 import { TransportBar } from './transport/transport-bar';
@@ -54,12 +67,14 @@ import {
   type SelectedRange,
   type StaffLayoutMode,
 } from './notation/renderers/staff-renderer';
+import { MultiStaffRenderer } from './notation/renderers/multi-staff-renderer';
+import { staffGroupIndices } from '@/lib/playsense-studio/staff-groups';
 import { StaffLayoutSwitch, StaffRefollowButton, staffLayoutMode, staffNeedsRefollow, staffPaneClass, useStaffLayoutPreference } from './notation/staff-layout-switch';
 import { StaffScrubBar } from './notation/staff-scrub-bar';
 import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
 import { useVideoClickTrack } from './state/use-video-click-track';
-import { beatGridFromAnchor, mergeBeatGrids } from '@/lib/playsense-studio/beat-grid';
+import { beatGridFromAnchor } from '@/lib/playsense-studio/beat-grid';
 import {
   readStoredClickVolume,
   writeStoredClickVolume,
@@ -93,6 +108,7 @@ export interface PlaysenseStudioPlayerScoreTrack {
 }
 
 export interface PlaysenseStudioPlayerTimeMap {
+  params?: Record<string, unknown>;
   id: string;
   method: string;
   waypoints: Array<{
@@ -112,6 +128,7 @@ export interface PlaysenseStudioPlayerTimeMap {
 
 /** One scored section of a video: a score + sync valid over a video time-range. */
 export interface PlayerSection {
+  continuousProject?: import('@/lib/playsense-studio/continuous-project').ContinuousScoreProject;
   id: string;
   label?: string | null;
   /** null = no fixed start (the synthetic single-section case → always active). */
@@ -197,12 +214,19 @@ export function PlaysenseStudioPlayer({
   trimInSeconds,
   trimOutSeconds,
 }: PlaysenseStudioPlayerProps) {
+  const {locale}=useTranslation();
+  const classroomId = useContext(TheaterClassContext);
+  const learningMode = useLearningMode();
+  // This player always owns a score. Compact sizing must not follow the
+  // active section: intros and gaps still use the same score workspace.
+  const kidsClassroom = learningMode === 'kids' && !!timbalScene(classroomId);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioSource=useAudioSource(classItemId,"watch",videoUrl);
+  const manual=useManualLessonMedia(videoRef);
   const [videoVolume, setVideoVolume] = useState(1);
   const [videoMuted, setVideoMuted] = useState(false);
-  useEffect(() => {
-    if (videoRef.current) {videoRef.current.volume = videoVolume; videoRef.current.muted = videoMuted;}
-  });
+  const replacementAudioError=useSelectedAudio(videoRef,audioSource.settings,{volume:videoVolume,muted:videoMuted,loaded:audioSource.loaded});
+  // The shared audio router exclusively owns volume/muting, including clip handoffs.
   const clock = useVideoTransportClock(videoRef, { onEnded });
 
   const trimStart = Math.max(0, trimInSeconds ?? 0);
@@ -284,6 +308,9 @@ export function PlaysenseStudioPlayer({
   // transport displays and what useFlexPlayback multiplies by the current
   // segment's rate; the element's own (flickering) rate is never shown.
   const [userSpeed, setUserSpeed] = useState(1);
+  // A viewer's explicit speed survives score boundaries and original/replacement handoffs.
+  const chosenSpeed = useRef<number | null>(null);
+  const chooseSpeed = (rate:number) => {chosenSpeed.current=rate;setUserSpeed(rate);};
 
   // Drives video.playbackRate frame-by-frame while a flexed section plays.
   // Called unconditionally (rules of hooks: normalizedSections can swap in a
@@ -304,13 +331,13 @@ export function PlaysenseStudioPlayer({
   const onDisplayedRateChange = flexMap.isIdentity
     ? (rate: number) => {
         clock.setPlaybackRate(rate);
-        setUserSpeed(rate);
+        chooseSpeed(rate);
       }
-    : setUserSpeed;
+    : chooseSpeed;
 
-  // Each example owns its reference. Gaps return to natural video speed.
+  // Authored defaults apply until the viewer chooses a speed; then preserve it across the lesson.
   useEffect(()=>{
-    const rate=activeSection?scorePlaybackRate(activeSection.score):1;
+    const rate=chosenSpeed.current ?? (activeSection?scorePlaybackRate(activeSection.score):1);
     setUserSpeed(rate);
     if(flexMap.isIdentity)clock.setPlaybackRate(rate);
   },[activeSection?.id,activeSection?.score.initialTempo,activeSection?.score.playbackTempoOverride,flexMap.isIdentity,clock.durationSeconds,clock.setPlaybackRate]);
@@ -326,7 +353,7 @@ export function PlaysenseStudioPlayer({
   // the whole video, so the scheduler never has to know about section
   // boundaries: crossing one stops being an event, gaps simply contain no
   // beats, and two abutting sections can't fire a doubled click.
-  const [clickOn, setClickOn] = useState(false);
+  const [clickOn, setClickOn] = useState<boolean>(LESSON_PLAYBACK_DEFAULTS.metronome);
   // Per-viewer convenience, so it survives a reload. Reads can throw (private
   // windows, blocked site data), so the player must render fine without it.
   const [clickVolume, setClickVolume] = useState(readStoredClickVolume);
@@ -335,11 +362,11 @@ export function PlaysenseStudioPlayer({
     writeStoredClickVolume(v);
   }, []);
   const clickGrid = useMemo(
-    () =>
-      mergeBeatGrids(
-        [lessonMetronomeGrid(lessonMetronome??{bpm:120,anchorSeconds:null},clock.durationSeconds,normalizedSections.flatMap(s=>s.videoStartSeconds==null?[]:[s.videoStartSeconds])).filter(t=>!normalizedSections.some(s=>t>=(s.videoStartSeconds??0)&&t<(s.videoEndSeconds??clock.durationSeconds))), ...normalizedSections.map((section) => {
-          const from = section.videoStartSeconds ?? 0;
-          const to = section.videoEndSeconds ?? clock.durationSeconds;
+    () => {
+      const sectionGrids = normalizedSections.map((section) => {
+          const musicRange=section.continuousProject?.musicRanges?.[section.id];
+          const from = musicRange?.start ?? section.videoStartSeconds ?? 0;
+          const to = musicRange?.end ?? section.videoEndSeconds ?? clock.durationSeconds;
           if (!(to > from)) return [];
           // With no anchor we fall back to the section's own start. The phase is
           // then arbitrary -- exactly as arbitrary as the old free-running click,
@@ -353,16 +380,31 @@ export function PlaysenseStudioPlayer({
           // seconds, so the click follows the (possibly stretched) recording.
           // Playback rate itself belongs in the media -> AudioContext
           // conversion, never in the grid.
-          const beatTimesTimeline = beatGridFromAnchor(anchor, section.score.initialTempo, from, to);
+          const confirmedAnchors = readClickAnchors(section.activeTimeMap?.params);
+          const beatTimesTimeline = confirmedAnchors !== undefined
+            ? anchoredClickGrid(sectionClickAnchors(confirmedAnchors,section.videoStartSeconds??from),section.score.initialTempo,section.score.initialTimeSignature[1],section.videoStartSeconds??from,Math.min(section.videoEndSeconds??to,clock.durationSeconds||Infinity))
+            : section.activeTimeMap && section.activeTimeMap.waypoints.length >= 2
+            ? scoreMetronomeGrid(section.score,section.activeTimeMap.waypoints,from,to,section.metronomeAnchorSeconds,
+                Math.min(musicRange?.end ?? Infinity, clock.durationSeconds || Infinity, ...normalizedSections.flatMap(s => s.videoStartSeconds != null && s.videoStartSeconds > from ? [s.videoStartSeconds] : [])))
+            : beatGridFromAnchor(anchor, section.score.initialTempo * section.score.initialTimeSignature[1] / 4, from, to);
           const sectionFlexMap = new FlexMap(section.activeTimeMap?.flex ?? []);
-          return clickTimesInMedia(sectionFlexMap, beatTimesTimeline);
-        })]
-      ),
+          return clickTimesInMedia(sectionFlexMap, stopClicksAtFinalBars(beatTimesTimeline,confirmedAnchors?.map(a=>a.seconds)??[anchor],finalBarClickStops(section.score,section.activeTimeMap?.waypoints??[])));
+        });
+      const lessonGrid = lessonMetronomeGrid(lessonMetronome??{bpm:120,anchorSeconds:null},clock.durationSeconds,normalizedSections.flatMap(s=>s.videoStartSeconds==null?[]:[s.videoStartSeconds]))
+        .filter(t=>!normalizedSections.some((s,i)=>{
+          const grid=sectionGrids[i];
+          const last=grid.at(-1)??0;
+          const finalPeriod=grid.length>1?last-grid[grid.length-2]:0;
+          return t>=(s.videoStartSeconds??0)&&t<Math.max(s.videoEndSeconds??clock.durationSeconds,last+finalPeriod);
+        }));
+      return sectionClickGrid(normalizedSections.map((section,i)=>({...section,grid:sectionGrids[i]})),lessonGrid);
+    },
     [normalizedSections, clock.durationSeconds,lessonMetronome]
   );
   // Disclosed in the chronometer: the section under the playhead has no anchor,
   // so there is nothing to align a click to here.
-  const lessonClickActive = !activeSection && lessonMetronome?.anchorSeconds != null && clock.currentSeconds >= lessonMetronome.anchorSeconds;
+  const lessonPulseSegment=lessonMetronome?.segments?.find(s=>clock.currentSeconds>=s.from&&clock.currentSeconds<s.to);
+  const lessonClickActive = !activeSection && (!!lessonPulseSegment || (lessonMetronome?.anchorSeconds != null && clock.currentSeconds >= lessonMetronome.anchorSeconds));
   const clickAligned = activeSection?.metronomeAnchorSeconds != null || lessonClickActive;
 
   // With flex anywhere in the lesson the rate driver changes playbackRate at
@@ -374,7 +416,7 @@ export function PlaysenseStudioPlayer({
     () => normalizedSections.some((section) => !new FlexMap(section.activeTimeMap?.flex ?? []).isIdentity),
     [normalizedSections]
   );
-  useVideoClickTrack({ videoRef, grid: clickGrid, enabled: clickOn, volume: clickVolume, smoothRateChanges: lessonFlexed });
+  const clickPlayback=useVideoClickTrack({ videoRef, grid: clickGrid, enabled: clickOn, volume: clickVolume, smoothRateChanges: lessonFlexed });
 
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
@@ -588,7 +630,7 @@ export function PlaysenseStudioPlayer({
   const workspace = useWorkspaceLayout(`watch:${notationLayout}`, WATCH_WORKSPACE);
 
   // Notation zoom (split layout) — pinch or slider scales the staff. 1 = default.
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.5);
 
   // ---- Shared building blocks (reused by both layouts) ----
   const fullscreenSurface = useCallback(() => {
@@ -596,9 +638,11 @@ export function PlaysenseStudioPlayer({
     return video?.closest<HTMLElement>('.ws-media, [data-video-fullscreen-frame]') ?? video?.parentElement ?? null;
   }, []);
   const videoEl = (
-    <VideoStage
+    <>{(audioSource.error||replacementAudioError)&&<p role="alert" className="absolute z-50 bg-background p-2 text-destructive">{audioSource.error||replacementAudioError}</p>}<VideoStage
+      classItemId={classItemId}
       ref={videoRef}
       src={videoUrl}
+      startLabel={manual?(locale==='es'?'Empezar':'Start'):undefined}
       poster={posterUrl}
       tracks={subtitleTracks}
       className={
@@ -606,8 +650,8 @@ export function PlaysenseStudioPlayer({
           ? 'h-full w-full [&_video]:object-contain'
           : 'aspect-video'
       }
-      onFirstPlay={() => clock.play()}
-    />
+      onFirstPlay={() => toggleCountedPlayback()}
+    /></>
   );
 
   // Scrubber markers for the scored sections (only in the multi-section case).
@@ -618,26 +662,20 @@ export function PlaysenseStudioPlayer({
           .map((s) => ({
             startSeconds: s.videoStartSeconds as number,
             endSeconds: s.videoEndSeconds,
-            label: s.label,
+            label: localizedScoreText(s.label, locale),
           }))
       : undefined;
 
-  // Section chips in the staff header: tap one to loop that part of the demo.
-  const chipSections = (sectionMarkers ?? []).map((marker, i, all) => ({
-    label: marker.label ?? null,
-    start: marker.startSeconds,
-    end: marker.endSeconds ?? all[i + 1]?.startSeconds ?? clock.durationSeconds,
-  })).filter((section) => section.end > section.start);
-
   const countIn=useTransportCountIn();
-  const [countInBars,setCountInBars]=useState<0|1|2>(0);
-  useEffect(()=>{countIn.cancel();},[displaySection.id,displayedRate,countIn.cancel]);
-  const firstBeatTimeline=displaySection.activeTimeMap?.waypoints.find(w=>w.musicalPositionQN===0)?.videoTimeSeconds ?? displaySection.videoStartSeconds ?? trimStart;
-  const firstBeatMedia=flexMap.toMedia(firstBeatTimeline);
+  const [countInBars,setCountInBars]=useState<0|1|2>(LESSON_PLAYBACK_DEFAULTS.countInBars);
+  useEffect(()=>{countIn.cancel();},[displaySection.id,displayedRate,clock.currentSeconds,countIn.cancel]);
   const toggleCountedPlayback=()=>{
+    if(manual?.index===0){manual.next();return;}
     if(countIn.remaining){countIn.cancel();return;}
+    if(videoRef.current&&!videoRef.current.paused){clickPlayback.stop();videoRef.current.pause();return;}
     if(clock.isPlaying||!countInBars){void clock.toggle();return;}
-    clampSeek(firstBeatMedia);
+    // Count before the current position; never skip the authored introduction.
+    if (videoRef.current?.ended) clampSeek(trimStart);
     void countIn.start({bpm:score.initialTempo*displayedRate,denominator:score.initialTimeSignature[1],beats:score.initialTimeSignature[0],bars:countInBars,volume:clickVolume||.2},()=>{void videoRef.current?.play().catch(()=>{});});
   };
 
@@ -646,7 +684,7 @@ export function PlaysenseStudioPlayer({
   const transportEl = (
     <TransportBar
       fullscreenControl={<VideoFullscreenButton inline getSurface={fullscreenSurface} />}
-      currentSeconds={clock.currentSeconds}
+      currentSeconds={manual?.position ?? clock.currentSeconds}
       durationSeconds={clock.durationSeconds}
       isPlaying={clock.isPlaying||countIn.remaining>0}
       playbackRate={displayedRate}
@@ -654,15 +692,17 @@ export function PlaysenseStudioPlayer({
       onRestart={()=>{countIn.cancel();clock.seek(trimStart);}}
       onSeek={seconds=>{countIn.cancel();clampSeek(seconds);}}
       onRateChange={onDisplayedRateChange}
+      onSetLoopA={seconds => { clock.setLoopA(seconds); if (clock.loopB !== null && seconds >= clock.loopB) { clock.setLoopB(null); clock.setLoopEnabled(false); } }}
+      onSetLoopB={seconds => { clock.setLoopB(seconds); clock.setLoopEnabled(true); }}
       loopA={clock.loopA}
       loopB={clock.loopB}
       loopEnabled={clock.loopEnabled}
       onToggleLoop={() =>
-        clock.loopEnabled ? clock.clearLoop() : clock.setLoopEnabled(true)
+        clock.setLoopEnabled(!clock.loopEnabled)
       }
       onClearLoop={clock.clearLoop}
-      metronomeControls={<div className="mt-2 border-t border-border pt-2 text-xs"><label className="flex items-center justify-between">Pre-count<select aria-label="Pre-count" value={countInBars} onChange={e=>{countIn.cancel();setCountInBars(Number(e.target.value) as 0|1|2);}} className="rounded border border-border bg-background p-1"><option value="0">Off</option><option value="1">1 measure</option><option value="2">2 measures</option></select></label>{countIn.remaining>0&&<output className="block py-2 text-center text-2xl font-mono">{countIn.remaining}</output>}</div>}
-      bpm={lessonClickActive ? lessonMetronome!.bpm : score.initialTempo}
+      metronomeControls={<PrecountControl bars={countInBars} remaining={countIn.remaining} onChange={n=>{countIn.cancel();setCountInBars(n);}}/>}
+      bpm={lessonClickActive ? lessonPulseSegment?.bpm??lessonMetronome!.bpm : score.initialTempo}
       beatsPerMeasure={score.initialTimeSignature[0]}
       clickOn={clickOn}
       onClickOnChange={setClickOn}
@@ -707,14 +747,26 @@ export function PlaysenseStudioPlayer({
   const staffLayout: StaffLayoutMode =
     layout === 'split' ? staffLayoutMode(notationLayout) : 'scroll';
 
+  const PlaybackStaff = staffGroupIndices(score, activeTrackIndex).length > 1 ? MultiStaffRenderer : StaffRenderer;
   const staffEl = (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-    <ScoreHeading score={score} trackIndex={activeTrackIndex} fallbackTitle={classItemTitle}/>
-    <StaffRenderer
+    // Paged notation must retain the heading plus a complete staff row. The
+    // outer notation pane owns scrolling when a stacked workspace is short.
+    <div className={staffLayout === 'paged'
+      ? 'flex min-h-full shrink-0 flex-col'
+      : 'flex min-h-0 flex-1 flex-col overflow-hidden'}>
+    {countIn.remaining>0&&<output role="status" className="p-2 text-center font-mono text-2xl text-primary">{countIn.remaining}</output>}
+    <ScoreHeading score={normalizedSections[0]?.continuousProject ? {...score,title:normalizedSections[0].continuousProject.title} : score} bpm={score.initialTempo * displayedRate} trackIndex={activeTrackIndex} fallbackTitle={classItemTitle}/>
+    {/* The staff owns a clipped viewport below the heading at every zoom. */}
+    <div data-score-staff-boundary className={staffLayout === 'scroll'
+      ? 'relative mt-1 flex min-h-0 flex-col overflow-hidden'
+      : 'relative mt-1 flex min-h-0 flex-1 flex-col overflow-hidden'}>
+    <PlaybackStaff
+      compact={learningMode === 'kids'}
       score={score}
       trackIndex={activeTrackIndex}
       currentMs={cursorMs}
       viewMs={viewMs}
+      autoFollow={isFollowing}
       loopAMs={loopAMs}
       loopBMs={loopBMs}
       layoutMode={staffLayout}
@@ -730,6 +782,7 @@ export function PlaysenseStudioPlayer({
       onSelectRange={handleSelectRange}
       onDurationKnown={setTrackDurationMs}
     />
+    </div>
     </div>
   );
 
@@ -762,30 +815,31 @@ export function PlaysenseStudioPlayer({
           // userSpeed too, so useFlexPlayback picks it up (and the identity
           // branch keeps clock.playbackRate/setPlaybackRate as the source of
           // truth when there's no flex — this write is simply unread then).
-          setUserSpeed(clip.playbackRate);
+          chooseSpeed(clip.playbackRate);
         }}
       />
     ) : null;
 
   // ---- Split layout: resizable video | notation panes ----
   if (layout === 'split') {
+    const unmetered=score.tracks[activeTrackIndex]?.measures[0]?.senzaMisura;
     const measures = score.tracks[activeTrackIndex]?.measures.length ?? 0;
     const meta = [
-      measures > 0 ? `${measures} measures` : null,
-      `${score.initialTimeSignature[0]}/${score.initialTimeSignature[1]}`,
-      `♩=${Math.round(score.initialTempo)}`,
+      !unmetered && measures > 0 ? `${measures} ${locale==='es'?'compases':'measures'}` : null,
+      unmetered?(locale==='es'?'Sin compás':'Unmetered'):`${score.initialTimeSignature[0]}/${score.initialTimeSignature[1]}`,
+      `♩=${Math.round(score.initialTempo * displayedRate)}`,
     ]
       .filter(Boolean)
       .join('  ·  ');
 
-    return (
-      <div className="space-y-4">
+    const content = (
+      <div className="space-y-4" data-kids-score-workspace={learningMode === 'kids' ? '' : undefined}>
         {/* Break out of the lesson page's px-4/md:px-8 padding for an
             edge-to-edge, viewport-filling workspace. */}
-        <div className="relative -mx-4 md:-mx-8">
+        <div className={kidsClassroom ? "relative flex h-[clamp(300px,calc(42dvh+73px+var(--lesson-footer-space,0px)),calc(633px+var(--lesson-footer-space,0px)))] flex-col" : "relative"}>
           <SplitWorkspace
             controller={workspace}
-            frame="bleed"
+            frame={kidsClassroom ? "fill" : "bleed"}
             media={
               <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
                 {videoEl}
@@ -793,14 +847,15 @@ export function PlaysenseStudioPlayer({
             }
             music={
               <>
-                <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-border bg-secondary px-3 py-2">
-                  <div className="min-w-0">
+                <div className="ws-score-tools">
+                <div className="ws-score-header flex flex-shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-secondary px-3 py-2">
+                  <div className="ws-score-summary min-w-0">
                     <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
                       <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(30_85%_55%/0.7)]" />
                       PlaySense Studio
                     </div>
                     <div className="mt-1 truncate font-heading text-[13.5px] font-bold tracking-tight">
-                      {score.title || 'Notation'}
+                      {localizedScoreText(score.title, locale) || (locale === 'es' ? 'Partitura' : 'Notation')}
                     </div>
                     <div className="mt-0.5 truncate text-[10.5px] font-medium tracking-[0.02em] text-muted-foreground">
                       {meta}
@@ -822,13 +877,9 @@ export function PlaysenseStudioPlayer({
                     )}
                   </div>
                 </div>
-                {chipSections.length > 1 && (
-                  <SectionChips sections={chipSections} currentSeconds={clock.currentSeconds}
-                    loop={{ a: clock.loopA, b: clock.loopB, enabled: clock.loopEnabled }}
-                    onLoop={(a, b) => clock.loadLoop(a, b)} onClear={clock.clearLoop}
-                    className="flex-shrink-0 border-b border-border px-3 py-2" />
-                )}
-                <div className="relative min-h-0 flex-1">
+                {workspace.layout === 'stack' && <NotationZoomControl zoom={zoom} onZoom={setZoom} docked />}
+                </div>
+                <div className="ws-score-content relative min-h-0 flex-1">
                   {/* See staffPaneClass for how each staff layout uses the pane. */}
                   <NotationZoomLayer
                     zoom={zoom}
@@ -839,7 +890,7 @@ export function PlaysenseStudioPlayer({
                     {staffEl}
                     {scrubEl}
                   </NotationZoomLayer>
-                  <NotationZoomControl zoom={zoom} onZoom={setZoom} />
+                  {workspace.layout !== 'stack' && <NotationZoomControl zoom={zoom} onZoom={setZoom} />}
                 </div>
               </>
             }
@@ -850,13 +901,14 @@ export function PlaysenseStudioPlayer({
           />
         </div>
 
-        {clipsEl}
+        {!kidsClassroom && clipsEl}
       </div>
     );
+    return kidsClassroom ? <div className="space-y-4"><TimbalTheater classId={classroomId}><div data-lesson-video data-kids-watch-workspace>{content}</div></TimbalTheater>{clipsEl}</div> : content;
   }
 
-  return (
-    <div className="space-y-4">
+  const content = (
+    <div className="space-y-4" data-kids-score-workspace={learningMode === 'kids' ? '' : undefined}>
       <div data-video-fullscreen-frame className="relative flex min-h-0 flex-col">
         <div className="relative min-h-0 flex-1">
           {videoEl}
@@ -872,6 +924,7 @@ export function PlaysenseStudioPlayer({
       {clipsEl}
     </div>
   );
+  return kidsClassroom ? <TimbalTheater classId={classroomId}><div data-lesson-video data-kids-watch-workspace>{content}</div></TimbalTheater> : content;
 }
 
 function fmtClock(seconds: number): string {
@@ -959,22 +1012,24 @@ function NotationZoomLayer({
   }, []);
 
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} tabIndex={0} className={className}>
       {children}
     </div>
   );
 }
 
-// Floating zoom slider pinned to the notation pane's corner.
+// Shared zoom control: docked for stacked viewing, floating otherwise.
 function NotationZoomControl({
   zoom,
   onZoom,
+  docked = false,
 }: {
+  docked?: boolean;
   zoom: number;
   onZoom: (z: number) => void;
 }) {
   return (
-    <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded-full border border-border bg-popover/90 px-1.5 py-1 shadow-lg backdrop-blur">
+    <div className={`${docked ? 'relative ml-auto shrink-0' : 'absolute bottom-3 right-3 z-20'} flex items-center gap-1 rounded-full border border-border bg-popover/90 px-1.5 py-1 backdrop-blur`}>
       <button
         type="button"
         onClick={() => onZoom(clampZoom(zoom - 0.2))}
@@ -1005,7 +1060,7 @@ function NotationZoomControl({
       </button>
       <button
         type="button"
-        onClick={() => onZoom(1)}
+        onClick={() => onZoom(0.5)}
         title="Reset zoom"
         className="min-w-[34px] rounded-full px-1 text-center text-[10px] font-semibold tabular-nums text-muted-foreground transition-colors hover:text-foreground"
       >

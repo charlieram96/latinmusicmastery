@@ -1,4 +1,5 @@
 'use client';
+import { LESSON_PLAYBACK_DEFAULTS } from '@/lib/playsense-studio/lesson-playback-defaults';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ScoreDocument } from '../shared/score-model/types';
 import { measureLengthInQN, qnToMs, walkMeasures } from '@/lib/playsense-studio/time-mapping';
@@ -9,10 +10,10 @@ import { ClickTrack, readStoredClickVolume, writeStoredClickVolume } from '@/lib
 export function useScoreTransport(score: ScoreDocument, trackIndex: number) {
   const bars = useMemo(() => {
     const track = score.tracks?.[trackIndex];
-    return track ? [...walkMeasures(playbackTrack(track,score), score)].map(({ state }) => ({ start: state.cumulativeMs, end: state.cumulativeMs + qnToMs(measureLengthInQN(state.timeSignature), state.tempo), bpm: state.tempo, denominator:state.timeSignature[1], beatMs: qnToMs(4 / state.timeSignature[1], state.tempo) })) : [];
+    return track ? [...walkMeasures(playbackTrack(track,score), score)].map(({ state, measure }) => ({ start: state.cumulativeMs, end: state.cumulativeMs + qnToMs(measureLengthInQN(state.timeSignature, measure), state.tempo), bpm: state.tempo, beats: state.timeSignature[0], denominator:state.timeSignature[1], beatMs: qnToMs(4 / state.timeSignature[1], state.tempo) })) : [];
   }, [score, trackIndex]);
   const countIn=useTransportCountIn();
-  const [countInBars,setCountInBars]=useState<0|1|2>(0);
+  const [countInBars,setCountInBars]=useState<0|1|2>(LESSON_PLAYBACK_DEFAULTS.countInBars);
   const [rate,setRate]=useState(()=>scorePlaybackRate(score));
   const rateRef=useRef(scorePlaybackRate(score));
   const duration = bars.at(-1)?.end ?? 0;
@@ -83,8 +84,8 @@ export function useScoreTransport(score: ScoreDocument, trackIndex: number) {
     // Unlock the playback context in this user gesture, before the count-in.
     const engine=click.current??(click.current=new ClickTrack());
     try {const ctx=engine.ensureContext();if(ctx.state!=='running')void ctx.resume().catch(()=>{});}catch{setError('Unable to start audio. Press Play to retry.');return;}
-    seek(bar.start);
-    void countIn.start({bpm:bar.bpm*rateRef.current,denominator:bar.denominator,beats:Math.round((bar.end-bar.start)/bar.beatMs),bars:countInBars,volume:volume||.2},()=>{void startPlayback();});
+    // Count in without moving the selected playback position.
+    void countIn.start({bpm:bar.bpm*rateRef.current,denominator:bar.denominator,beats:bar.beats,bars:countInBars,volume:volume||.2},()=>{void startPlayback();});
   };
   const changeRate=(next:number)=>{
     if(!Number.isFinite(next)||next<=0)return;

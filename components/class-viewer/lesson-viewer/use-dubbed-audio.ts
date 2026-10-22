@@ -4,9 +4,10 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import type { LessonAudioTrack } from '@/lib/audio/lesson-audio'
 
 /** The video remains the master clock, including seeks, loops and speed changes. */
-export function useDubbedAudio(videoRef: RefObject<HTMLVideoElement | null>, tracks: readonly LessonAudioTrack[], volume: number, muted: boolean) {
-  const [language, setLanguage] = useState('original')
+export function useDubbedAudio(videoRef: RefObject<HTMLVideoElement | null>, tracks: readonly LessonAudioTrack[], volume: number, muted: boolean, preferredLanguage = 'original') {
+  const [language, setLanguage] = useState(preferredLanguage)
   const [error, setError] = useState(false)
+  useEffect(() => { setLanguage(preferredLanguage); setError(false) }, [preferredLanguage])
   const track = tracks.find(t => t.lang === language)
   const [audio] = useState(() => typeof window === 'undefined' ? null : new Audio())
   const mutedRef = useRef(muted)
@@ -36,9 +37,21 @@ export function useDubbedAudio(videoRef: RefObject<HTMLVideoElement | null>, tra
       void audio.play().then(() => {
         starting = false
         if (disposed || video.paused || video.ended) audio.pause()
-      }).catch(() => { starting = false; fail() })
+      }).catch((reason: unknown) => {
+        starting = false
+        if (disposed) return
+        // Seeking/waiting can interrupt a pending play(); this is not a bad dub.
+        if (reason instanceof DOMException && reason.name === 'AbortError') {
+          if (!video.paused && !video.seeking && audio.readyState >= 3) play()
+          return
+        }
+        fail()
+      })
     }
     const pause = () => audio.pause()
+    audio.dataset.lessonDubbedAudio = track.lang
+    audio.hidden = true
+    video.parentElement?.appendChild(audio)
     audio.src = track.src
     audio.preload = 'auto'
     audio.volume = volume
@@ -56,6 +69,7 @@ export function useDubbedAudio(videoRef: RefObject<HTMLVideoElement | null>, tra
     return () => {
       disposed = true
       audio.pause()
+      audio.remove()
       audio.removeEventListener('error', fail)
       audio.removeEventListener('loadedmetadata', align)
       audio.removeEventListener('canplay', play)

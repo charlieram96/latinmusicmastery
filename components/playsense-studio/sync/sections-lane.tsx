@@ -27,6 +27,10 @@ export function sectionColor(index: number): string {
 
 export interface LaneSection {
   sectionId: string;
+  score?: import('../shared/score-model/types').ScoreDocument;
+  timing?: import('@/lib/playsense-studio/drafts/timing').StudioTiming;
+  continuousProject?: import('@/lib/playsense-studio/continuous-project').ContinuousScoreProject;
+  preview?: boolean;
   label: string;
   startSeconds: number | null;
   endSeconds: number | null;
@@ -146,7 +150,7 @@ export function SectionsLane({
             key={s.sectionId}
             type="button"
             className={`st-section-block${isActive ? ' is-active' : ''}`}
-            style={{ left: x, width: Math.max(w, 14), ['--block-color' as string]: sectionColor(i) }}
+            style={{ left: x, width: Math.max(w, 14), borderStyle: s.preview ? 'dashed' : undefined, ['--block-color' as string]: sectionColor(i) }}
             title={isActive ? 'Drag to move this section' : `${s.label} — click to edit`}
             onClick={() => !isActive && onSelectSection(s.sectionId)}
             onPointerDown={isActive ? onActivePointerDown : undefined}

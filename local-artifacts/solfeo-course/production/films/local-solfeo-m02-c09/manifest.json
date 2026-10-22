@@ -1,0 +1,530 @@
+{
+  "classId": "local-solfeo-m02-c09",
+  "duration": 146.354667,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Silencios, respiración y ligadura de prolongación",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 23,
+      "kind": "explanation",
+      "title": "Silencios, respiración y ligadura de prolongación",
+      "sourceTopic": "lectura-inicial-4",
+      "soundEvents": []
+    },
+    {
+      "start": 23,
+      "end": 36,
+      "kind": "notation",
+      "title": "Compases 1-4",
+      "sourceTopic": "lectura-inicial-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "Compases 1-4",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 1
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 1
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {},
+            "ties": [
+              [
+                0,
+                1
+              ],
+              [
+                3,
+                4
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "lectura-inicial-4",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "lectura-inicial-3"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 3.7125,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 6,
+          "duration": 3.7125,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 2
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 9.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 36,
+      "end": 49,
+      "kind": "notation",
+      "title": "Compases 5-8",
+      "sourceTopic": "lectura-inicial-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "Compases 5-8",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 1
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 1
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 1
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "ties": [
+              [
+                0,
+                1
+              ]
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "lectura-inicial-4",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "lectura-inicial-3"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 3.7125,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 6,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 8.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 49,
+      "end": 64,
+      "kind": "explanation",
+      "title": "Silencios, respiración y ligadura de prolongación",
+      "sourceTopic": "lectura-inicial-4",
+      "soundEvents": []
+    },
+    {
+      "start": 64,
+      "end": 76.166667,
+      "kind": "explanation",
+      "title": "Silencios, respiración y ligadura de prolongación",
+      "sourceTopic": "lectura-inicial-4",
+      "soundEvents": []
+    },
+    {
+      "start": 76.166667,
+      "end": 87.166667,
+      "kind": "explanation",
+      "title": "Silencios, respiración y ligadura de prolongación",
+      "sourceTopic": "lectura-inicial-5",
+      "soundEvents": []
+    },
+    {
+      "start": 87.166667,
+      "end": 100.166667,
+      "kind": "notation",
+      "title": "Compases 1-4",
+      "sourceTopic": "lectura-inicial-5",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Compases 1-4",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                },
+                {
+                  "rest": true,
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "rest": true,
+                  "dur": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 1
+                }
+              ]
+            ],
+            "barStyles": {},
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "lectura-inicial-5",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-13"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 7.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 8.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 100.166667,
+      "end": 113.166667,
+      "kind": "notation",
+      "title": "Compases 5-8",
+      "sourceTopic": "lectura-inicial-5",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 87,
+        "rows": [
+          {
+            "title": "Compases 5-8",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 2
+                },
+                {
+                  "rest": true,
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "rest": true,
+                  "dur": 2
+                },
+                {
+                  "pitch": "B3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 1
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 135,
+        "_sourcePage": "lectura-inicial-5",
+        "rowHeights": [
+          87
+        ],
+        "sourcePageId": "flow-cont-13"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 7.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 8.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 113.166667,
+      "end": 128.16666700000002,
+      "kind": "explanation",
+      "title": "Silencios, respiración y ligadura de prolongación",
+      "sourceTopic": "lectura-inicial-5",
+      "soundEvents": []
+    },
+    {
+      "start": 128.16666700000002,
+      "end": 140.333334,
+      "kind": "explanation",
+      "title": "Silencios, respiración y ligadura de prolongación",
+      "sourceTopic": "lectura-inicial-5",
+      "soundEvents": []
+    },
+    {
+      "start": 140.333334,
+      "end": 146.333334,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

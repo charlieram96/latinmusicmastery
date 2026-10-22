@@ -3,7 +3,7 @@
 // `spellingHint`) or after. New code reads through these, never the raw fields.
 import type { Articulation, MusicalEvent, ScoreDocument, Spelling } from './types';
 
-export function eventDots(e: MusicalEvent): 0 | 1 | 2 {
+export function eventDots(e: MusicalEvent): 0 | 1 | 2 | 3 {
   return e.dots ?? (e.dotted ? 1 : 0);
 }
 

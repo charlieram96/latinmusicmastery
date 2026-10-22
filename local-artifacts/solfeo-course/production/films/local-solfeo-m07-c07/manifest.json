@@ -1,0 +1,488 @@
+{
+  "classId": "local-solfeo-m07-c07",
+  "duration": 96.688,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Modulación de Do mayor a Sol mayor",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 21,
+      "kind": "explanation",
+      "title": "Modulación de Do mayor a Sol mayor",
+      "sourceTopic": "modulacion-practica",
+      "soundEvents": []
+    },
+    {
+      "start": 21,
+      "end": 34,
+      "kind": "notation",
+      "title": "1-4 · Establecer Do mayor",
+      "sourceTopic": "modulacion-practica",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "1-4 · Establecer Do mayor",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2,
+                  "label": "C"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 2,
+                  "label": "F"
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 2,
+                  "label": "G7"
+                },
+                {
+                  "pitch": "B3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 1,
+                  "label": "C"
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 120,
+        "_sourcePage": "modulacion-practica",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-142"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 6,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 7.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 8.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 34,
+      "end": 47,
+      "kind": "notation",
+      "title": "5-8 · Acorde común y cadencia en Sol",
+      "sourceTopic": "modulacion-practica",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "5-8 · Acorde común y cadencia en Sol",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2,
+                  "label": "Am"
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "F#4",
+                  "dur": 2,
+                  "label": "D7"
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2,
+                  "label": "G"
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 1,
+                  "label": "G"
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 120,
+        "_sourcePage": "modulacion-practica",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-142"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 6,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 7.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 8.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 47,
+      "end": 60,
+      "kind": "notation",
+      "title": "9-12 · Confirmar Sol como nueva tónica",
+      "sourceTopic": "modulacion-practica",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 86,
+        "rows": [
+          {
+            "title": "9-12 · Confirmar Sol como nueva tónica",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "A4",
+                  "dur": 2,
+                  "label": "Am"
+                },
+                {
+                  "pitch": "C5",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "F#4",
+                  "dur": 2,
+                  "label": "D7"
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 2,
+                  "label": "G"
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 1,
+                  "label": "G"
+                }
+              ]
+            ],
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 120,
+        "_sourcePage": "modulacion-practica",
+        "rowHeights": [
+          86
+        ],
+        "sourcePageId": "flow-cont-142"
+      },
+      "soundEvents": [
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 6,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 7.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 7.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 8.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 60,
+      "end": 79.166667,
+      "kind": "explanation",
+      "title": "Modulación de Do mayor a Sol mayor",
+      "sourceTopic": "modulacion-practica",
+      "soundEvents": []
+    },
+    {
+      "start": 79.166667,
+      "end": 90.666667,
+      "kind": "explanation",
+      "title": "Modulación de Do mayor a Sol mayor",
+      "sourceTopic": "modulacion-practica",
+      "soundEvents": []
+    },
+    {
+      "start": 90.666667,
+      "end": 96.666667,
+      "kind": "completion",
+      "title": "¡Un paso más en tu música!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

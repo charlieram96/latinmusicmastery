@@ -1,5 +1,12 @@
 'use client'
 
+import Link from 'next/link'
+import { TimbalTheater } from '@/components/learning-mode/theater/timbal-theater'
+import { timbalScene } from '@/components/learning-mode/theater/timbal-scenes'
+import { useLearningMode } from '@/components/learning-mode/store'
+import { LessonVideoPlayer } from '@/components/class-viewer/lesson-viewer/lesson-video-player'
+import { useTranslation } from '@/components/language-provider'
+import { pick } from '@/lib/i18n/localize'
 import { AdminText } from '@/components/admin/admin-text'
 
 
@@ -24,6 +31,7 @@ interface ClassCanvasProps {
   cls: ClassWithItems | null
   moduleIndex: number
   classIndex: number
+  localPreview?: boolean
   hasModules: boolean
   activeItemId: string | null
   onAddItem: (classId: string, type: ClassItemType) => Promise<void> | void
@@ -38,12 +46,15 @@ export function ClassCanvas({
   moduleIndex,
   classIndex,
   hasModules,
+  localPreview,
   activeItemId,
   onAddItem,
   onSelectItem,
   onDeleteItem,
   onReorderItems,
 }: ClassCanvasProps) {
+  const learningMode = useLearningMode()
+  const { locale } = useTranslation()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   if (!cls || !section) {
@@ -80,6 +91,9 @@ export function ClassCanvas({
 
   return (
     <div className="mx-auto w-full max-w-[760px] px-5 py-7 md:px-8">
+      {learningMode === 'kids' && timbalScene(cls.id) && <div className="mb-6"><TimbalTheater classId={cls.id} empty={!cls.items.some(item => item.item_type === 'VIDEO' && item.video_url)}>
+        {cls.items.find(item => item.item_type === 'VIDEO' && item.video_url)?.video_url ? <LessonVideoPlayer src={cls.items.find(item => item.item_type === 'VIDEO' && item.video_url)!.video_url!}/> : <div className="flex min-h-48 items-center justify-center p-8 text-center"><p>{locale === 'es' ? 'Escenario listo para el video de esta clase.' : 'The stage is ready for this class video.'}</p></div>}
+      </TimbalTheater></div>}
       <ClassHeader cls={cls} moduleIndex={moduleIndex} classIndex={classIndex} />
 
       <div className="mt-6 space-y-2">
@@ -121,6 +135,9 @@ export function ClassCanvas({
           <AddItemBar onAdd={(type) => onAddItem(cls.id, type)} />
         </div>
       </div>
+      {localPreview && cls.id.startsWith('local-solfeo-') && <div className="mt-6 space-y-3">
+        <Link href={`/solfeo-preview?class=${cls.id}`} target="_blank" className="text-sm font-medium text-primary"><AdminText text="Preview" /> ↗</Link>
+      </div>}
     </div>
   )
 }
@@ -133,6 +150,7 @@ interface ClassHeaderProps {
 
 /** Read-only header — title/description/free/delete are edited in the drawer. */
 function ClassHeader({ cls, moduleIndex, classIndex }: ClassHeaderProps) {
+  const { locale } = useTranslation()
   return (
     <header className={styles.rise}>
       <div className="flex items-center gap-2">
@@ -145,11 +163,11 @@ function ClassHeader({ cls, moduleIndex, classIndex }: ClassHeaderProps) {
       </div>
 
       <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-foreground">
-        {cls.title || 'Untitled class'}
+        {pick(locale, cls.title, cls.title_es ?? '') || 'Untitled class'}
       </h2>
 
       {cls.description && (
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{cls.description}</p>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{pick(locale, cls.description, cls.description_es ?? '')}</p>
       )}
     </header>
   )

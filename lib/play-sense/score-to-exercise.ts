@@ -82,6 +82,7 @@ const STROKE_INFO: Record<string, { technique: Technique; surface: string }> = {
   rim: { technique: 'rim', surface: 'macho' },
   'high-mute': { technique: 'mute', surface: 'macho' },
   'low-mute': { technique: 'mute', surface: 'hembra' },
+  'elbow-strike': { technique: 'open', surface: 'hembra' },
   'low-cross-stick': { technique: 'rim', surface: 'hembra' },
   'cascara-low': { technique: 'shell', surface: 'cascara' },
   'jam-block': { technique: 'tip', surface: 'jamblock' },
@@ -228,12 +229,16 @@ export function scoreToExerciseDefinition(
         }
         let vexKey: string
         let technique: Technique = 'open'
+        let strokeId: string | undefined
+        let strokeLabel: string | undefined
         let surface: string | undefined
         let expectedPitch: number | undefined
         let expectedNoteName: string | undefined
 
         if (perc) {
           const strokeData = resolvePercStroke(track.instrument, n)
+          strokeId = strokeData?.id ?? `midi-${midi}`
+          strokeLabel = strokeData?.label ?? `MIDI ${midi}`
           vexKey = percussionNotation(track.instrument, n).staffLine
           const info = strokeData ? STROKE_INFO[strokeData.id] : undefined
           technique = info?.technique ?? 'open'
@@ -256,6 +261,9 @@ export function scoreToExerciseDefinition(
           expectedPitch,
           expectedNoteName,
           surface,
+          strokeId,
+          strokeLabel,
+          notehead: perc ? percussionNotation(track.instrument,n).notehead : undefined,
           chordId,
         }
         events.push(played)

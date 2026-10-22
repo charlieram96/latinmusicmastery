@@ -96,6 +96,12 @@ export interface Track {
 }
 
 export interface Measure {
+  /** Text shown in place of the automatic rest in an empty measure. */
+  emptyText?: { text: string; fontSize: number };
+  /** Actual span of an implicit/pickup measure; does not change its meter. */
+  durationQN?: number;
+  /** Unmetered notation: derive its span from the longest voice and omit meter. */
+  senzaMisura?: boolean;
   /** Expanded performance order; matching offsets share notation across passes. */
   repeat?: { id: string; pass: number; count: number; offset: number; length: number };
   /** 1-based measure number. */
@@ -145,7 +151,7 @@ export interface NoteBase {
   /** Stable id for spans, nudges and flex. Assigned by ensureEventIds. */
   id?: string;
   /** Supersedes `dotted`: read with eventDots(). */
-  dots?: 1 | 2;
+  dots?: 1 | 2 | 3;
   /** Supersedes `triplet`: read with eventTuplet(). */
   tuplet?: Tuplet;
   /** Supersedes `articulation`: read with eventArticulations(). */

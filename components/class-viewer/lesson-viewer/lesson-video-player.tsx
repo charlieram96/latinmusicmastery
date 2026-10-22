@@ -1,4 +1,8 @@
 'use client'
+import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar'
+import { ExerciseVideoGuidance } from '@/components/playsense-studio/shared/exercise-video-guidance'
+import { exerciseVideoGuidance } from '@/lib/playsense-studio/exercise-video-guidance'
+import {useAudioSource,useSelectedAudio} from '@/components/playsense-studio/shared/use-audio-source';
 
 // Polished, custom-skinned video player for lesson videos that have no notation.
 //
@@ -10,8 +14,14 @@
 // Transport state (play/seek/rate/loop) is delegated to the shared
 // useVideoTransportClock so behavior matches the PlaySense Studio player.
 
+import { useManualLessonMedia } from '@/components/playsense-studio/shared/manual-lesson-navigation';
+import { useTransportCountIn } from '@/components/playsense-studio/player/state/use-transport-count-in';
+import { LESSON_PLAYBACK_DEFAULTS } from '@/lib/playsense-studio/lesson-playback-defaults';
+import { PrecountControl } from '@/components/playsense-studio/shared/precount-control';
 import { useSpacePlayback } from '@/hooks/use-space-playback'
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
+import { LessonPresentationOverlay } from '@/components/playsense-studio/shared/lesson-presentation';
+import { lessonPresentationFor } from '@/lib/playsense-studio/lesson-presentation';
 import {useVideoClickTrack} from '@/components/playsense-studio/player/state/use-video-click-track';
 import {lessonMetronomeGrid,type LessonMetronome} from '@/lib/playsense-studio/lesson-metronome';
 import {
@@ -45,6 +55,8 @@ import { lessonAudioTracks } from '@/lib/audio/lesson-audio'
 import { useDubbedAudio } from './use-dubbed-audio'
 
 interface LessonVideoPlayerProps {
+  audioSourceItemId?: string
+  onEnded?: () => void
   src: string
   metronome?: LessonMetronome
   poster?: string
@@ -75,6 +87,7 @@ function fmt(seconds: number): string {
 }
 
 export function LessonVideoPlayer({
+  audioSourceItemId,
   src,
   metronome,
   poster,
@@ -83,21 +96,31 @@ export function LessonVideoPlayer({
   defaultSubtitleLang,
   trimInSeconds,
   trimOutSeconds,
+  onEnded,
 }: LessonVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const { t, locale } = useTranslation()
+  const presentation = lessonPresentationFor(src)
+  const sharedTransport = true
+  const [clickVolume, setClickVolume] = useState(.2)
   const clock = useVideoTransportClock(videoRef)
-  const [clickOn,setClickOn]=useState(true)
-  useVideoClickTrack({videoRef,grid:lessonMetronomeGrid(metronome??{bpm:120,anchorSeconds:null},clock.durationSeconds),enabled:clickOn&&metronome?.anchorSeconds!=null,volume:.2})
+  const manual=useManualLessonMedia(videoRef)
+  const [clickOn,setClickOn]=useState<boolean>(LESSON_PLAYBACK_DEFAULTS.metronome)
+  const countIn=useTransportCountIn()
+  const [countInBars,setCountInBars]=useState<0|1|2>(LESSON_PLAYBACK_DEFAULTS.countInBars)
+  useEffect(()=>{countIn.cancel()},[src,clock.playbackRate,manual?.index,countIn.cancel])
+  useVideoClickTrack({videoRef,grid:lessonMetronomeGrid(metronome??{bpm:120,anchorSeconds:null},clock.durationSeconds),enabled:clickOn&&(metronome?.anchorSeconds!=null||!!metronome?.segments?.length),volume:clickVolume})
   const tracks = subtitles ?? []
   const { activeLang, setActiveLang } = useSubtitleTracks(videoRef, tracks, defaultSubtitleLang)
 
   const [hasPlayed, setHasPlayed] = useState(false)
   const [volume, setVolume] = useState(1)
   const [muted, setMuted] = useState(false)
+  const audioSource=useAudioSource(audioSourceItemId??"","watch",src)
   const audioTracks = lessonAudioTracks(src)
-  const dubbedAudio = useDubbedAudio(videoRef, audioTracks, volume, muted)
+  const dubbedAudio = useDubbedAudio(videoRef, audioSource.settings.selected==='imported'?[]:audioTracks, volume, muted || !audioSource.loaded, locale)
+  const replacementAudioError=useSelectedAudio(videoRef,audioSource.settings,{volume,muted:muted || dubbedAudio.language!=='original',loaded:audioSource.loaded})
   const [buffered, setBuffered] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [controlsVisible, setControlsVisible] = useState(true)
@@ -117,7 +140,7 @@ export function LessonVideoPlayer({
   // Everything the controls show is RELATIVE to the usable region, so a trimmed
   // lesson reads as a video of exactly that length.
   const duration = Math.max(0, trimEnd - trimStart)
-  const positionSeconds = Math.max(0, clock.currentSeconds - trimStart)
+  const positionSeconds = Math.max(0, (manual?.position ?? clock.currentSeconds) - trimStart)
   const playedPct = duration > 0 ? (positionSeconds / duration) * 100 : 0
 
   // Start at the in-point rather than at zero.
@@ -170,8 +193,7 @@ export function LessonVideoPlayer({
     const video = videoRef.current
     if (!video) return
     video.volume = volume
-    video.muted = muted || dubbedAudio.language !== 'original'
-  }, [volume, muted, dubbedAudio.language])
+  }, [volume, muted, dubbedAudio.language,audioSource.loaded,audioSource.settings.selected])
 
   // --- auto-hide controls while playing ---
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -189,8 +211,11 @@ export function LessonVideoPlayer({
   }, [clock.isPlaying, bumpControls])
 
   const firstPlay = () => {
+    if(manual?.index===0){setHasPlayed(true);manual.next();return}
+    if(countIn.remaining){countIn.cancel();return}
     setHasPlayed(true)
-    void clock.play()
+    if(clock.isPlaying){clock.pause();return}
+    void countIn.start({bpm:(metronome?.bpm??120)*clock.playbackRate,denominator:4,beats:4,bars:countInBars,volume:.2},()=>{void clock.play()})
   }
 
   const toggleFullscreen = useCallback(() => {
@@ -209,7 +234,7 @@ export function LessonVideoPlayer({
     if (!rect || rect.width === 0) return 0
     return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
   }
-  const seekToPct = (pct: number) => clock.seek(trimStart + pct * duration)
+  const seekToPct = (pct: number) => {countIn.cancel();clock.seek(trimStart + pct * duration)}
 
   const onTrackPointerDown = (e: ReactPointerEvent) => {
     e.preventDefault()
@@ -227,7 +252,7 @@ export function LessonVideoPlayer({
     setScrubbing(false)
   }
 
-  useSpacePlayback(true, () => { hasPlayed ? clock.toggle() : firstPlay() })
+  useSpacePlayback(true, () => { firstPlay() })
 
   // --- keyboard shortcuts ---
   const onKeyDown = (e: ReactKeyboardEvent) => {
@@ -235,14 +260,16 @@ export function LessonVideoPlayer({
     switch (e.key) {
       case 'k':
         e.preventDefault()
-        hasPlayed ? clock.toggle() : firstPlay()
+        firstPlay()
         break
       case 'ArrowLeft':
         e.preventDefault()
+        countIn.cancel()
         clock.seek(Math.max(trimStart, clock.currentSeconds - 5))
         break
       case 'ArrowRight':
         e.preventDefault()
+        countIn.cancel()
         clock.seek(Math.min(trimEnd, clock.currentSeconds + 5))
         break
       case 'ArrowUp':
@@ -284,6 +311,8 @@ export function LessonVideoPlayer({
     <div
       ref={containerRef}
       data-lesson-video
+      data-presentation={!!presentation}
+      data-shared-exercise-transport={sharedTransport}
       data-fullscreen={isFullscreen}
       tabIndex={0}
       onKeyDown={onKeyDown}
@@ -293,51 +322,84 @@ export function LessonVideoPlayer({
         setHoverPct(null)
       }}
       className={cn(
-        'group/player relative isolate aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black shadow-warm outline-none ring-primary/60 focus-visible:ring-2',
+        'group/player relative isolate aspect-video w-full select-none overflow-hidden rounded-2xl border border-border bg-black shadow-warm outline-none ring-primary/60 focus-visible:ring-2',
+        (presentation || sharedTransport) && 'flex aspect-auto flex-col',
         isFullscreen && 'aspect-auto h-full rounded-none border-0',
         className
       )}
     >
-      {metronome?.anchorSeconds!=null&&<button type="button" aria-pressed={clickOn} onClick={()=>setClickOn(!clickOn)} className="absolute right-3 top-3 z-20 rounded-lg bg-black/70 px-3 py-2 text-sm text-white">♩ {metronome.bpm} BPM {clickOn?'✓':''}</button>}
+      {!sharedTransport && (metronome?.anchorSeconds!=null||!!metronome?.segments?.length)&&<button type="button" aria-pressed={clickOn} onClick={()=>setClickOn(!clickOn)} className="absolute right-3 top-3 z-20 rounded-lg bg-black/70 px-3 py-2 text-sm text-white">♩ {metronome?.segments?.find(s=>clock.currentSeconds>=s.from&&clock.currentSeconds<s.to)?.bpm??metronome?.bpm} BPM {clickOn?'✓':''}</button>}
+      {!presentation && !sharedTransport && <div className="absolute left-3 top-3 z-20 rounded-lg bg-background/95 p-2"><PrecountControl bars={countInBars} remaining={countIn.remaining} onChange={n=>{countIn.cancel();setCountInBars(n)}}/></div>}
+      {countIn.remaining>0&&<output role="status" className="pointer-events-none absolute inset-0 z-10 grid place-content-center font-mono text-6xl font-bold text-primary">{countIn.remaining}</output>}
       <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()}
         ref={videoRef}
+        onEnded={onEnded}
         src={src}
-        poster={poster}
+        poster={hasPlayed ? undefined : presentation?.poster ?? poster}
+        onSeeking={()=>setHasPlayed(true)}
         playsInline
         preload="metadata"
         crossOrigin={tracks.length > 0 ? 'anonymous' : undefined}
-        onClick={() => (hasPlayed ? clock.toggle() : firstPlay())}
-        className="absolute inset-0 h-full w-full bg-black"
+        onClick={() => (firstPlay())}
+        style={sharedTransport && !isFullscreen ? {maxHeight: 'max(200px, calc(100dvh - 360px))', objectFit: 'contain'} : undefined}
+        className={cn('w-full bg-black', (presentation || sharedTransport) ? (isFullscreen ? 'relative min-h-0 flex-1 object-contain' : 'relative block aspect-video h-auto') : 'absolute inset-0 h-full')}
       >
         {tracks.map((t) => (
           <track key={t.src} kind="subtitles" src={t.src} srcLang={t.lang} label={t.label} />
         ))}
-      </video><VideoWatermark controlsClearance={80} sizeScale={0.85} />
+      </video>{audioSourceItemId && <ExerciseVideoGuidance key={src} watch itemId={audioSourceItemId} videoRef={videoRef} />}<VideoWatermark controlsClearance={presentation ? 12 : 80} sizeScale={0.85} /><LessonPresentationOverlay src={src} />
 
       {/* First-play overlay (also handles the mobile user-gesture requirement) */}
-      {!hasPlayed && (
+      {!hasPlayed && !presentation && !exerciseVideoGuidance[audioSourceItemId ?? ''] && (
         <button
           type="button"
           onClick={firstPlay}
-          className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 transition-colors hover:bg-black/20"
-          aria-label={t('dashboard.classViewer.video.playVideo')}
+          className="absolute inset-0 z-20 flex items-center justify-center bg-transparent"
+          style={presentation ? { bottom: 76 } : undefined}
+          aria-label={manual?(locale==='es'?'Empezar':'Start'):t('dashboard.classViewer.video.playVideo')}
         >
-          <span className="grid h-20 w-20 place-items-center rounded-full bg-primary/90 text-white shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-transform hover:scale-105">
-            <Play className="ml-1 h-9 w-9" fill="currentColor" />
+          <span className={cn("flex items-center justify-center gap-2 bg-primary/90 text-white shadow-lg transition-transform hover:scale-105",manual?"rounded-xl px-6 py-3":"h-20 w-20 rounded-full")}>
+            <Play className="ml-1 h-9 w-9" fill="currentColor" />{manual&&<span className="font-semibold">{locale==='es'?'Empezar':'Start'}</span>}
           </span>
         </button>
       )}
 
-      {/* Bottom gradient scrim + controls */}
-      <div
+      {sharedTransport && dubbedAudio.error && <p role="status" className="bg-card px-3 py-1 text-xs text-foreground">{locale==='es'?'Doblaje no disponible. Se restauró el original.':'Dub unavailable. Original audio restored.'}</p>}
+      {/* Exercise videos share the same transport, even without a score. */}
+      {sharedTransport ? <div data-video-transport className="relative z-30 shrink-0 bg-card px-2 py-1 text-foreground">
+        <TransportBar
+          currentSeconds={positionSeconds} durationSeconds={duration}
+          isPlaying={clock.isPlaying || countIn.remaining > 0} playbackRate={clock.playbackRate}
+          onToggle={firstPlay}
+          onRestart={() => { countIn.cancel(); clock.pause(); clock.seek(trimStart); }}
+          onSeek={seconds => { countIn.cancel(); clock.seek(trimStart + seconds); }}
+          onRateChange={clock.setPlaybackRate}
+          loopA={clock.loopA === null ? null : clock.loopA - trimStart}
+          loopB={clock.loopB === null ? null : clock.loopB - trimStart}
+          loopEnabled={clock.loopEnabled}
+          onSetLoopA={seconds => clock.setLoopA(seconds + trimStart)}
+          onSetLoopB={seconds => { clock.setLoopB(seconds + trimStart); clock.setLoopEnabled(true); }}
+          onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)} onClearLoop={clock.clearLoop}
+          bpm={metronome?.segments?.find(segment => clock.currentSeconds >= segment.from && clock.currentSeconds < segment.to)?.bpm ?? metronome?.bpm ?? 120}
+          beatsPerMeasure={4} clickOn={clickOn} onClickOnChange={setClickOn}
+          clickAligned={metronome?.anchorSeconds != null || !!metronome?.segments?.length}
+          clickVolume={clickVolume} onClickVolumeChange={setClickVolume}
+          videoMuted={muted} onVideoMutedChange={setMuted} videoVolume={volume} onVideoVolumeChange={setVolume}
+          subtitleOptions={tracks} activeSubtitleLang={activeLang} onSubtitleLangChange={setActiveLang}
+          metronomeControls={<PrecountControl bars={countInBars} remaining={countIn.remaining} onChange={n => {countIn.cancel();setCountInBars(n)}}/>}
+          fullscreenControl={<button type="button" onClick={toggleFullscreen} aria-label={isFullscreen ? t('dashboard.classViewer.video.exitFullscreen') : t('dashboard.classViewer.video.fullscreen')} className="rounded-md p-1 hover:bg-muted">{isFullscreen ? <Minimize className="h-4 w-4"/> : <Maximize className="h-4 w-4"/>}</button>}
+        />
+      </div> : <div data-video-transport
         className={cn(
           'absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-3 pb-2.5 pt-10 transition-opacity duration-300 md:px-4',
-          controlsVisible || !hasPlayed ? 'opacity-100' : 'pointer-events-none opacity-0',
+          presentation && 'relative inset-auto shrink-0 bg-black bg-none pt-2',
+          presentation || controlsVisible || !hasPlayed ? 'opacity-100' : 'pointer-events-none opacity-0',
           (captionsOpen || speedOpen) && 'z-30'
         )}
       >
         {/* Scrubber */}
         <div
+          data-video-seek-track
           ref={trackRef}
           onPointerDown={onTrackPointerDown}
           onPointerMove={onTrackPointerMove}
@@ -391,12 +453,12 @@ export function LessonVideoPlayer({
         </div>
 
         {/* Control row */}
-        <div className="flex items-center gap-2 text-white">
+        <div className="flex flex-wrap items-center gap-0.5 text-white sm:gap-2">
           <ControlButton
-            onClick={() => (hasPlayed ? clock.toggle() : firstPlay())}
-            label={clock.isPlaying ? t('dashboard.classViewer.video.pause') : t('dashboard.classViewer.video.play')}
+            onClick={() => (firstPlay())}
+            label={clock.isPlaying||countIn.remaining>0 ? t('dashboard.classViewer.video.pause') : t('dashboard.classViewer.video.play')}
           >
-            {clock.isPlaying ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="h-5 w-5" fill="currentColor" />}
+            {clock.isPlaying||countIn.remaining>0 ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="h-5 w-5" fill="currentColor" />}
           </ControlButton>
 
           <ControlButton onClick={toggleFullscreen} label={isFullscreen ? t('dashboard.classViewer.video.exitFullscreen') : t('dashboard.classViewer.video.fullscreen')}>
@@ -424,7 +486,7 @@ export function LessonVideoPlayer({
             />
           </div>
 
-          <span className="ml-0.5 select-none text-xs font-medium tabular-nums text-white/90">
+          <span className="ml-0.5 shrink-0 select-none whitespace-nowrap text-xs font-medium tabular-nums text-white/90">
             {fmt(positionSeconds)} <span className="text-white/50">/ {fmt(duration)}</span>
           </span>
 
@@ -489,6 +551,7 @@ export function LessonVideoPlayer({
           </div>
 
           {/* Subtitle and audio language settings share one menu. */}
+          {(replacementAudioError || audioSource.error) && <span role="alert" className="text-xs text-white">{replacementAudioError || audioSource.error}</span>}
           {dubbedAudio.error && <span role="status" className="text-xs text-white">{locale === 'es' ? 'Audio no disponible. Se restauró el original.' : 'Audio unavailable. Original restored.'}</span>}
           {(tracks.length > 0 || audioTracks.length > 0) && (
             <div className="relative">
@@ -501,7 +564,7 @@ export function LessonVideoPlayer({
               </ControlButton>
               {captionsOpen && (
                 <div
-                  className="absolute bottom-full right-0 mb-2 max-h-[min(60vh,320px)] w-48 overflow-y-auto rounded-xl border border-white/20 bg-[#171412] p-2 text-white shadow-xl"
+                  className="absolute bottom-full left-0 mb-2 max-h-[min(60vh,320px)] w-48 overflow-y-auto rounded-xl border border-white/20 bg-[#171412] p-2 text-white shadow-xl sm:left-auto sm:right-0"
                   onMouseLeave={() => setCaptionsOpen(false)}
                 >
                   <section aria-label={locale === 'es' ? 'Subtítulos' : 'Subtitles'}>
@@ -554,7 +617,7 @@ export function LessonVideoPlayer({
 
 
         </div>
-      </div>
+      </div>}
     </div>
   )
 }
@@ -580,7 +643,7 @@ function ControlButton({
       aria-label={label}
       title={label}
       className={cn(
-        'grid h-8 min-w-8 place-items-center rounded-md px-1.5 text-white/90 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 disabled:cursor-not-allowed disabled:opacity-40',
+        'grid h-9 min-w-9 shrink-0 place-items-center rounded-md px-1.5 text-white [&>svg]:size-5 [&>svg]:stroke-[2.25] transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 disabled:cursor-not-allowed disabled:opacity-40',
         active && 'text-primary hover:text-primary'
       )}
     >

@@ -1,3 +1,14 @@
+import { CASCARA_RIGHT_HAND_ITEM, withWatchIntro } from '@/lib/playsense-studio/watch-intro-template';
+import { RITMO_SOURCE_PATH, RITMO_SOURCE_DURATION } from '@/lib/playsense-studio/ritmo-presentation';
+import { usesLocalTimbalIntro, replaceTimbalIntroItems, TIMBAL_INTRO_ORIGINAL, TIMBAL_INTRO_SOURCE, TIMBAL_RITMO_ORIGINAL, TIMBAL_RITMO_SOURCE, TIMBAL_VARIACIONES_ORIGINAL, TIMBAL_VARIACIONES_SOURCE } from '@/lib/courses/local-timbal-intro';
+import {ModuleOneExperience} from '@/components/solfeo/module-one-experience'
+import {CourseBookExperience} from '@/components/solfeo/course-book-experience';
+import Link from 'next/link';
+import { ProducedSolfeoLessonPreview } from '@/components/solfeo/produced-lesson-preview';
+import { FullSolfeoLessonPreview } from '@/components/solfeo/full-lesson-preview';
+import { usesLocalSolfeo, readLocalSolfeo, localItem, LOCAL_SOLFEO_COURSE_ID } from '@/lib/courses/local-solfeo-draft';
+import { localStudioSections, localStudio, localMediaDefault } from '@/lib/courses/local-solfeo-studio';
+import { getServerLocale } from '@/lib/i18n/server';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -48,6 +59,24 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     .single();
   if (!profile?.is_admin) redirect('/dashboard');
 
+  if (await usesLocalSolfeo(classItemId)) {
+    const item = localItem((await readLocalSolfeo()).sections, classItemId);
+    const locale = await getServerLocale();
+    if(item.class_id.startsWith('local-solfeo-m01-'))return <ModuleOneExperience number={Number(item.class_id.slice(-2))} exercise={item.item_type==='EXERCISE'} quiz={item.item_type==='QUIZ'} headerContext={{title:(locale==='es'?item.title_es:item.title)||item.title,module:locale==='es'?'Módulo 1: Elementos de la notación musical':'Module 1: Elements of musical notation',editorLinks:<Link href={`/solfeo-preview?class=${item.class_id}`}>{locale==='es'?'Vista del estudiante':'Student view'}</Link>}}/>;
+    if(!item.class_id.startsWith('local-solfeo-m01-')){
+      const draft=await readLocalSolfeo();
+      const section=draft.sections.find(s=>s.classes.some(c=>c.id===item.class_id));
+      return <CourseBookExperience classId={item.class_id} exercise={item.item_type==='EXERCISE'} quiz={item.item_type==='QUIZ'} headerContext={{title:(locale==='es'?item.title_es:item.title)||item.title,module:(locale==='es'?section?.title_es:section?.title)||section?.title||'Applied Solfege',editorLinks:<><Link href={`/admin/courses/${LOCAL_SOLFEO_COURSE_ID}?class=${item.class_id}`} className="text-primary">{locale==='es'?'Editar curso':'Edit course'}</Link><Link href={`/solfeo-preview?class=${item.class_id}`} className="ml-4 text-primary">{locale==='es'?'Vista del estudiante':'Student view'}</Link></>}}/>;
+    }
+    const sections = await localStudioSections(classItemId);
+    const media = await localStudio(classItemId, store => store.media[classItemId] ?? localMediaDefault);
+    return <VideoSectionsWorkspace classItemId={classItemId} title={(locale === 'es' ? item.title_es : item.title) || item.title}
+      backHref={`/admin/courses/${LOCAL_SOLFEO_COURSE_ID}?class=${item.class_id}&item=${item.id}`}
+      videoUrl={item.video_url} videoDurationSeconds={item.video_duration_seconds} initialTrim={media} initialSections={sections.data}
+      studentHref={`/solfeo-preview?class=${item.class_id}`}
+      appBarExtra={<><span className="text-xs text-primary">{locale === 'es' ? 'Borrador local' : 'Local draft'}</span>{/^local-solfeo-m01-c(01|02|09|10)-video$/.test(classItemId) && <FullSolfeoLessonPreview lessonNumber={Number(classItemId.match(/-c(\d+)-/)?.[1]??1)} />}{classItemId.startsWith('local-solfeo-')&&!/^local-solfeo-m01-c(01|02|09|10)-video$/.test(classItemId)&&<ProducedSolfeoLessonPreview classId={classItemId.replace(/-video$/, '')}/>}</>}/>;
+  }
+
   const { data: classItem } = await supabase
     .from('class_items')
     .select(
@@ -56,6 +85,17 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     .eq('id', classItemId)
     .single();
   if (!classItem) notFound();
+  if (classItemId === CASCARA_RIGHT_HAND_ITEM && await usesLocalTimbalIntro()) Object.assign(classItem, withWatchIntro(classItem));
+
+  if ([TIMBAL_INTRO_ORIGINAL, TIMBAL_RITMO_ORIGINAL, TIMBAL_VARIACIONES_ORIGINAL].includes(classItemId) && await usesLocalTimbalIntro()) {
+    const { data: source } = await supabase.from('class_items').select('*').eq('id', classItemId === TIMBAL_VARIACIONES_ORIGINAL ? TIMBAL_VARIACIONES_SOURCE : classItemId === TIMBAL_RITMO_ORIGINAL ? TIMBAL_RITMO_SOURCE : TIMBAL_INTRO_SOURCE).single();
+    if (source) Object.assign(classItem, replaceTimbalIntroItems([classItem, source])[0]);
+  }
+
+  if (classItemId === TIMBAL_RITMO_SOURCE && await usesLocalTimbalIntro()) {
+    classItem.video_url = RITMO_SOURCE_PATH;
+    classItem.video_duration_seconds = RITMO_SOURCE_DURATION;
+  }
 
   // The Studio's back link returns to the owning course with this item's
   // lesson open and the item selected, so the admin lands where they left.

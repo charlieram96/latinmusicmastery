@@ -1,0 +1,397 @@
+{
+  "classId": "local-solfeo-m02-c07",
+  "duration": 208.835396,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 19,
+      "kind": "explanation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-2",
+      "soundEvents": []
+    },
+    {
+      "start": 19,
+      "end": 31,
+      "kind": "notation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "conduct",
+        "height": 270,
+        "count": 2,
+        "_sourcePage": "marcar-2",
+        "sourcePageId": "flow-cont-21"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 31,
+      "end": 49.666667000000004,
+      "kind": "explanation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-2",
+      "soundEvents": []
+    },
+    {
+      "start": 49.666667000000004,
+      "end": 61.666667000000004,
+      "kind": "notation",
+      "title": "Cuenta un número por cada negra",
+      "sourceTopic": "marcar-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 86,
+        "rows": [
+          {
+            "title": "Cuenta un número por cada negra",
+            "meter": "2/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "1"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "2"
+                }
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "marcar-2",
+        "rowHeights": [
+          86
+        ],
+        "sourcePageId": "flow-cont-21"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 61.666667000000004,
+      "end": 70.954334,
+      "kind": "explanation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-2",
+      "soundEvents": []
+    },
+    {
+      "start": 70.954334,
+      "end": 84.732112,
+      "kind": "explanation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-3",
+      "soundEvents": []
+    },
+    {
+      "start": 84.732112,
+      "end": 96.732112,
+      "kind": "notation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "conduct",
+        "height": 270,
+        "count": 3,
+        "_sourcePage": "marcar-3",
+        "sourcePageId": "flow-cont-22"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 96.732112,
+      "end": 115.398779,
+      "kind": "explanation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-3",
+      "soundEvents": []
+    },
+    {
+      "start": 115.398779,
+      "end": 127.398779,
+      "kind": "notation",
+      "title": "Cuenta un número por cada negra",
+      "sourceTopic": "marcar-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 86,
+        "rows": [
+          {
+            "title": "Cuenta un número por cada negra",
+            "meter": "3/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "1"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "2"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "3"
+                }
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "marcar-3",
+        "rowHeights": [
+          86
+        ],
+        "sourcePageId": "flow-cont-22"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 127.398779,
+      "end": 136.68644600000002,
+      "kind": "explanation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-3",
+      "soundEvents": []
+    },
+    {
+      "start": 136.68644600000002,
+      "end": 151.742002,
+      "kind": "explanation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-4",
+      "soundEvents": []
+    },
+    {
+      "start": 151.742002,
+      "end": 163.742002,
+      "kind": "notation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "conduct",
+        "height": 270,
+        "count": 4,
+        "_sourcePage": "marcar-4",
+        "sourcePageId": "flow-cont-23"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 163.742002,
+      "end": 182.408669,
+      "kind": "explanation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-4",
+      "soundEvents": []
+    },
+    {
+      "start": 182.408669,
+      "end": 194.408669,
+      "kind": "notation",
+      "title": "Cuenta un número por cada negra",
+      "sourceTopic": "marcar-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 86,
+        "rows": [
+          {
+            "title": "Cuenta un número por cada negra",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "1"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "2"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "3"
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "label": "4"
+                }
+              ]
+            ],
+            "barStyles": {
+              "0": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 100,
+        "_sourcePage": "marcar-4",
+        "rowHeights": [
+          86
+        ],
+        "sourcePageId": "flow-cont-23"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 194.408669,
+      "end": 202.814065,
+      "kind": "explanation",
+      "title": "Marcar el pulso: dos, tres y cuatro tiempos",
+      "sourceTopic": "marcar-4",
+      "soundEvents": []
+    },
+    {
+      "start": 202.814065,
+      "end": 208.814065,
+      "kind": "completion",
+      "title": "¡Sigues progresando!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

@@ -50,10 +50,10 @@ describe('insert-measure', () => {
     expect(r.score.tracks[0].measures[2].timeSignature).toEqual([3, 4]);
   });
 
-  it('is refused strictly inside a repeat group but allowed at its edges', () => {
+  it('allows insertion inside a repeat and at its edges', () => {
     const s = repeated(); // bars 1-2 ×2 (indices 0..3), then bar 5
-    expect(structuralEditProblem(s, { type: 'insert-measure', trackIndex: 0, index: 1 })).toMatch(/Unlink/);
-    expect(structuralEditProblem(s, { type: 'insert-measure', trackIndex: 0, index: 2 })).toMatch(/Unlink/);
+    expect(structuralEditProblem(s, { type: 'insert-measure', trackIndex: 0, index: 1 })).toBeNull();
+    expect(structuralEditProblem(s, { type: 'insert-measure', trackIndex: 0, index: 2 })).toBeNull();
     expect(structuralEditProblem(s, { type: 'insert-measure', trackIndex: 0, index: 0 })).toBeNull();
     expect(structuralEditProblem(s, { type: 'insert-measure', trackIndex: 0, index: 4 })).toBeNull();
     expect(structuralEditProblem(s, { type: 'insert-measure', trackIndex: 0, index: 9 })).toMatch(/valid/);
@@ -303,6 +303,12 @@ describe('duplicate-measures', () => {
 });
 
 describe('set-repeat-count', () => {
+  it('removes a repeat while preserving its first pass and following music', () => {
+    const r = ok(applyMeasureEdit(repeated(), {type:'set-repeat-count',trackIndex:0,id:'g',count:1}));
+    expect(midis(r.score)).toEqual([60,62,64]);
+    expect(r.score.tracks[0].measures.every(m => !m.repeat)).toBe(true);
+    expect(r.splice).toEqual({index:2,removeCount:2,insertCount:0});
+  });
   it('adds passes as copies of pass 1 after the group', () => {
     const r = ok(applyMeasureEdit(repeated(), { type: 'set-repeat-count', trackIndex: 0, id: 'g', count: 3 }));
     expect(midis(r.score)).toEqual([60, 62, 60, 62, 60, 62, 64]);
@@ -395,4 +401,31 @@ describe('event ids through structural edits (Task 13)', () => {
     expect(out[3]).toBe('n0~2');
     expect(repeatGroups(r.score.tracks[0])).toEqual([{ id: 'r', start: 0, length: 1, count: 3 }]);
   });
+});
+
+it('inserts before an inner repeat bar without copying the insertion into other passes, with undo', () => {
+ const source=repeated();
+ const state={score:source,past:[],future:[],isDirty:false};
+ const inserted=editorReducer(state,{type:'insert-measure',trackIndex:0,index:3});
+ expect(midis(inserted.score)).toEqual([60,62,60,null,62,64]);
+ expect(repeatGroups(inserted.score.tracks[0])).toEqual([]);
+ expect(inserted.score.tracks[0].measures.filter(m=>m.voices[0].events.length).map(m=>m.voices)).toEqual(source.tracks[0].measures.map(m=>m.voices));
+ expect(editorReducer(inserted,{type:'undo'}).score).toEqual(source);
+ expect(editorReducer(editorReducer(inserted,{type:'undo'}),{type:'redo'}).score).toEqual(inserted.score);
+});
+
+it('pastes repeated source notes into an existing final measure without adding a bar, with undo/redo',()=>{
+ const s=score(Array.from({length:8},(_,i)=>bar(i+1,60+i)));
+ s.tracks[0].measures[3]=bar(4,65);s.tracks[0].measures[4]=bar(5,66);
+ for(let i=3;i<7;i++) s.tracks[0].measures[i].repeat={id:'source',pass:Math.floor((i-3)/2),count:2,offset:(i-3)%2,length:2};
+ s.tracks[0].measures[7]={number:8,endBarline:'final',voices:[{number:1,events:[]}]};
+ const clip:MeasureClip={measures:[s.tracks[0].measures[5]],instrument:'staff',context:{bpm:120,timeSignature:[4,4],keyFifths:0}};
+ const initial={score:s,past:[],future:[],isDirty:false};
+ const after=editorReducer(initial,{type:'paste-measures',trackIndex:0,index:7,clip,mode:'replace'});
+ expect(after.score.tracks[0].measures).toHaveLength(8);
+ expect(after.score.tracks[0].measures[7]).toMatchObject({number:8,endBarline:'final',voices:[{events:[{midi:65,durationQN:4}]}]});
+ expect(after.score.tracks[0].measures[7].repeat).toBeUndefined();
+ expect(after.score.tracks[0].measures.slice(0,7)).toEqual(s.tracks[0].measures.slice(0,7));
+ const undone=editorReducer(after,{type:'undo'});expect(undone.score).toEqual(s);
+ expect(editorReducer(undone,{type:'redo'}).score).toEqual(after.score);
 });

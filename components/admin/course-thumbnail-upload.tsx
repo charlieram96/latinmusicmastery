@@ -15,6 +15,7 @@ interface CourseThumbnailUploadProps {
   onImageUploaded: (url: string) => void
   /** Renders a small row (thumbnail + actions) instead of the full-width
       aspect-video dropzone — for tight layouts like the studio drawer. */
+  readOnly?: boolean
   compact?: boolean
 }
 
@@ -23,6 +24,7 @@ export function CourseThumbnailUpload({
   currentImageUrl,
   onImageUploaded,
   compact = false,
+  readOnly = false,
 }: CourseThumbnailUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl)
@@ -113,6 +115,14 @@ export function CourseThumbnailUpload({
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+  }
+
+  if (readOnly) {
+    return previewUrl ? (
+      <a href={previewUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border bg-[#265b4d]">
+        <img src={previewUrl} alt="Course thumbnail" className="h-64 w-full object-contain" />
+      </a>
+    ) : null
   }
 
   if (compact) {

@@ -56,9 +56,10 @@ export interface EditorState {
 }
 
 export interface MeasurePropsPatch {
+  emptyText?: {text:string;fontSize:number} | null;
   timeSignature?: [number, number];
   keyFifths?: number;
-  clef?: 'treble' | 'bass' | 'alto' | 'tenor';
+  clef?: 'treble' | 'bass' | 'alto' | 'tenor' | 'percussion';
   tempo?: number;
   repeatStart?: boolean;
   repeatEnd?: boolean;
@@ -94,7 +95,7 @@ export type EditorAction =
   | { type: 'delete-measures'; trackIndex: number; start: number; count: number }
   /** Reducer no-op: the studio's dispatch wrapper writes the clipboard (it owns the timing). */
   | { type: 'copy-measures'; trackIndex: number; start: number; count: number }
-  | { type: 'paste-measures'; trackIndex: number; index: number; clip: MeasureClip }
+  | { type: 'paste-measures'; trackIndex: number; index: number; clip: MeasureClip; mode?: 'replace' }
   | { type: 'append-score'; score: ScoreDocument }
   /** Adopt a structurally edited score computed outside the reducer (the sync
    *  panel pairs it with transformed markers). Refused when the base moved. */
@@ -146,10 +147,10 @@ export type EditorAction =
       spelling?: Spelling;
       percussion?: PercussionNotation;
       value?: NoteValue;
-      dots?: 0 | 1 | 2;
+      dots?: 0 | 1 | 2 | 3;
     }
   | { type: 'add-chord-note'; ref: EventRef; midi: number; spelling?: Spelling }
-  | { type: 'set-events-rhythm'; refs: EventRef[]; value?: NoteValue; dots?: 0 | 1 | 2 }
+  | { type: 'set-events-rhythm'; refs: EventRef[]; value?: NoteValue; dots?: 0 | 1 | 2 | 3 }
   | { type: 'transpose-events'; refs: EventRef[]; kind: 'step' | 'semi' | 'oct'; dir: 1 | -1; keyFifths: number }
   | { type: 'set-events-accidental'; refs: EventRef[]; alter: -2 | -1 | 0 | 1 | 2; keyFifths: number }
   | { type: 'set-event-pitches'; ref: EventRef; midis: number[] }
@@ -229,7 +230,7 @@ function overflowsMeasure(
 ): boolean {
   const ts = effectiveTimeSignatureAt(track, initialTimeSignature, measureIndex);
   const others = occupiedQN(events) - (events[eventIndex]?.durationQN ?? 0);
-  return others + nextDuration > measureLengthInQN(ts) + QN_EPS;
+  return !track.measures[measureIndex].senzaMisura && others + nextDuration > measureLengthInQN(ts, track.measures[measureIndex]) + QN_EPS;
 }
 
 // ---------------------------------------------------------------------------
@@ -248,7 +249,7 @@ function voiceEvents(track: Track, measureIndex: number, voice: 0 | 1, create = 
 }
 
 function barLengthQN(score: ScoreDocument, track: Track, measureIndex: number): number {
-  return measureLengthInQN(effectiveTimeSignatureAt(track, score.initialTimeSignature, measureIndex));
+  return measureLengthInQN(effectiveTimeSignatureAt(track, score.initialTimeSignature, measureIndex), track.measures[measureIndex]);
 }
 
 const voiceKey = (r: EventRef) => `${r.trackIndex}:${r.measureIndex}:${r.voice}`;
@@ -518,19 +519,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (action.videoCoaching !== undefined) next.videoCoaching = action.videoCoaching;
       if (action.initialTempo !== undefined && Number.isFinite(action.initialTempo)) {
         next.initialTempo = Math.min(400, Math.max(20, Math.round(action.initialTempo)));
-        // The opening mark and the score header describe the same tempo.
-        // Preserve later musical tempo changes when editing the base tempo.
-        next.tracks.forEach(track => {
-          const first=track.measures[0];
-          if(first?.tempoChange !== undefined) {
-            const opening=first.tempoChange;
-            let openingSection=true;
-            track.measures.forEach(m=>{
-              if(m.tempoChange!==undefined&&m.tempoChange!==opening)openingSection=false;
-              if(openingSection&&m.tempoChange===opening)m.tempoChange=next.initialTempo;
-            });
-          }
-        });
+        // The sidebar tempo is a whole-score command, including repeated bars
+        // and every staff. Old imported/authored marks must not take over later.
+        next.tracks.forEach(track => track.measures.forEach(measure => {
+          delete measure.tempoChange;
+        }));
+        delete next.tempoMarksConfirmed;
+        delete next.playbackTempoOverride;
       }
       if (action.initialTimeSignature !== undefined) {
         const [n,d]=action.initialTimeSignature;
@@ -598,11 +593,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const track = next.tracks[action.trackIndex];
       const measure = track?.measures[action.measureIndex];
       if (!track || !measure) return state;
-      // Persist only overrides of the automatic rule so the bar follows the
-      // last measure as measures are added or deleted.
-      const automatic = action.measureIndex === track.measures.length - 1;
-      if (action.final === automatic) delete measure.endBarline;
-      else measure.endBarline = action.final ? 'final' : 'single';
+      // Interior endings stay authored; appending a bar moves the terminal ending.
+      if(action.final) measure.endBarline='final';
+      else if(action.measureIndex===track.measures.length-1)measure.endBarline='single';
+      else delete measure.endBarline;
       return withHistory(state, next);
     }
     case 'clear-measures': {
@@ -641,6 +635,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const anchored = !!m.repeat;
       const before = inheritedContext(next, track, action.measureIndex);
       const p = action.props;
+      if (p.emptyText !== undefined) {
+        if (p.emptyText?.text.trim()) m.emptyText = {text:p.emptyText.text.trim().slice(0,200),fontSize:Math.max(10,Math.min(48,p.emptyText.fontSize || 16))};
+        else delete m.emptyText;
+      }
       if (p.timeSignature) {
         if (first) next.initialTimeSignature = p.timeSignature;
         const matchesInherited = !first && p.timeSignature[0] === before.timeSignature[0] && p.timeSignature[1] === before.timeSignature[1];
@@ -709,7 +707,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       // A lone full-measure placeholder rest is replaced by the first real event.
       if (isFillerRest(measure.voices[0].events, ts)) measure.voices[0].events = [];
       const need = effectiveDurationQN(action.durationQN, action);
-      if (occupiedQN(measure.voices[0].events) + need > measureLengthInQN(ts) + QN_EPS) {
+      if (!measure.senzaMisura && occupiedQN(measure.voices[0].events) + need > measureLengthInQN(ts, measure) + QN_EPS) {
         return state; // measure full — block (UI also disables the control)
       }
       const note: Note = {
@@ -732,7 +730,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const ts = effectiveTimeSignatureAt(track, next.initialTimeSignature, action.measureIndex);
       if (isFillerRest(measure.voices[0].events, ts)) measure.voices[0].events = [];
       const need = effectiveDurationQN(action.durationQN, action);
-      if (occupiedQN(measure.voices[0].events) + need > measureLengthInQN(ts) + QN_EPS) {
+      if (!measure.senzaMisura && occupiedQN(measure.voices[0].events) + need > measureLengthInQN(ts, measure) + QN_EPS) {
         return state; // measure full — block
       }
       const rest: Rest = {
@@ -799,7 +797,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       // The dot toggle is single-dot only; `dots` (which can hold a double
       // dot from import) is retired here so `dotted` becomes the sole source
       // of truth again, per eventDots()'s precedence.
-      const oldFactor = eventDots(event) === 2 ? 1.75 : eventDots(event) === 1 ? 1.5 : 1;
+      const oldFactor = 2 - 2 ** -eventDots(event);
       const newFactor = action.dotted ? 1.5 : 1;
       const nextDuration = (event.durationQN / oldFactor) * newFactor;
       if (oldFactor !== newFactor && overflowsMeasure(track, next.initialTimeSignature, action.measureIndex, events, action.eventIndex, nextDuration)) {
@@ -890,8 +888,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const next = clone(state.score);
       const measure = next.tracks[action.trackIndex]?.measures[action.measureIndex];
       const event = measure?.voices[0]?.events[action.eventIndex];
-      if (!event || event.kind === 'rest') return state;
-      measure!.voices[0].events[action.eventIndex] = { ...overwriteRest(event), id: newEventId() };
+      if (!event) return state;
+      if (event.kind === 'rest') measure!.voices[0].events.splice(action.eventIndex, 1);
+      else measure!.voices[0].events[action.eventIndex] = { ...overwriteRest(event), id: newEventId() };
       const result = withHistory(state, next);
       // After withHistory, so a note removed from every pass of a repeat is caught too.
       if (result.score.spans) result.score.spans = pruneSpans(result.score);
@@ -938,8 +937,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         const dots = action.dots ?? 0;
         const durationQN = soundingQN(action.value, dots, null);
         // Refuse rather than overfill the bar (the zoom flashes "m.N is full").
-        if (occupiedQN(events) + durationQN > measureLengthInQN(ts) + QN_EPS) return state;
-        const rhythm = { id: newEventId(), durationQN, ...(dots > 0 ? { dots: dots as 1 | 2 } : {}) };
+        if (!track.measures[at.measureIndex].senzaMisura && occupiedQN(events) + durationQN > measureLengthInQN(ts, track.measures[at.measureIndex]) + QN_EPS) return state;
+        const rhythm = { id: newEventId(), durationQN, ...(dots > 0 ? { dots: dots as 1 | 2 | 3 } : {}) };
         events.push(action.kind === 'note'
           ? {
               kind: 'note',
@@ -1009,7 +1008,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           durationQN = soundingQN(value, dots, eventTuplet(e));
         }
         e.durationQN = durationQN;
-        if (dots > 0) e.dots = dots as 1 | 2;
+        if (dots > 0) e.dots = dots as 1 | 2 | 3;
         else delete e.dots;
         delete e.dotted;
       });
@@ -1084,8 +1083,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const next = clone(state.score);
       const resolved = resolveRefs(next, action.refs);
       let changed = false;
-      for (const r of resolved) {
-        if (r.event.kind === 'rest') continue;
+      for (const r of resolved.sort((a, b) => b.eventIndex - a.eventIndex)) {
+        if (r.event.kind === 'rest') { r.events.splice(r.eventIndex, 1); changed = true; continue; }
         const members = new Set(action.refs.filter(ref => refKey(ref) === refKey(r)).map(ref => ref.member));
         if (r.event.kind === 'chord') {
           const remaining = r.event.notes.filter((_, i) => !members.has(i));
@@ -1105,11 +1104,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     }
     case 'delete-events': {
       const next = clone(state.score);
-      const refs = resolveRefs(next, action.refs).filter(r => r.event.kind !== 'rest');
+      const refs = resolveRefs(next, action.refs).sort((a, b) => b.eventIndex - a.eventIndex);
       if (!refs.length) return state;
-      // Preserve every rhythmic slot, including voice 2 and tuplet membership.
+      // Notes become rests to preserve their slots. Deleting a rest explicitly
+      // removes that slot within this voice; other measures retain their timing.
       // A fresh event id removes spans that belonged to the deleted note.
-      for (const r of refs) r.events[r.eventIndex] = { ...overwriteRest(r.event), id: newEventId() };
+      for (const r of refs) {
+        if (r.event.kind === 'rest') r.events.splice(r.eventIndex, 1);
+        else r.events[r.eventIndex] = { ...overwriteRest(r.event), id: newEventId() };
+      }
       const result = withHistory(state, next);
       // After withHistory, so an event removed from every pass of a repeat is caught too.
       const spans = pruneSpans(result.score);

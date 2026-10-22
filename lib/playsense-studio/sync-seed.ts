@@ -47,7 +47,7 @@ export function buildWaypoints(
       beatInMeasure: 1,
     });
 
-    const measureQN = measureLengthInQN(timeSignature);
+    const measureQN = measureLengthInQN(timeSignature, measure);
     cumulativeQN += measureQN;
     cumulativeMs += qnToMs(measureQN, bpm);
   }

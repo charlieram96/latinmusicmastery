@@ -8,7 +8,7 @@
 @media (min-width:768px) { .lx-fill { padding:18px 32px 24px; } }
 .lx-fill[hidden] { display:none; }
 /* The stage already frames the workspace; no rules above and below it. */
-.lx-stage .ws-frame[data-frame=bleed] { border-block:0; background:transparent; }
+.lx-stage .ws-frame[data-frame=bleed] { border-block:0; background:transparent; padding-inline:0; }
 @media (max-width:767px) { .lx { grid-template-columns:minmax(0,1fr); } }
 
 /* ───────── Action bar ───────── */
@@ -107,7 +107,7 @@
 .lx-ls[data-state=done] .lx-dot { background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); box-shadow:0 3px 0 hsl(var(--primary-deep)); }
 .lx-ls[data-state=current] .lx-dot { background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); box-shadow:0 3px 0 hsl(var(--primary-deep)), 0 0 0 4px hsl(var(--primary) / .2); }
 .lx-lt { display:grid; min-width:0; flex:1; line-height:1.25; opacity:0; transition:opacity 150ms; }
-.lx-lt b { overflow:hidden; text-overflow:ellipsis; font-size:13px; font-weight:700; }
+.lx-lt b { white-space:normal; overflow-wrap:anywhere; font-size:13px; font-weight:700; }
 .lx-lt small { font-size:11px; color:hsl(var(--muted-foreground)); }
 .lx-ls[data-state=upcoming] .lx-lt b { color:hsl(var(--muted-foreground)); }
 .lx-lock { color:hsl(var(--muted-foreground)); opacity:0; transition:opacity 150ms; }
@@ -270,11 +270,13 @@
 @media (max-width:767px) { .lx-action .lx-hide-phone { display:none; } }
 @media (prefers-reduced-motion:reduce) { .lx-bigring-fill, .lx-bar { animation:none; } }
 
-/* Balanced reading width: leave room for lesson text and transport beneath media. */
+/* One outer frame for lessons, with or without synchronized notation. */
 .lx-fill { width:100%; max-width:1680px; margin-inline:auto; padding:clamp(18px,2vw,36px) clamp(18px,2.4vw,44px) 36px; }
-.lx-stage [data-lesson-video][data-fullscreen=false] { width:100%; max-width:min(1120px,calc((100dvh - 220px) * 1.77778)); margin-inline:auto; }
-.lx-top { grid-template-columns:minmax(180px,.8fr) minmax(0,1.65fr) auto; padding:14px 24px 20px; gap:16px; }
-.lx-parts { min-width:0; overflow-x:auto; scrollbar-width:thin; justify-content:flex-start; padding-block:2px; }
+.lx-stage [data-lesson-video][data-fullscreen=false] { width:100%; max-width:100%; max-height:max(300px,calc(100dvh - 220px)); margin-inline:auto; }
+.lx-stage [data-lesson-video][data-fullscreen=false][data-presentation=true] > video { max-height:clamp(240px,calc(100dvh - 300px),780px); object-fit:contain; }
+.lx-top { grid-template-columns:minmax(180px,320px) minmax(0,1fr) auto; padding:14px 24px 20px; gap:16px; }
+/* One sliding row; the current destination is revealed on navigation and resize. */
+.lx-parts { min-width:0; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; justify-content:flex-start; padding:4px 4px 8px; scrollbar-width:thin; overscroll-behavior-x:contain; }
 .lx-title h1 { font-size:18px; line-height:1.35; }
 .lx-crumb { font-size:13px; line-height:1.6; }
 .lx-action { padding:12px 24px; }
@@ -295,7 +297,7 @@
 }
 
 /* Course navigation sits beside the persistent dashboard Tools menu. */
-.lx[data-course-navigation=true] { --lesson-side-w:320px; grid-template-columns:var(--lesson-side-w) minmax(0,1fr); }
+.lx[data-course-navigation=true] { --lesson-side-w:288px; grid-template-columns:var(--lesson-side-w) minmax(0,1fr); }
 .lx[data-course-navigation=true][data-navigation-collapsed=true] { --lesson-side-w:72px; }
 .lx[data-course-navigation=true] > aside { height:100%; min-height:0; }
 @media (max-width:1023px) { .lx[data-course-navigation=true] { grid-template-columns:minmax(0,1fr); } }
@@ -317,3 +319,104 @@
 .lx-guide-confirmed { display:flex; align-items:center; justify-content:center; gap:6px; padding:8px; border-radius:10px; border:1px solid hsl(142 65% 45% / .3); background:hsl(142 65% 45% / .07); color:hsl(142 65% 45%); font-size:12px; }
 .lx-guide-reopen { width:100%; font-size:12px; }
 @media(max-width:900px) { .lx-rgrid-acoustic { grid-auto-columns:min(85vw,360px); } }
+
+/* Authored exercise names remain visible under their numbered labels. */
+.lx-part { flex:none; max-width:100%; flex-direction:column; justify-content:center; gap:4px; }
+.lx-part-heading { display:flex; align-items:center; justify-content:center; gap:7px; }
+.lx-part-name { width:max-content; max-width:160px; white-space:normal; overflow-wrap:anywhere; text-align:center; font-size:12px; font-weight:400; line-height:1.4; }
+@media (max-width:767px) {
+ .lx-part .lx-part-label { display:inline; }
+ .lx-part-name { max-width:150px; }
+}
+
+.lx-part[data-exercise=true] { padding-inline:10px; }
+
+/* Course destinations remain visible independently of quiz/score action controls. */
+.lx-bottom { min-width:0; background:hsl(var(--background)); }
+.lx-course-sequence { padding:4px 12px 8px; }
+.lx-course-sequence nav { padding:6px; gap:8px; }
+.lx-course-sequence nav > * { padding:7px 10px; overflow-wrap:anywhere; }
+.lx-course-sequence nav svg { max-height:24px; }
+@media(max-width:767px) {
+ .lx-course-sequence { padding:3px 4px 5px; }
+ .lx-course-sequence nav { gap:4px; padding:4px; }
+ .lx-course-sequence nav > * { padding:5px; }
+ .lx-course-sequence nav .text-sm { font-size:11px; line-height:1.25; }
+}
+
+/* The children's world surrounds every activity, not just the video. */
+.lx[data-kids-world=true]{--world-paper:#fff9e9;--world-ink:#253e59;--world-line:#bbd9d1}
+.dark .lx[data-kids-world=true]{--world-paper:#252d49;--world-ink:#f6e8c9;--world-line:#576082}
+.lx[data-kids-world=true] .lx-stage{background:radial-gradient(circle at 6% 12%,#ffcf6c44,transparent 26%),radial-gradient(circle at 95% 65%,#69c6bd44,transparent 30%),linear-gradient(140deg,#e3f3ea,#f9efd9 50%,#d2eae5)}
+.dark .lx[data-kids-world=true] .lx-stage{background:radial-gradient(circle at 8% 12%,#d4ab6933,transparent 28%),radial-gradient(circle at 92% 55%,#4e9fa633,transparent 30%),linear-gradient(140deg,#192b41,#30344e,#173e46)}
+.lx[data-kids-world=true] .lx-fill{max-width:none;padding:14px 18px 24px}
+.lx[data-kids-world=true] .lx-top{background:var(--world-paper);color:var(--world-ink);border-bottom:3px solid #dfbc73;box-shadow:0 3px 12px #54432d12;padding:12px 20px;gap:12px}
+.lx[data-kids-world=true] .lx-title h1{font-weight:850;color:var(--world-ink)}
+.lx[data-kids-world=true] .lx-crumb{color:var(--world-ink);opacity:.8}
+.lx[data-kids-world=true] .lx-part{background:var(--world-paper);border:1px solid var(--world-line);border-radius:16px;box-shadow:0 3px 0 var(--world-line);padding:9px 12px 12px;color:var(--world-ink)}
+.lx[data-kids-world=true] .lx-part-on{background:#ffdfaa;border-color:#f5820b;color:#57350f;box-shadow:0 3px 0 #ed8c29}
+.lx-world-icon{display:inline-grid;place-items:center;font-size:21px;line-height:1;width:27px;height:27px}
+.lx[data-kids-world=true] .lx-icon-btn{background:#b8ded52b;border:1px solid var(--world-line);border-radius:14px}
+.lx[data-kids-world=true] .lx-bottom{background:var(--world-paper);border-top:3px solid #dfbc73}
+.lx[data-kids-world=true] .lx-course-sequence{background:var(--world-paper);color:var(--world-ink)}
+.lx[data-kids-world=true] .lx-course-sequence nav{border-radius:16px;background:transparent}
+@media(max-width:700px){.lx[data-kids-world=true] .lx-fill{padding:8px 6px 20px}.lx[data-kids-world=true] .lx-top{padding:8px;gap:8px}.lx[data-kids-world=true] .lx-part{padding:7px 8px 11px}.lx-world-icon{font-size:18px;width:21px;height:21px}}
+/* Maintain contrast against global children's cream cards in night mode. */
+.dark .lx[data-kids-world=true] .lx-part:not(.lx-part-on),
+.dark .lx[data-kids-world=true] .lx-action,
+.dark .lx[data-kids-world=true] .learning-module,
+.dark .lx[data-kids-world=true] [data-learning-lesson] > a{background:#29334d!important;color:#f6e8cf!important}
+.dark .lx[data-kids-world=true] .learning-module .text-muted-foreground,
+.dark .lx[data-kids-world=true] .lx-action small{color:#c4d5df!important}
+.dark .lx[data-kids-world=true] .lx-course-sequence nav > a{color:#f6e8cf}
+
+/* Compact children's activity strip leaves more room for the classroom. */
+.lx[data-kids-world=true] .lx-top { padding-block:5px; gap:8px; }
+.lx[data-kids-world=true] .lx-parts { padding-block:2px 5px; align-items:stretch; }
+.lx[data-kids-world=true] .lx-part { padding:5px 9px 7px; gap:2px; border-radius:12px; }
+.lx[data-kids-world=true] .lx-world-icon { font-size:17px; width:21px; height:21px; }
+.lx[data-kids-world=true] .lx-part-name { font-size:10px; line-height:1.2; max-width:160px; }
+.lx[data-kids-world=true] .lx-part-label { font-size:11px; }
+.lx[data-kids-world=true] .lx-title h1 { font-size:16px; }
+.lx[data-kids-world=true] .lx-crumb { font-size:11px; }
+
+/* Keep the hosts mounted so collapsing navigation never resets playback. */
+.lx-bottom { position:relative; }
+.lx-bottom[data-collapsed=true] { min-height:12px; }
+.lx-bottom > [hidden] { display:none; }
+.lx-bottom-toggle { position:absolute; z-index:30; right:12px; top:-28px; display:grid; place-items:center; width:44px; height:28px; border:1px solid #dfbc73; border-bottom:0; border-radius:10px 10px 0 0; background:var(--world-paper, var(--card)); color:var(--world-ink, var(--foreground)); cursor:pointer; }
+.lx-bottom-toggle:hover { background:#ffdfaa; color:#57350f; }
+.lx-bottom-toggle:focus-visible { outline:3px solid #ff8500; outline-offset:2px; }
+
+/* Compact expanded navigation throughout the children's lesson shell. */
+.lx[data-kids-world=true] .lx-course-sequence { padding:2px 8px 3px; }
+.lx[data-kids-world=true] .lx-course-sequence nav { padding:2px; gap:6px; }
+.lx[data-kids-world=true] .lx-course-sequence nav > * { padding:3px 8px; border-radius:12px; }
+.lx[data-kids-world=true] .lx-course-sequence nav .text-xs { font-size:10px; line-height:1.2; }
+.lx[data-kids-world=true] .lx-course-sequence nav .text-sm { margin-top:1px; font-size:12px; line-height:1.25; }
+.lx[data-kids-world=true] .lx-action { padding:5px 16px; gap:8px; }
+.lx[data-kids-world=true] .lx-msg { gap:8px; min-width:140px; }
+.lx[data-kids-world=true] .lx-msg-badge { width:30px; height:30px; }
+.lx[data-kids-world=true] .lx-msg b { font-size:13px; }
+.lx[data-kids-world=true] .lx-msg-detail { font-size:11px; line-height:1.3; }
+.lx[data-kids-world=true] .lx-action :is(.lx-primary,[data-primary],[data-lesson-next]) { min-height:32px; height:auto; padding:6px 14px; font-size:12px; }
+@media(max-width:767px) {
+ .lx[data-kids-world=true] .lx-action { padding:4px 8px; gap:5px; }
+ .lx[data-kids-world=true] .lx-course-sequence { padding-inline:3px; }
+ .lx[data-kids-world=true] .lx-course-sequence nav > * { padding-inline:4px; }
+ .lx[data-kids-world=true] .lx-action :is(.lx-primary,[data-primary]) { flex:0 1 auto; }
+}
+
+.lx-clips-host:empty { display:none; }
+.lx-clips-host { margin-left:auto; flex:none; }
+.lx[data-kids-world=true] .lx-fill { padding-bottom:4px; }
+.lx-bar:has(.lx-bar-practice) { padding:0; }
+.lx-bar-practice { display:grid; align-content:space-between; justify-items:center; width:100%; height:100%; padding:6px 0; border-radius:inherit; cursor:pointer; }
+.lx-bar-practice:hover { background:hsl(var(--primary) / .15); }
+.lx-bar-practice:focus-visible { outline:2px solid hsl(var(--primary)); outline-offset:2px; }
+
+/* Video actions live alongside playback; document and quiz action bars remain available. */
+.lx-action.lx-action-transport { padding:0!important; min-height:0; border:0; background:transparent!important; box-shadow:none; gap:6px; }
+.lx-action-transport :is(.lx-msg,.lx-action-progress,.lx-action-prev) { display:none!important; }
+.lx-action-transport .lx-action-host { gap:6px; min-height:0; }
+.lx-action-transport :is(.lx-primary,[data-primary],[data-lesson-next]) { min-height:28px!important; height:auto!important; padding:4px 10px!important; font-size:11px!important; box-shadow:none; }

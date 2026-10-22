@@ -3,13 +3,19 @@ export interface ScoreAnchor { ms: number; x: number; system: number; bar?: numb
 
 export function scoreCursorAt(ms: number, anchors: readonly ScoreAnchor[], endMs: number, rowEnds: readonly number[]): { x: number; system: number } {
   if (!anchors.length) return { x: 0, system: 0 }
-  const time = Math.max(0, Math.min(ms, endMs))
+  let time = Math.max(0, Math.min(ms, endMs))
   if (time <= anchors[0].ms) return { x: anchors[0].x, system: anchors[0].system }
   let lo = 0, hi = anchors.length
   while (lo + 1 < hi) {
     const mid = (lo + hi) >>> 1
     if (anchors[mid].ms <= time) lo = mid
     else hi = mid
+  }
+  // Media seeks are rounded to the audio sample clock. Keep a downbeat seek
+  // from landing on the previous barline a fraction of a millisecond early.
+  if (anchors[lo + 1] && anchors[lo + 1].ms - time <= 0.5) {
+    lo += 1
+    time = anchors[lo].ms
   }
   const a = anchors[lo], b = anchors[lo + 1]
   const end = b?.ms ?? endMs

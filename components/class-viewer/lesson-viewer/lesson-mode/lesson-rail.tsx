@@ -12,6 +12,9 @@ import { useState } from 'react'
 import { Check, Lock, Play } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { LessonArt, LearningBrand } from '@/components/learning-mode/art'
+import { useLearningMode } from '@/components/learning-mode/store'
+import { LearningModeToggle } from '@/components/learning-mode-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { cn } from '@/lib/utils'
 import type { RailLesson } from '@/lib/courses/lesson-rail'
@@ -32,17 +35,18 @@ export function ProgressRing({ done, total, size = 40 }: { done: number; total: 
 }
 
 export function LessonRailList({ lessons, open = false }: { lessons: RailLesson[]; open?: boolean }) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const kids = useLearningMode() === 'kids'
   return <ol className={cn('lx-list', open && 'lx-list-open')}>
     {lessons.map(lesson => <li key={lesson.id}>
-      <Link href={lesson.href} data-rail-lesson data-state={lesson.state} aria-current={lesson.state === 'current' ? 'page' : undefined}
+      <Link href={lesson.href} data-rail-lesson data-current-location={lesson.state === 'current' ? 'lesson' : undefined} data-state={lesson.state} aria-current={lesson.state === 'current' ? 'page' : undefined}
         className="lx-ls" title={lesson.title}>
         <span className="lx-dot" aria-hidden>
-          {lesson.state === 'done' ? <Check className="h-4 w-4" strokeWidth={3} />
+          {kids && lesson.state !== 'done' ? <LessonArt title={lesson.title} index={lesson.number - 1}/> : lesson.state === 'done' ? <Check className="h-4 w-4" strokeWidth={3} />
             : lesson.state === 'current' ? <Play className="ml-0.5 h-4 w-4" fill="currentColor" /> : lesson.number}
         </span>
         <span className="lx-lt">
-          <b>{lesson.title}</b>
+          {lesson.state === 'current' && <span className="lmm-location-badge">{locale === 'es' ? 'Estás aquí' : 'You are here'}</span>}<b>{lesson.title}</b>
           <small>
             {t(`dashboard.classViewer.lessonMode.rail.kind.${lesson.kind}`)}
             {lesson.minutes != null && <> · {t('dashboard.classViewer.lessonMode.rail.minutes', { count: lesson.minutes })}</>}
@@ -63,7 +67,7 @@ export function LessonRail({ courseHref, courseTitle, moduleTitle, moduleIndex, 
   /** The open lesson is finished (it still shows as current). */
   currentDone?: boolean
 }) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   // Keyboard users expand the rail by focusing into it; hover expands it with CSS.
   const [focused, setFocused] = useState(false)
   const done = lessons.filter(l => l.state === 'done' || (currentDone && l.state === 'current')).length
@@ -73,7 +77,7 @@ export function LessonRail({ courseHref, courseTitle, moduleTitle, moduleIndex, 
       onFocus={() => setFocused(true)}
       onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false) }}>
       <Link href={courseHref} data-rail-home className="lx-home" aria-label={t('dashboard.classViewer.lessonMode.backToCourse')}>
-        <Image src="/logo-solo-color.svg" alt="" width={32} height={24} className="h-6 w-8 object-contain" />
+        <LearningBrand><Image src="/logo-solo-color.svg" alt="" width={32} height={24} className="h-6 w-8 object-contain" /></LearningBrand>
       </Link>
       <div className="lx-mod" title={t('dashboard.classViewer.lessonMode.rail.moduleProgress', { done, total: lessons.length })}>
         <ProgressRing done={done} total={lessons.length} />
@@ -85,6 +89,7 @@ export function LessonRail({ courseHref, courseTitle, moduleTitle, moduleIndex, 
       <LessonRailList lessons={lessons} />
       <div data-rail-settings className="lx-settings">
         <span className="lx-reveal lx-settings-label">{t('dashboard.classViewer.lessonMode.rail.settings')}</span>
+        <LearningModeToggle />
         <ThemeToggle variant="rail" />
         <LanguageToggle variant="rail" />
       </div>

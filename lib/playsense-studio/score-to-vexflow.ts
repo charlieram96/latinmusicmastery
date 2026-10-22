@@ -42,7 +42,7 @@ import { legacyTripletGroups } from './legacy-triplets';
 export function vexflowDurationCode(durationQN: number, dots: number | boolean = 0, tupletScale = 1): string {
   // Undo the dot (×1.5 or ×1.75) and the tuplet (×m/n) to get the written value.
   const count = dots === true ? 1 : dots === false ? 0 : dots;
-  const dotFactor = count >= 2 ? 1.75 : count === 1 ? 1.5 : 1;
+  const dotFactor = 2 - 2 ** -count;
   const base = durationQN / dotFactor / (tupletScale || 1);
 
   const eps = 1e-7;
@@ -244,7 +244,7 @@ export interface VexEventDescriptor {
   /** Articulation glyph to attach, or undefined. */
   articulation?: 'staccato' | 'accent' | 'tenuto';
   /** Number of augmentation dots (0-2); the renderer adds that many Dot modifiers. */
-  dots: 0 | 1 | 2;
+  dots: 0 | 1 | 2 | 3;
   /** Tuplet bracket this event belongs to, or null. Events sharing an id share one bracket. */
   tuplet: { id: string; n: number; m: number } | null;
   /** Every articulation glyph to attach (supersedes `articulation`). */
@@ -506,7 +506,7 @@ export function extractTrackEvents(
       clefChanged,
     });
 
-    cumulativeQN += measureLengthInQN(currentTimeSig);
+    cumulativeQN += measureLengthInQN(currentTimeSig, measure);
   }
 
   return result;

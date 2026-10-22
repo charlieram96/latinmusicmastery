@@ -100,7 +100,7 @@ export function OutlineModule({
           type="button"
           onClick={onSelectModule}
           className={cn(
-            'min-w-0 flex-1 truncate text-left text-[11px] font-semibold uppercase tracking-[0.1em]',
+            'min-w-0 flex-1 whitespace-normal break-words text-left text-[11px] font-semibold uppercase tracking-[0.1em]',
             isSelected
               ? 'text-primary'
               : containsSelection

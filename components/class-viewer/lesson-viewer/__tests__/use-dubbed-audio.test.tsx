@@ -9,9 +9,9 @@ let root: ReturnType<typeof createRoot>
 let audio: HTMLAudioElement
 let control: ReturnType<typeof useDubbedAudio>
 const tracks=[{lang:'en',label:'English',src:'https://example.com/english.mp3'}]
-function Harness({volume=1,muted=false}:{volume?:number;muted?:boolean}) {
+function Harness({volume=1,muted=false,locale='original'}:{volume?:number;muted?:boolean;locale?:string}) {
  const ref=useRef<HTMLVideoElement>(null)
- control=useDubbedAudio(ref,tracks,volume,muted)
+ control=useDubbedAudio(ref,tracks,volume,muted,locale)
  return <video ref={ref}/>
 }
 beforeEach(()=>{
@@ -58,4 +58,41 @@ it('stops translated audio on unmount',()=>{
  const calls=vi.mocked(audio.pause).mock.calls.length
  act(()=>root.render(null))
  expect(vi.mocked(audio.pause).mock.calls.length).toBeGreaterThan(calls)
+})
+
+it('defaults to the application language and changes sound without moving the video clock', () => {
+ const video=host.querySelector('video')!
+ video.currentTime=301
+ act(()=>root.render(<Harness locale="en"/>))
+ expect(control.language).toBe('en')
+ expect(audio.src).toBe(tracks[0].src)
+ expect(audio.currentTime).toBe(301)
+ expect(video.muted).toBe(true)
+ act(()=>root.render(<Harness locale="es"/>))
+ expect(control.language).toBe('original')
+ expect(video.muted).toBe(false)
+ expect(video.currentTime).toBe(301)
+ act(()=>root.render(<Harness locale="en"/>))
+ expect(control.language).toBe('en')
+ expect(audio.currentTime).toBe(301)
+})
+it('uses the original for an unavailable language and does not retry a failed dub on every render', () => {
+ act(()=>root.render(<Harness locale="fr"/>))
+ expect(control.language).toBe('original')
+ act(()=>root.render(<Harness locale="en"/>))
+ act(()=>audio.dispatchEvent(new Event('error')))
+ act(()=>root.render(<Harness locale="en" volume={.5}/>))
+ expect(control.language).toBe('original')
+ expect(control.error).toBe(true)
+})
+
+it('keeps the dub after seeking interrupts a pending play request', async () => {
+ const video=host.querySelector('video')!
+ Object.defineProperty(video,'paused',{value:false,configurable:true})
+ vi.mocked(audio.play).mockRejectedValueOnce(new DOMException('Interrupted by pause', 'AbortError'))
+ await act(async()=>control.setLanguage('en'))
+ expect(control.language).toBe('en')
+ expect(control.error).toBe(false)
+ expect(video.muted).toBe(true)
+ expect(audio.play).toHaveBeenCalledTimes(2)
 })

@@ -12,10 +12,10 @@ describe('workspaceSeed', () => {
   // Studio rework P5: 'exercise' mode is the graded workspace (EXERCISE and
   // JAM_SESSION items alike). Bar 1 places the media now, so there's no time
   // map or click anchor to seed — only the play-along settings.
-  it('a graded (exercise/jam) owner has no waypoints or anchor to seed', () => {
+  it('a graded owner preserves its authored click anchor independently of bar 1', () => {
     const s = workspaceSeed({ owner: { kind: 'classItem', classItemId: 'ci' }, mode: 'exercise', initialScore: score, activeTimeMap: null, exerciseMedia: media as never });
     expect(s.timing.waypoints).toEqual([]);
-    expect(s.timing.anchor).toBeNull();
+    expect(s.timing.anchor).toEqual({seconds:0.5,qn:0});
     expect(s.timeMap).toBeNull();
   });
   it('a graded owner seeds timing.play from the exercise media', () => {

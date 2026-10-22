@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useReducer } from 'react'
+import { useCallback, useReducer, useRef } from 'react'
 
 export type HistoryState<T> = { past: T[]; present: T; future: T[] }
 export type HistoryAction<T> = { type: 'commit'; next: T } | { type: 'undo' } | { type: 'redo' } | { type: 'reset'; present: T }
@@ -33,17 +33,22 @@ export function historyReducer<T>(state: HistoryState<T>, action: HistoryAction<
 /** Undo/redo stack over snapshots. `undo`/`redo` return the snapshot to restore (or null at the ends). */
 export function useHistory<T>(initial: T) {
   const [state, dispatch] = useReducer(historyReducer<T>, { past: [], present: initial, future: [] })
-  const commit = useCallback((next: T) => dispatch({ type: 'commit', next }), [])
-  const reset = useCallback((present: T) => dispatch({ type: 'reset', present }), [])
+  const latest = useRef(state)
+  const send = useCallback((action: HistoryAction<T>) => {
+    latest.current = historyReducer(latest.current, action)
+    dispatch(action)
+  }, [])
+  const commit = useCallback((next: T) => send({ type: 'commit', next }), [send])
+  const reset = useCallback((present: T) => send({ type: 'reset', present }), [send])
   const undo = useCallback((): T | null => {
-    if (state.past.length === 0) return null
-    dispatch({ type: 'undo' })
-    return state.past[state.past.length - 1]
-  }, [state.past])
+    if (!latest.current.past.length) return null
+    send({type:'undo'})
+    return latest.current.present
+  }, [send])
   const redo = useCallback((): T | null => {
-    if (state.future.length === 0) return null
-    dispatch({ type: 'redo' })
-    return state.future[0]
-  }, [state.future])
+    if (!latest.current.future.length) return null
+    send({type:'redo'})
+    return latest.current.present
+  }, [send])
   return { present: state.present, canUndo: state.past.length > 0, canRedo: state.future.length > 0, commit, undo, redo, reset }
 }

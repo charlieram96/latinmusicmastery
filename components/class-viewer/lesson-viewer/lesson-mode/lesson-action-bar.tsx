@@ -5,7 +5,8 @@
 // workspace layout switcher when a workspace is on screen.
 
 import Link from 'next/link'
-import { useEffect, useRef, type MouseEvent } from 'react'
+import { createPortal } from 'react-dom'
+import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react'
 import { AlertTriangle, ArrowRight, Check, ChevronLeft, Loader2, Play, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
@@ -14,7 +15,10 @@ import { useLessonProgress } from '../lesson-progress-context'
 import { ActionMessage, type ActionTone } from './lesson-frame'
 import './lesson-mode.css'
 
-export function LessonActionBar({ progress, claimed, tone, onActionHost, onToolsHost, onPrimary, primaryLabel }: {
+export function LessonActionBar({ transportHost, progress, claimed, tone, onActionHost, onToolsHost, onPrimary, primaryLabel, narration, onClipsHost }: {
+  transportHost?: HTMLElement | null
+  onClipsHost?: (el: HTMLElement | null) => void
+  narration?: ReactNode
   progress: LessonProgressInput | null
   claimed: boolean
   tone: ActionTone
@@ -36,14 +40,15 @@ export function LessonActionBar({ progress, claimed, tone, onActionHost, onTools
   const nextText = !summary ? '' : summary.next === 'part' ? t('common.next')
     : summary.next === 'lesson' ? t('dashboard.classViewer.footer.nextLesson') : t('dashboard.classViewer.footer.backToCourse')
 
-  return <footer ref={barRef} data-lesson-action-bar data-tone={tone} data-claimed={claimed} className="lx-action">
+  const actions = <footer ref={barRef} data-lesson-action-bar data-tone={tone} data-claimed={claimed} className={transportHost ? "lx-action lx-action-transport" : "lx-action"}>
     {/* One live region for the bar's lifetime: parts swap the content, the region stays and reads the new message. */}
     <span ref={liveRef} data-action-live role="status" aria-live="polite" aria-atomic="true" className="sr-only" />
     {summary && <div role="progressbar" aria-label={t('dashboard.classViewer.footer.lessonProgress')} aria-valuemin={0}
       aria-valuemax={total || 1} aria-valuenow={summary.completedCount} className="lx-action-progress">
       <i style={{ transform: `scaleX(${total ? summary.completedCount / total : 0})` }} />
     </div>}
-    <div data-ws-tools ref={onToolsHost} className="lx-action-tools" />
+    {narration}
+    {!transportHost && <div data-ws-tools ref={onToolsHost} className="lx-action-tools" />}
     <div data-action-host ref={onActionHost} className="lx-action-host" hidden={!claimed} />
     {!claimed && summary && progress && <>
       {summary.prevHref && <Link href={summary.prevHref} aria-label={t('dashboard.pages.modules.previous')} className="lx-action-prev">
@@ -63,7 +68,13 @@ export function LessonActionBar({ progress, claimed, tone, onActionHost, onTools
         </Link>
       </Button>
     </>}
+    {!transportHost && onClipsHost && <div className="lx-clips-host" ref={onClipsHost} />}
   </footer>
+  return transportHost ? <>
+    {createPortal(actions, transportHost)}
+    <div data-ws-tools ref={onToolsHost} className="lx-action-tools" />
+    {onClipsHost && <div className="lx-clips-host" ref={onClipsHost} />}
+  </> : actions
 }
 
 /**

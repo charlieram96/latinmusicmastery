@@ -1,0 +1,149 @@
+{
+  "classId": "local-solfeo-m06-c01",
+  "title": {
+    "es": "6.1 · Procedimiento de lectura tonal",
+    "en": "6.1 · A method for tonal reading"
+  },
+  "videoUrl": "/local-course-assets/solfeo/films/local-solfeo-m06-c01-sync-v3.mp4",
+  "posterUrl": "/local-course-assets/solfeo/films/local-solfeo-m06-c01.png",
+  "duration": 95.876411,
+  "sections": [],
+  "questions": [
+    {
+      "id": "local-solfeo-m06-c01-exercise-q1",
+      "class_item_id": "local-solfeo-m06-c01-exercise",
+      "order_index": 0,
+      "question": "¿Qué conviene reconocer primero en la lectura tonal?",
+      "question_es": "¿Qué conviene reconocer primero en la lectura tonal?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Solo la última barra"
+          },
+          {
+            "id": "choice-1",
+            "text": "Solo el tempo"
+          },
+          {
+            "id": "choice-2",
+            "text": "La tónica y la armadura"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-2",
+      "explanation": "La respuesta es La tónica y la armadura.",
+      "explanation_es": "La respuesta es La tónica y la armadura.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m06-c01-exercise-q2",
+      "class_item_id": "local-solfeo-m06-c01-exercise",
+      "order_index": 1,
+      "question": "¿Qué grado actúa como dominante?",
+      "question_es": "¿Qué grado actúa como dominante?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "El cuarto"
+          },
+          {
+            "id": "choice-1",
+            "text": "El quinto"
+          },
+          {
+            "id": "choice-2",
+            "text": "El segundo"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-1",
+      "explanation": "La respuesta es El quinto.",
+      "explanation_es": "La respuesta es El quinto.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m06-c01-exercise-q3",
+      "class_item_id": "local-solfeo-m06-c01-exercise",
+      "order_index": 2,
+      "question": "¿Qué identifica una armadura con dos sostenidos?",
+      "question_es": "¿Qué identifica una armadura con dos sostenidos?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Fa sostenido y Do sostenido"
+          },
+          {
+            "id": "choice-1",
+            "text": "Si bemol y Mi bemol"
+          },
+          {
+            "id": "choice-2",
+            "text": "Do sostenido y Re sostenido"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-0",
+      "explanation": "La respuesta es Fa sostenido y Do sostenido.",
+      "explanation_es": "La respuesta es Fa sostenido y Do sostenido.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m06-c01-exercise-q4",
+      "class_item_id": "local-solfeo-m06-c01-exercise",
+      "order_index": 3,
+      "question": "¿Cómo se prepara una lectura de entonación?",
+      "question_es": "¿Cómo se prepara una lectura de entonación?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "Saltando los silencios"
+          },
+          {
+            "id": "choice-1",
+            "text": "Cantando todas las notas a la misma altura"
+          },
+          {
+            "id": "choice-2",
+            "text": "Estableciendo una referencia tonal y un tempo cómodo"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-2",
+      "explanation": "La respuesta es Estableciendo una referencia tonal y un tempo cómodo.",
+      "explanation_es": "La respuesta es Estableciendo una referencia tonal y un tempo cómodo.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    }
+  ],
+  "nextHref": "/solfeo-preview?class=local-solfeo-m06-c02",
+  "metronome": {
+    "trimInSeconds": 0,
+    "trimOutSeconds": null,
+    "bpm": 100,
+    "anchorSeconds": null,
+    "segments": []
+  }
+}

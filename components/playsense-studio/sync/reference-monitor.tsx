@@ -2,6 +2,9 @@
 
 // PlaySense Studio — sync panel's reference-video monitor.
 
+import { ExerciseVideoGuidance } from '../shared/exercise-video-guidance';
+import { LessonPresentationOverlay } from '@/components/playsense-studio/shared/lesson-presentation';
+import { lessonPresentationFor } from '@/lib/playsense-studio/lesson-presentation';
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { VideoFullscreenButton } from '@/components/playsense-studio/shared/video-fullscreen-button';
 import { Volume2, VolumeX } from 'lucide-react';
@@ -14,11 +17,15 @@ import { cn } from '@/lib/utils';
 // keeps driving it.
 export function ReferenceMonitor({
   videoRef,
+  classItemId,
   videoUrl,
+  watch = false,
   bare,
   videoMuted = false,
   onVideoMutedChange,
 }: {
+  classItemId?: string;
+  watch?: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   videoUrl: string | null;
   /** True when this renders inside the floating PiP, which already supplies
@@ -42,11 +49,12 @@ export function ReferenceMonitor({
         )}
         <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()}
           ref={videoRef}
-          src={videoUrl ?? undefined}
+          src={videoUrl?.trim() || undefined}
+          poster={videoUrl ? lessonPresentationFor(videoUrl)?.poster : undefined}
           playsInline
           preload="metadata"
           className="aspect-video w-full bg-black"
-        /><VideoWatermark /><VideoFullscreenButton />
+        />{classItemId && <ExerciseVideoGuidance watch={watch} itemId={classItemId} videoRef={videoRef} />}{videoUrl && <LessonPresentationOverlay src={videoUrl} />}<VideoWatermark /><VideoFullscreenButton />
       </div>
       {onVideoMutedChange && <div className="flex h-8 items-center border-t border-border bg-card px-2 pr-6">
         <button type="button" className="flex w-full items-center gap-2 rounded px-1 py-1 text-xs text-foreground hover:bg-muted"

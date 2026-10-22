@@ -11,6 +11,8 @@ const families: Array<[string, RegExp]> = [
   ['Notación antigua', /^(mensural|chant|medRen|kievan)/], ['Líneas y reguladores', /^(wiggle|arrow|line|bracket|octave|ottava)/],
 ];
 const additions = [
+  ['First ending','1. ┐','Repeticiones y navegación'], ['Second ending','2. ┐','Repeticiones y navegación'], ['Remove ending','× 1.','Repeticiones y navegación'], ['Remove repeat signs','× :‖','Repeticiones y navegación'], ['Tenor clef','𝄡','Claves y pentagramas'],
+  ...['2/4','3/4','4/4','6/8','9/8','12/8'].map(x=>[x,x,'Compás y barras']),
   ['Crescendo','<','Líneas y reguladores'], ['Diminuendo','>','Líneas y reguladores'], ['Ligadura de unión','⌒','Líneas y reguladores'], ['Ligadura de expresión','⌢','Líneas y reguladores'],
   ['Puntillo','·','Notas y silencios'], ['Doble puntillo','··','Notas y silencios'], ['Tresillo','3','Grupos irregulares'], ['Dosillo','2','Grupos irregulares'], ['Quintillo','5','Grupos irregulares'], ['Seisillo','6','Grupos irregulares'], ['Septillo','7','Grupos irregulares'], ['Grupo personalizado','n:m','Grupos irregulares'],
   ...['Largo','Adagio','Andante','Moderato','Allegro','Presto','ritardando','rallentando','accelerando','rubato','a tempo','Tempo primo'].map(x=>[x,x,'Tempo y agógica']),

@@ -1,0 +1,71 @@
+{
+  "classId": "local-solfeo-m08-c05",
+  "duration": 60.602188,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Largo, adagio, andante y moderato",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 17.469749999999998,
+      "kind": "explanation",
+      "title": "Largo, adagio, andante y moderato",
+      "sourceTopic": "agogica-vocabulario",
+      "soundEvents": []
+    },
+    {
+      "start": 17.469749999999998,
+      "end": 27.469749999999998,
+      "kind": "photo",
+      "title": "Una referencia para el pulso",
+      "soundEvents": []
+    },
+    {
+      "start": 27.469749999999998,
+      "end": 40.96975,
+      "kind": "explanation",
+      "title": "Largo, adagio, andante y moderato",
+      "sourceTopic": "agogica-vocabulario",
+      "soundEvents": []
+    },
+    {
+      "start": 40.96975,
+      "end": 54.580861,
+      "kind": "explanation",
+      "title": "Largo, adagio, andante y moderato",
+      "sourceTopic": "agogica-vocabulario",
+      "soundEvents": []
+    },
+    {
+      "start": 54.580861,
+      "end": 60.580861,
+      "kind": "completion",
+      "title": "¡Sigues progresando!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

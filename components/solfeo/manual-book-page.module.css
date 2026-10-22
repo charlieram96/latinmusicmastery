@@ -1,0 +1,68 @@
+.sheet{max-width:1120px;margin:auto;padding:22px 30px;color:hsl(var(--foreground))}
+.heading{text-align:center;margin-bottom:22px}.heading>span{font-size:10px;font-weight:700;letter-spacing:.15em;color:hsl(var(--primary))}.heading h2{font-family:var(--font-heading),sans-serif;font-size:clamp(21px,2vw,29px);font-weight:800;line-height:1.2;margin:10px 0}.heading i{display:block;width:56px;height:3px;background:hsl(var(--primary));margin:16px auto 0;border-radius:3px}
+.blocks{font-size:16px;line-height:1.65;max-width:960px;margin:auto}.blocks>*+*{margin-top:18px}.blocks h3{font-weight:700;color:hsl(var(--primary))}.small{font-size:14px}.diagram{max-width:920px;margin:auto}.diagram>svg{display:block;width:100%;margin:auto;background:#fff;border-radius:12px;min-height:150px}.note{cursor:pointer;outline:none}.focusRing{stroke:transparent}.note:hover .focusRing,.note:focus .focusRing{stroke:#f58215;stroke-width:2}
+.manualCover{height:100%;min-height:480px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:13px;background:#265b4d;color:#fff;border-radius:12px;margin:12px;padding:24px}.manualCover h2{font-size:clamp(32px,5vw,52px);font-weight:800;line-height:1.05}.manualCover h3{font-size:clamp(20px,2.8vw,28px);line-height:1.2}.manualCover>p:first-child{font-size:11px;letter-spacing:.2em;color:#ffb775}.manualCover small{opacity:.8}
+@media(max-width:639px){.sheet{padding:18px 14px}.blocks{font-size:15px}.diagram>svg{min-width:420px}.diagram{overflow-x:auto}.heading h2{font-size:21px}}
+.sheet{animation:pageIn .35s ease-out}.blocks>div:not(.diagram){padding:14px 18px;border-left:3px solid hsl(var(--primary)/.25);border-radius:0 12px 12px 0;background:hsl(var(--muted)/.25);animation:pageIn .5s ease-out both}.blocks>div:nth-child(2){animation-delay:.08s}.blocks>div:nth-child(3){animation-delay:.14s}.blocks mark{color:inherit;background:linear-gradient(transparent 72%,hsl(var(--primary)/.23) 72%);background-repeat:no-repeat;background-size:100% 100%;font-weight:600;animation:underlineIn .85s ease-out both}.heading i{animation:underlineIn .6s ease-out both}
+@keyframes pageIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}@keyframes underlineIn{from{background-size:0% 100%;opacity:.5}to{background-size:100% 100%;opacity:1}}
+@media(prefers-reduced-motion:reduce){.sheet,.blocks>div:not(.diagram),.blocks mark,.heading i{animation:none}}
+
+.manualCover{min-height:100%;margin:0;border-radius:0;padding:30px 24px 65px}.blocks>div:not(.diagram){padding:10px 16px}.blocks>*+*{margin-top:12px}.blocks{line-height:1.55;max-width:1040px}
+.diagram{color:hsl(var(--foreground));--manual-muted:hsl(var(--foreground)/.65);--manual-line:hsl(var(--border));--manual-green:#265b4d}.diagram>svg{background:transparent;border-radius:0}.diagram :global(text){font-family:inherit}.diagram :global(line){shape-rendering:geometricPrecision}:global(.dark) .diagram{--manual-green:#83d6b4}
+.diagram :global(.manual-note){opacity:1;animation:none}
+@keyframes noteIn{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.diagram :global(.manual-note){animation:none}}
+.illustrated{display:grid;grid-template-columns:minmax(240px,.85fr) minmax(0,1.8fr);gap:18px;align-items:center;max-width:none}.illustrated>.diagram{grid-column:2;grid-row:1 / span 4;width:100%;margin:0}.illustrated>*:not(.diagram){grid-column:1;margin:0}.illustrated .small{font-size:13px}.sheet:has(.illustrated){max-width:1360px}
+@media(max-width:1000px){.illustrated{display:block}.illustrated>.diagram{margin:16px auto}.illustrated>*+*{margin-top:12px}}
+.sheet{max-width:1360px;padding:18px 24px}.blocks{max-width:1240px;font-size:16px;line-height:1.5}.heading{margin-bottom:16px}.heading h2{margin:8px 0}.heading i{margin-top:12px}.blocks>div:not(.diagram){padding:9px 14px}.blocks>*+*{margin-top:10px}
+.learning{display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:16px;line-height:1.5}.learningCard{padding:14px 18px;border:1px solid hsl(var(--border));border-top:2px solid hsl(var(--primary)/.5);border-radius:12px;background:hsl(var(--muted)/.18)}.learningCard:first-child,.learningCard:last-child{grid-column:1 / -1}.learningCard h3{color:hsl(var(--primary));font-weight:700;margin-bottom:8px}.learningCard p+p{margin-top:9px}.learningCard mark{background:linear-gradient(transparent 75%,hsl(var(--primary)/.25) 75%);color:inherit;font-weight:600;animation:underlineIn .8s ease-out}
+@media(max-width:760px){.learning{grid-template-columns:1fr;font-size:15px}}
+@media(prefers-reduced-motion:reduce){.learningCard mark{animation:none}}
+.valuesPage .illustrated{grid-template-columns:minmax(230px,.75fr) minmax(0,1.6fr);align-items:start;gap:20px}.valuesPage .illustrated>div:has(table){grid-column:2;grid-row:1 / span 4;margin:0;padding:0;border:0;background:transparent}.valuesPage .illustrated>div:not(:has(table)){grid-column:1;font-size:14px;line-height:1.55}.valuesPage .heading{margin-bottom:12px}
+@media(max-width:1000px){.valuesPage .illustrated{display:grid;grid-template-columns:minmax(180px,.65fr) minmax(0,1.35fr);gap:12px}.valuesPage .illustrated>div:not(:has(table)){font-size:12px}}
+@media(max-width:639px){.valuesPage .illustrated{display:flex;flex-direction:column}.valuesPage .illustrated>div:has(table){order:-1;width:100%}}
+.sheet[data-book=true] .illustrated{grid-template-columns:minmax(0,1.25fr) minmax(0,1.4fr);gap:12px;align-items:start;font-size:15px;line-height:1.4}
+.sheet[data-book=true] .illustrated>.diagram{grid-row:1 / span 8;align-self:center}
+.sheet[data-book=true] .illustrated>div:not(.diagram){padding:8px 12px}
+.sheet[data-book=true] .illustrated h3{font-size:15px}
+@media(max-width:1000px){.sheet[data-book=true] .illustrated{display:block}}
+.bookIllustrated{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1.4fr);gap:20px;align-items:center;font-size:15px;line-height:1.4}
+.blocks.bookIllustrated>div{padding:0;border:0;border-radius:0;background:none;margin:0}
+.bookProse>div{padding:8px 12px;border-left:3px solid hsl(var(--primary)/.25);border-radius:0 12px 12px 0;background:hsl(var(--muted)/.25)}
+.bookProse>*+*{margin-top:10px}.bookProse h3{font-size:15px}.bookFigures .diagram{width:100%}
+@media(max-width:1000px){.bookIllustrated{grid-template-columns:1fr}.bookFigures{min-width:0}}
+.sheet[data-book=true]{padding-top:14px;padding-bottom:14px}
+.sheet[data-book=true]>.blocks:not(.bookIllustrated){font-size:15px;line-height:1.45}
+.answerPage[data-book=true]>.blocks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.answerPage[data-book=true]>.blocks>*{margin:0}.answerPage[data-book=true]>.blocks>h3{grid-column:1/-1}
+@media(max-width:700px){.answerPage[data-book=true]>.blocks{grid-template-columns:1fr}}
+.answerPage[data-book=true]>.blocks>div:not(.small){grid-column:1/-1}
+.blocks a{color:hsl(var(--primary));text-decoration:underline;overflow-wrap:anywhere}
+
+.staffPage .blocks{font-size:14px;line-height:1.5}.staffPage .illustrated{grid-template-columns:minmax(240px,.85fr) minmax(0,1.8fr)}.staffPage .diagram>svg{max-height:280px!important;min-height:0}.staffPage .heading{margin-bottom:14px}
+
+/* Chapter-two conducting pages reserve room for both the gesture and staff. */
+.conductPage .bookFigures .diagram>svg{min-height:0;max-height:120px!important}.conductPage .bookFigures{display:grid;gap:12px}.conductPage .bookIllustrated{align-items:start}
+
+.completionPage .bookIllustrated{align-items:start}
+
+/* Keep listening beside the explanation so the notation can use the full height. */
+.listeningLayout{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(0,1.6fr);gap:28px;align-items:start;max-width:1240px;margin:auto;font-size:15px;line-height:1.45}
+.listeningText{min-width:0;padding-top:8px}.listeningText>button{width:100%;margin:26px 0 0}.listeningText mark{color:inherit;background:linear-gradient(transparent 72%,hsl(var(--primary)/.23) 72%);font-weight:600}
+.listeningLayout>.expandedDiagram{width:100%;max-width:none;margin:0;min-width:0}.expandedDiagram>svg{max-height:500px!important;min-height:0}
+@media(max-width:800px){.listeningLayout{grid-template-columns:1fr;gap:20px}.listeningText>button{width:auto;margin-top:18px}.expandedDiagram>svg{max-height:none!important}}
+
+/* Book diagrams enter with the page; playback never hides their engraved notes. */
+.expandedDiagram{animation:pageIn .45s ease-out both}.listeningText .bookProse>div{animation:pageIn .35s ease-out both}.listeningText .bookProse>div:nth-child(2){animation-delay:.06s}.listeningText .bookProse>div:nth-child(3){animation-delay:.12s}
+@media(prefers-reduced-motion:reduce){.expandedDiagram,.listeningText .bookProse>div{animation:none}}
+/* Balance longer manual explanations against the full notation height. */
+.listeningLayout{grid-template-columns:minmax(300px,1fr) minmax(0,1.4fr);gap:24px;font-size:14px;line-height:1.4}
+.listeningText .bookProse>div{padding:7px 11px}.listeningText .bookProse>*+*{margin-top:8px}.listeningText>button{margin-top:18px}
+@media(max-width:800px){.listeningLayout{grid-template-columns:1fr}}
+
+.listeningText .small{font-size:12px;line-height:1.4}.listeningText a{color:hsl(var(--primary));text-decoration:underline}.listeningText>button{padding-block:12px}
+
+/* Consecutive historical lessons share the available book page. */
+.sourceSections{display:flex;flex-direction:column;gap:1.25rem;width:100%}
+.sourceSections h3{margin:0 0 .5rem}
+.sourceSections .listeningLayout{min-height:0}

@@ -152,7 +152,7 @@ export function merge(parts: THREE.BufferGeometry[]) {
   return merged
 }
 
-export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standard' | 'low', boatSide = 1) {
+export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standard' | 'low', boatSide = 1, runwayWidth = RUNWAY_WIDTH) {
   const group = new THREE.Group()
   const anisotropy = quality === 'low' ? 1 : 8
   const chassisWood = new THREE.MeshStandardMaterial({ color: 0x3a2417, roughness: .45, metalness: 0 })
@@ -168,15 +168,15 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   // The dock: weathered teak planks laid across its width on a timber frame.
   const front = HIT_Z + 1.25, back = farZ - 1.3
   const length = front - back, center = (front + back) / 2
-  const frame = new THREE.Mesh(new RoundedBoxGeometry(RUNWAY_WIDTH + 1.1, .7, length + .3, 2, .05), chassisWood)
+  const frame = new THREE.Mesh(new RoundedBoxGeometry(runwayWidth + 1.1, .7, length + .3, 2, .05), chassisWood)
   frame.position.set(0, DECK_TOP - .38, center); frame.receiveShadow = true; group.add(frame)
-  const planks = photoTexture('/playsense/textures/dock.jpg', deckTexture(), [(RUNWAY_WIDTH + .9) / 7.4, length / 7.4], anisotropy)
+  const planks = photoTexture('/playsense/textures/dock.jpg', deckTexture(), [(runwayWidth + .9) / 7.4, length / 7.4], anisotropy)
   const deckMaterial = new THREE.MeshPhysicalMaterial({ map: planks, bumpMap: planks, bumpScale: .6, color: 0x9a8a7c, roughness: .6, clearcoat: .3, clearcoatRoughness: .35, envMapIntensity: .65 })
-  const surface = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .9, length).rotateX(-Math.PI / 2), deckMaterial)
+  const surface = new THREE.Mesh(new THREE.PlaneGeometry(runwayWidth + .9, length).rotateX(-Math.PI / 2), deckMaterial)
   surface.position.set(0, DECK_TOP, center); surface.receiveShadow = true
   group.add(surface)
   const edgeParts: THREE.BufferGeometry[] = [], fenderParts: THREE.BufferGeometry[] = [], cleatParts: THREE.BufferGeometry[] = []
-  const edgeX = RUNWAY_WIDTH / 2 + .45
+  const edgeX = runwayWidth / 2 + .45
   for (const side of [-1, 1]) {
     // Fascia boards and a continuous D-fender on the boat side.
     edgeParts.push(new THREE.BoxGeometry(.12, .5, length + .2).translate(side * (edgeX + .06), DECK_TOP - .2, center))
@@ -201,9 +201,9 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
       pilings.push(new THREE.CylinderGeometry(.2, .24, pilingTop - SEA_Y, 14).translate(x, (pilingTop + SEA_Y) / 2, z))
       caps.push(new THREE.ConeGeometry(.24, .22, 14).translate(x, pilingTop + .11, z))
       for (let k = 0; k < 3; k++) wraps.push(new THREE.TorusGeometry(.215, .025, 6, 16).rotateX(Math.PI / 2).translate(x, DECK_TOP + .55 + k * .07, z))
-      pilings.push(new THREE.CylinderGeometry(.26, .3, DECK_TOP - SEA_Y, 12).translate(side * (RUNWAY_WIDTH / 2 - .6), (DECK_TOP + SEA_Y) / 2 - .3, z))
+      pilings.push(new THREE.CylinderGeometry(.26, .3, DECK_TOP - SEA_Y, 12).translate(side * (runwayWidth / 2 - .6), (DECK_TOP + SEA_Y) / 2 - .3, z))
     }
-    pilings.push(new THREE.BoxGeometry(RUNWAY_WIDTH, .3, .3).translate(0, DECK_TOP - 1.3, z))
+    pilings.push(new THREE.BoxGeometry(runwayWidth, .3, .3).translate(0, DECK_TOP - 1.3, z))
   }
   const pier = new THREE.Mesh(merge(pilings), timber); pier.castShadow = true; group.add(pier)
   group.add(new THREE.Mesh(merge(caps), capWhite))
@@ -227,7 +227,7 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   terrace.position.set(0, TERRACE_Y, SEAWALL_Z + 24); terrace.receiveShadow = true; group.add(terrace)
   const wallParts: THREE.BufferGeometry[] = [], bandParts: THREE.BufferGeometry[] = [], railParts: THREE.BufferGeometry[] = []
   for (const side of [-1, 1]) {
-    const inner = RUNWAY_WIDTH / 2 + 1.2
+    const inner = runwayWidth / 2 + 1.2
     const width = 60 - inner, x = side * (inner + width / 2)
     wallParts.push(new RoundedBoxGeometry(width, .8, 1, 2, .08).translate(x, TERRACE_Y + .4, SEAWALL_Z))
     bandParts.push(new THREE.BoxGeometry(width, .12, 1.03).translate(x, TERRACE_Y + .6, SEAWALL_Z))
@@ -258,7 +258,7 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   const masts: THREE.BufferGeometry[] = []
   const festoon: THREE.Vector3[] = []
   const mastZ = [-3.4, -11, -18.6, farZ + 1.2]
-  const mastX = RUNWAY_WIDTH / 2 + 1.35
+  const mastX = runwayWidth / 2 + 1.35
   const top = 5.4
   for (const side of [-boatSide]) {
     for (const z of mastZ) {
@@ -288,9 +288,9 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   const gateZ = back + .2
   const gateGlow = { value: 0 }
   const threshold = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 1.1, 1.8) })
-  const line = new THREE.Mesh(new THREE.BoxGeometry(RUNWAY_WIDTH + .5, .045, .07), threshold)
+  const line = new THREE.Mesh(new THREE.BoxGeometry(runwayWidth + .5, .045, .07), threshold)
   line.position.set(0, DECK_TOP + .03, gateZ); group.add(line)
-  const veil = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + 1.6, 3.4).translate(0, 1.7, 0), new THREE.ShaderMaterial({
+  const veil = new THREE.Mesh(new THREE.PlaneGeometry(runwayWidth + 1.6, 3.4).translate(0, 1.7, 0), new THREE.ShaderMaterial({
     uniforms: { psClock: uniforms.psClock, psGlow: gateGlow },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
@@ -321,7 +321,7 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   veil.position.set(0, DECK_TOP, gateZ - .05); veil.renderOrder = 2
   group.add(veil)
   const pylonParts: THREE.BufferGeometry[] = [], capParts: THREE.BufferGeometry[] = [], stripParts: THREE.BufferGeometry[] = []
-  const pylonX = RUNWAY_WIDTH / 2 + .78
+  const pylonX = runwayWidth / 2 + .78
   for (const side of [-1, 1]) {
     const x = side * pylonX
     pylonParts.push(new RoundedBoxGeometry(.42, 3.4, .42, 2, .06).translate(x, DECK_TOP + 1.7, gateZ))

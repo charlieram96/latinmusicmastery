@@ -1,0 +1,64 @@
+{
+  "sourcePages": [
+    25,
+    55
+  ],
+  "lessons": 9,
+  "questionsPerLesson": 2,
+  "examQuestions": 10,
+  "sourceBlocks": 164,
+  "missingBlocks": [],
+  "otherModulesUnchanged": true,
+  "moduleOneSha256": "be11ff2caf51d7886c603aec5f85bcb9c5ebed1afd00c154a48e714247c37149",
+  "mapping": {
+    "local-solfeo-m02-c01": {
+      "lessonPages": 1,
+      "practicePages": 1
+    },
+    "local-solfeo-m02-c02": {
+      "lessonPages": 4,
+      "practicePages": 2
+    },
+    "local-solfeo-m02-c03": {
+      "lessonPages": 3,
+      "practicePages": 1
+    },
+    "local-solfeo-m02-c04": {
+      "lessonPages": 1,
+      "practicePages": 3
+    },
+    "local-solfeo-m02-c05": {
+      "lessonPages": 2,
+      "practicePages": 11
+    },
+    "local-solfeo-m02-c06": {
+      "lessonPages": 1,
+      "practicePages": 2
+    },
+    "local-solfeo-m02-c07": {
+      "lessonPages": 1,
+      "practicePages": 6
+    },
+    "local-solfeo-m02-c08": {
+      "lessonPages": 1,
+      "practicePages": 3
+    },
+    "local-solfeo-m02-c09": {
+      "lessonPages": 1,
+      "practicePages": 3
+    },
+    "local-solfeo-m02-c10": {
+      "lessonPages": 1,
+      "practicePages": 0
+    }
+  },
+  "verification": {
+    "pdfParagraphsMatched": 122,
+    "automatedTestsPassed": 13,
+    "typescript": "passed",
+    "studentExamCorrectAnswers": "100%",
+    "practiceStudentAndEditor": "four correct measures",
+    "lessonPagesInspected": 15,
+    "conductingControlsClipped": 0
+  }
+}

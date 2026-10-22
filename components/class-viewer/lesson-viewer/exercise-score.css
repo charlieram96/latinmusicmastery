@@ -67,3 +67,21 @@
   .ps-score-tools [data-slot=button] { min-width:28px; min-height:30px; height:30px; padding-inline:6px; }
 }
 @media(prefers-reduced-motion:reduce) { .ps-exercise-score * { transition:none!important; } }
+
+/* The score pane owns vertical trackpad scrolling when its split is short. */
+.ps-exercise-score-panel {
+ overflow-y:auto;
+ overscroll-behavior-y:contain;
+ scrollbar-width:thin;
+ touch-action:pan-y;
+}
+.ps-exercise-score-panel .ps-exercise-score[data-staff-layout=horizontal] {
+ flex:0 0 auto;
+ min-height:max-content;
+ container-type:inline-size;
+ overflow:visible;
+}
+.ps-exercise-score-panel .ps-exercise-score[data-staff-layout=horizontal] .ps-score-sheet {
+ flex:none;
+ min-height:min-content;
+}

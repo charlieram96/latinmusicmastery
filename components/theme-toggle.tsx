@@ -1,5 +1,7 @@
 'use client'
 
+import { LearningIcon } from '@/components/learning-mode/art'
+
 import { Moon, Sun } from 'lucide-react'
 import { useTheme } from '@/components/theme-provider'
 import { Button } from '@/components/ui/button'
@@ -37,7 +39,7 @@ export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
           className
         )}
       >
-        <Icon className="h-5 w-5 shrink-0" />
+        <LearningIcon name={current === 'light' ? 'sun' : 'moon'} icon={Icon} />
         <span className={cn('ml-[22px] truncate text-sm font-medium', RAIL_REVEAL)}>
           {t('common.theme.label')}: {t(`common.theme.${current}`)}
         </span>

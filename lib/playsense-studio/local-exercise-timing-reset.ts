@@ -9,7 +9,7 @@ export function localExerciseTimingReset(score: ScoreDocument, itemId: string, d
   if (!development || itemId !== TIMING_TEST_ITEM) return score
   const clean = structuredClone(score)
   clean.tempoMarksConfirmed = false
-  delete clean.playbackTempoOverride
+  // Keep the authored playback tempo shared by Studio and the student player.
   for (const track of clean.tracks) for (const measure of track.measures) {
     delete measure.tempoChange
     for (const voice of measure.voices) for (const event of voice.events) delete event.symbolOffsets

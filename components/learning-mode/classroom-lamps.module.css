@@ -1,0 +1,12 @@
+.pair{position:absolute;inset:0;pointer-events:none;z-index:3}
+.lamp{position:absolute;top:40%;width:clamp(28px,3.5vw,58px)}
+.lamp[data-side=left]{left:.5%}.lamp[data-side=right]{right:.5%}
+.lamp svg{position:relative;display:block;width:100%;overflow:visible;filter:drop-shadow(1px 3px 2px #182d2828)}
+.bulb{fill:#ddd5bb;stroke:#a7926c;stroke-width:1.5;transition:fill .35s,filter .35s}
+.glow{position:absolute;left:-95%;top:-60%;width:290%;aspect-ratio:1;border-radius:50%;background:radial-gradient(ellipse,#ffe59780 0%,#ffcc5140 26%,#ffbd2914 49%,transparent 70%);opacity:0;transition:opacity .35s}
+.rays{opacity:0;transition:opacity .35s}
+.pair[data-lit=true] .bulb{fill:#fff4b2;stroke:#ffe08a;filter:drop-shadow(0 0 6px #ffe28c)}
+.pair[data-lit=true] .glow,.pair[data-lit=true] .rays{opacity:1}
+.pair[data-cover=true] .lamp{top:39%;width:9%}
+@media(max-width:700px){.lamp{top:49%;width:23px}.lamp[data-side=left]{left:0}.lamp[data-side=right]{right:0}}
+@media(prefers-reduced-motion:reduce){.bulb,.glow,.rays{transition:none}}

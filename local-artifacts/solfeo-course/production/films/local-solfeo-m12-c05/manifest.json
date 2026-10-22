@@ -1,0 +1,64 @@
+{
+  "classId": "local-solfeo-m12-c05",
+  "duration": 56.71925,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Dictado 4: semicorcheas",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 21,
+      "kind": "explanation",
+      "title": "Dictado 4: semicorcheas",
+      "sourceTopic": "dictado-modelo-4",
+      "soundEvents": []
+    },
+    {
+      "start": 21,
+      "end": 38.356646,
+      "kind": "explanation",
+      "title": "Dictado 4: semicorcheas",
+      "sourceTopic": "dictado-modelo-4",
+      "soundEvents": []
+    },
+    {
+      "start": 38.356646,
+      "end": 50.697917,
+      "kind": "explanation",
+      "title": "Dictado 4: semicorcheas",
+      "sourceTopic": "dictado-modelo-4",
+      "soundEvents": []
+    },
+    {
+      "start": 50.697917,
+      "end": 56.697917,
+      "kind": "completion",
+      "title": "¡Sigues progresando!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

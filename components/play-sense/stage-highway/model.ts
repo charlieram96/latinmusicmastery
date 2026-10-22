@@ -1,7 +1,7 @@
 import type { ExerciseDefinition, ExerciseEvent, HitGrade } from '@/lib/play-sense/types'
 import { getInstrumentCategory } from '@/lib/play-sense/types'
 import { generateExpectedTimestamps } from '@/lib/play-sense/exercise-utils'
-import { PLAYSENSE_MAPPINGS } from '@/lib/play-sense/playsense-mappings'
+import { percussionLanes, percussionLaneId } from '@/lib/play-sense/percussion-lanes'
 import { isBlackKey, noteNameToMidi } from '../glass-highway/LaneLayout'
 
 export const RUNWAY_WIDTH = 10
@@ -9,8 +9,8 @@ export const HIT_Z = 3.6
 export const FAR_Z = -37
 export const APPROACH_SECONDS = 3.5
 
-export interface StageLane { id: string; label: string; x: number; width: number; black: boolean; midi?: number }
-export interface StageNote { index: number; time: number; duration: number; lane: number; accent: boolean }
+export interface StageLane { id: string; label: string; x: number; width: number; black: boolean; midi?: number; surface?: string }
+export interface StageNote { index: number; time: number; duration: number; lane: number; accent: boolean; strokeId?: string; notehead?: ExerciseEvent['notehead'] }
 export interface VisualResult { eventIndex: number; grade: HitGrade }
 export interface StageFrame {
   elapsed: number
@@ -25,7 +25,7 @@ export interface StageFrame {
 const NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B']
 const pitch = (e: ExerciseEvent) => e.expectedPitch ?? (e.expectedNoteName ? noteNameToMidi(e.expectedNoteName) : null)
 
-export function createStageModel(exercise: ExerciseDefinition): { lanes: StageLane[]; notes: StageNote[] } {
+export function createStageModel(exercise: ExerciseDefinition, order: readonly string[] = [], locale: 'en'|'es' = 'en', runwayWidth = exercise.instrument === 'timbale' ? 20 : RUNWAY_WIDTH, hidden: readonly string[] = []): { lanes: StageLane[]; notes: StageNote[] } {
   let lanes: StageLane[]
   let laneForEvent: (e: ExerciseEvent) => number
   if (exercise.instrument === 'piano') {
@@ -44,25 +44,27 @@ export function createStageModel(exercise: ExerciseDefinition): { lanes: StageLa
     })
     laneForEvent = e => Math.max(0, Math.min(lanes.length - 1, (pitch(e) ?? 60) - min))
   } else {
-    const mapped = PLAYSENSE_MAPPINGS[exercise.instrument]
+    const percussion = percussionLanes(exercise,locale).filter(lane=>!hidden.includes(lane.id))
+    const rank = new Map(order.map((id, i) => [id, i]))
+    percussion.sort((a,b) => (rank.get(a.id) ?? order.length) - (rank.get(b.id) ?? order.length))
     const pitched = getInstrumentCategory(exercise.instrument) === 'pitched'
-    const id = (e: ExerciseEvent) => pitched ? String(pitch(e) ?? e.expectedNoteName ?? 'note') : e.surface || e.technique
-    const ids = mapped ? Object.values(mapped.piezoMap) : [...new Set(exercise.events.map(id))]
+    const id = (e: ExerciseEvent) => pitched ? String(pitch(e) ?? e.expectedNoteName ?? 'note') : percussionLaneId(e)
+    const ids = pitched ? [...new Set(exercise.events.map(id))] : percussion.map(lane => lane.id)
     if (pitched) ids.sort((a, b) => Number(a) - Number(b))
-    if (!ids.length) ids.push('note')
+    if (!ids.length && pitched) ids.push('note')
     lanes = ids.map((key, i) => ({
-      id: key, black: false, x: (i + 0.5) * RUNWAY_WIDTH / ids.length - RUNWAY_WIDTH / 2,
-      width: RUNWAY_WIDTH / ids.length * 0.7,
-      label: pitched && Number.isFinite(Number(key)) ? `${NAMES[Number(key) % 12]}${Math.floor(Number(key) / 12) - 1}` : key,
+      id: key, surface: pitched ? undefined : percussion[i]?.surface, black: false, x: (i + 0.5) * runwayWidth / ids.length - runwayWidth / 2,
+      width: runwayWidth / ids.length * 0.7,
+      label: pitched && Number.isFinite(Number(key)) ? `${NAMES[Number(key) % 12]}${Math.floor(Number(key) / 12) - 1}` : percussion[i]?.label ?? key,
     }))
-    laneForEvent = e => Math.max(0, ids.indexOf(id(e)))
+    laneForEvent = e => ids.indexOf(id(e))
   }
   const notes = generateExpectedTimestamps(exercise).map(expected => {
     const source = exercise.events[expected.eventIndex % exercise.events.length]
     return { index: expected.eventIndex, time: expected.timestamp, duration: expected.expectedDurationSec ?? 0,
-      lane: laneForEvent(source), accent: source.accent }
+      lane: laneForEvent(source), accent: source.accent, strokeId:source.strokeId, notehead:source.notehead }
   })
-  return { lanes, notes }
+  return { lanes, notes: notes.filter(note=>note.lane>=0) }
 }
 
 export function firstVisibleNote(notes: readonly StageNote[], time: number): number {

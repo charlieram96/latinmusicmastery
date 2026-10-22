@@ -46,9 +46,28 @@ describe('LessonTopBar', () => {
     // Parts are links in a nav, the current one marked as the current step (L4).
     expect(host.querySelector('[role=tablist], [role=tab]')).toBeNull()
     expect(tabs().map(t => t.getAttribute('aria-current'))).toEqual([null, 'step', null])
-    expect(tabs()[0].getAttribute('href')).toBe('/dashboard/course/c/class/k?item=0')
+    expect(tabs()[0].getAttribute('href')).toBe('/dashboard/course/c/class/k?itemId=a')
     const widths = tabs().map(t => (t.querySelector('[data-part-progress] i') as HTMLElement).style.width)
     expect(widths).toEqual(['100%', '50%', '0%'])
+  })
+
+  it('marks only the current tab, independently of completion, and moves the mark on navigation', () => {
+    act(() => root.render(<LessonTopBar {...props} completedItemIds={['a', 'b', 'c']} onOpenDrawer={() => {}} />))
+    expect(tabs().map(tab => !!tab.querySelector('[data-active-tab-check]'))).toEqual([false, true, false])
+    act(() => root.render(<LessonTopBar {...props} activeIndex={2} completedItemIds={[]} onOpenDrawer={() => {}} />))
+    expect(tabs().map(tab => !!tab.querySelector('[data-active-tab-check]'))).toEqual([false, false, true])
+  })
+
+  it('reveals the selected destination horizontally without scrolling the lesson', () => {
+    act(() => root.render(<LessonTopBar {...props} onOpenDrawer={() => {}} />))
+    const nav = host.querySelector('nav.lx-parts') as HTMLElement
+    nav.getBoundingClientRect = () => ({ left: 100, right: 400 } as DOMRect)
+    tabs()[2].getBoundingClientRect = () => ({ left: 450, right: 600 } as DOMRect)
+    act(() => root.render(<LessonTopBar {...props} activeIndex={2} onOpenDrawer={() => {}} />))
+    expect(nav.scrollLeft).toBe(204)
+    tabs()[0].getBoundingClientRect = () => ({ left: -100, right: 50 } as DOMRect)
+    act(() => root.render(<LessonTopBar {...props} activeIndex={0} onOpenDrawer={() => {}} />))
+    expect(nav.scrollLeft).toBe(0)
   })
 
   it('one part renders', () => {

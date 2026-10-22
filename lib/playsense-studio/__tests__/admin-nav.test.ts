@@ -33,3 +33,10 @@ it('links to the exact published student item without preview flags', async () =
   expect(studentHrefFromAdmin('/admin/courses')).toBeUndefined()
   expect(studentHrefFromAdmin(undefined)).toBeUndefined()
 })
+
+ it('preserves the authored part when opening student view', async () => {
+  const { studentHrefFromAdmin } = await import('../admin-nav')
+  const back = '/admin/courses/course?class=lesson&item=exercise'
+  expect(studentHrefFromAdmin(back, 'exercise')).toBe('/dashboard/course/course/class/lesson?itemId=exercise&part=exercise')
+  expect(studentHrefFromAdmin(back, 'watch')).toBe('/dashboard/course/course/class/lesson?itemId=exercise&part=watch')
+ })

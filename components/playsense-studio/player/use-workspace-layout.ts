@@ -26,6 +26,7 @@ export interface WorkspaceController {
   /** What renders: the stored layout, with side shown as stack on phones. */
   layout: WorkspaceLayout;
   narrow: boolean;
+  allowSideOnNarrow?: boolean;
   /** Layouts this view offers. */
   layouts: readonly WorkspaceLayout[];
   defaults: WorkspaceState;
@@ -42,7 +43,7 @@ export interface WorkspaceController {
 export function useWorkspaceLayout(
   kind: string,
   defaults: WorkspaceState,
-  { layouts = WORKSPACE_LAYOUTS }: { layouts?: readonly WorkspaceLayout[] } = {},
+  { layouts = WORKSPACE_LAYOUTS, allowSideOnNarrow = false }: { layouts?: readonly WorkspaceLayout[]; allowSideOnNarrow?: boolean } = {},
 ): WorkspaceController {
   const [state, setState] = useState<WorkspaceState>(defaults);
   const [narrow, setNarrow] = useState(false);
@@ -92,7 +93,7 @@ export function useWorkspaceLayout(
   const update = useCallback((patch: Partial<WorkspaceState>) => commit((s) => ({ ...s, ...patch })), [commit]);
 
   return useMemo(() => ({
-    kind, state, layout: effectiveLayout(state.layout, narrow), narrow, layouts, defaults,
+    kind, state, layout: effectiveLayout(state.layout, narrow && !allowSideOnNarrow), narrow, allowSideOnNarrow, layouts, defaults,
     setLayout, swap, update, beforeLayoutChangeRef,
-  }), [kind, state, narrow, layouts, defaults, setLayout, swap, update]);
+  }), [kind, state, narrow, allowSideOnNarrow, layouts, defaults, setLayout, swap, update]);
 }

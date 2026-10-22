@@ -1,3 +1,4 @@
+import { hasFinalBarline } from '../barlines';
 import { describe, it, expect } from 'vitest';
 import { editorReducer, type EditorState } from '../editor-state';
 import type { Note, Rest, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -81,12 +82,16 @@ describe('editor-state capacity guard', () => {
 describe('editor-state final barline', () => {
   const twoMeasures = () => editorReducer(stateOf(makeScore([])), { type: 'add-measure', trackIndex: 0 });
 
-  it('stores only overrides: removing the bar on the last measure persists, re-adding clears the field', () => {
+  it('moves the closing final bar to the appended measure', () => {
     const s1 = editorReducer(twoMeasures(), { type: 'set-measure-final-bar', trackIndex: 0, measureIndex: 1, final: false });
     expect(s1.score.tracks[0].measures[1].endBarline).toBe('single');
     expect(s1.isDirty).toBe(true);
     const s2 = editorReducer(s1, { type: 'set-measure-final-bar', trackIndex: 0, measureIndex: 1, final: true });
-    expect(s2.score.tracks[0].measures[1].endBarline).toBeUndefined();
+    expect(s2.score.tracks[0].measures[1].endBarline).toBe('final');
+    const s3=editorReducer(s2,{type:'add-measure',trackIndex:0});
+    expect(hasFinalBarline(s3.score.tracks[0].measures, 1)).toBe(false);
+    expect(hasFinalBarline(s3.score.tracks[0].measures, 2)).toBe(true);
+    expect(editorReducer(s3, {type:'undo'}).score).toEqual(s2.score);
   });
 
   it('adds an explicit final bar to an inner measure and clears it again', () => {
@@ -308,6 +313,19 @@ describe('event-id integrity (Task 13)', () => {
     expect(s2.score.tracks[0].measures.every((m) => m.repeat?.id === 'r')).toBe(true);
   });
 
+  it('removes extra passes, keeps originals, and can undo/redo removal', () => {
+    const initial = stateOf(makeScore([note('a')]));
+    const repeated = editorReducer(initial, {type:'repeat-measures',trackIndex:0,start:0,end:0,count:4,id:'r'});
+    expect(editorReducer(repeated, {type:'undo'}).score).toEqual(initial.score);
+    const removed = editorReducer(repeated, {type:'set-repeat-count',trackIndex:0,id:'r',count:1});
+    expect(removed.score.tracks[0].measures).toHaveLength(1);
+    expect(removed.score.tracks[0].measures[0].repeat).toBeUndefined();
+    expect(ids(removed, 0)).toEqual(['a']);
+    const restored = editorReducer(removed, {type:'undo'});
+    expect(restored.score).toEqual(repeated.score);
+    expect(editorReducer(restored, {type:'redo'}).score).toEqual(removed.score);
+  });
+
   it('adds repeat passes with their own pass ids', () => {
     const s1 = editorReducer(stateOf(makeScore([note('a')])), { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'r' });
     const s2 = editorReducer(s1, { type: 'set-repeat-count', trackIndex: 0, id: 'r', count: 3 });
@@ -349,20 +367,26 @@ describe('deletion preserves musical time', () => {
     const s1 = editorReducer(s0, action);
     expect(events(s1)[0]).toMatchObject({kind:'rest', ...rhythm});
     expect(events(s1)[1]).toMatchObject({kind:'note', midi:64, durationQN:1});
-    expect(editorReducer(s1, action)).toBe(s1);
-    expect(editorReducer(s1, {type:'delete-events', refs:[{trackIndex:0, measureIndex:0, voice:0, eventIndex:0}]})).toBe(s1);
+    expect(events(editorReducer(s1, action))).toHaveLength(1);
+    expect(events(editorReducer(s1, {type:'delete-events', refs:[{trackIndex:0, measureIndex:0, voice:0, eventIndex:0}]}))).toHaveLength(1);
     expect(editorReducer(s1, {type:'undo'}).score).toEqual(s0.score);
   });
 });
 
-it('reconciles the opening tempo with the score without deleting later tempo changes, and supports undo', () => {
+it('applies the sidebar tempo to every bar and staff, clears playback overrides, and supports undo', () => {
   const score=scoreWithTempoMarks();
   score.tracks[0].measures[0].tempoChange=100;
+  score.tracks.push(structuredClone(score.tracks[0]));
+  score.playbackTempoOverride=151;
+  score.tempoMarksConfirmed=true;
   const before=JSON.stringify(score);
   const s0=stateOf(score);
   const s1=editorReducer(s0,{type:'set-score-meta',initialTempo:120});
   expect(s1.score.initialTempo).toBe(120);
-  expect(s1.score.tracks[0].measures.map(m=>m.tempoChange)).toEqual([120,120,100]);
+  expect(s1.score.tracks.flatMap(t=>t.measures.map(m=>m.tempoChange))).toEqual(Array(6).fill(undefined));
+  expect(s1.score.playbackTempoOverride).toBeUndefined();
+  expect(s1.score.tempoMarksConfirmed).toBeUndefined();
+  expect(s1.score.tracks.map(t=>t.measures.map(m=>m.voices))).toEqual(score.tracks.map(t=>t.measures.map(m=>m.voices)));
   expect(JSON.stringify(score)).toBe(before);
   expect(editorReducer(s1,{type:'undo'}).score).toEqual(score);
 });
@@ -406,3 +430,13 @@ it('stores video effects in the score draft, preserves them through serializatio
   expect(parseScoreDocument(disabled.score).videoCoaching).toBeNull();
   expect(editorReducer(disabled, { type: 'undo' }).score.videoCoaching).toBe('cascara-v1');
 });
+
+ it('removes multiple selected rests without deleting their neighbours and can undo', () => {
+ const score = makeScore([{kind:'rest',durationQN:1},{kind:'note',midi:60,durationQN:1},{kind:'rest',durationQN:1},{kind:'note',midi:64,durationQN:1}]);
+ const initial = stateOf(score);
+ for (const type of ['delete-events', 'delete-selected-pitches'] as const) {
+ const result = editorReducer(initial, {type, refs:[0,2].map(eventIndex=>({trackIndex:0,measureIndex:0,voice:0 as const,eventIndex,member:0}))});
+ expect(events(result).map(e=>e.kind)).toEqual(['note','note']);
+ expect(editorReducer(result,{type:'undo'}).score).toEqual(initial.score);
+ }
+ });

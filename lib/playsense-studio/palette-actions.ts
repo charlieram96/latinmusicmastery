@@ -31,6 +31,18 @@ add(['barlineSingle'],{kind:'measure',props:{endBarline:'single'}});
 add(['barlineFinal'],{kind:'measure',props:{endBarline:'final'}});
 add(['barlineDouble'],{kind:'measure',props:{endBarline:'double'}});
 
+add(['unpitchedPercussionClef1','unpitchedPercussionClef2'],{kind:'measure',props:{clef:'percussion'}});
+add(['Tenor clef'],{kind:'measure',props:{clef:'tenor'}});
+add(['timeSigCommon'],{kind:'measure',props:{timeSignature:[4,4]}});
+add(['timeSigCutCommon'],{kind:'measure',props:{timeSignature:[2,2]}});
+for(const [n,d] of [[2,4],[3,4],[4,4],[6,8],[9,8],[12,8]])add([`${n}/${d}`],{kind:'measure',props:{timeSignature:[n,d]}});
+add(['repeatLeft'],{kind:'measure',props:{repeatStart:true}});
+add(['repeatRight'],{kind:'measure',props:{repeatEnd:true}});
+add(['First ending'],{kind:'measure',props:{volta:'1.'}});
+add(['Second ending'],{kind:'measure',props:{volta:'2.'}});
+add(['Remove ending'],{kind:'measure',props:{volta:null}});
+add(['Remove repeat signs'],{kind:'measure',props:{repeatStart:false,repeatEnd:false}});
+
 export function paletteActions(name:string,score:ScoreDocument,selection:EventRef[],bars:Array<{trackIndex:number;measureIndex:number}>): {actions:EditorAction[];error?:string} {
  const command=PALETTE_COMMANDS[name];
  if(!command)return {actions:[],error:'This symbol is not connected yet.'};

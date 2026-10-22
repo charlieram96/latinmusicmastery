@@ -1,7 +1,8 @@
 'use client';
 // components/playsense-studio/export/download-menu.tsx
 // Student-facing: one icon button, a two-item menu, defaults for everything.
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Download, FileCode2, FileText } from 'lucide-react';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { exportSection, type ExportFormat } from '@/lib/playsense-studio/export';
@@ -22,23 +23,15 @@ export function DownloadMenu({ score, classItemTitle, sectionIndex, sectionCount
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<ExportFormat | null>(null);
   const [error, setError] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    // A previous export that hung or failed must not leave both items disabled
-    // reading "Preparing…" the next time the menu is opened.
-    setBusy(null);
-    setError(false);
-    const onDown = (e: PointerEvent) => { if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('pointerdown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
-  }, [open]);
+  const inFlight = useRef(false);
+  const changeOpen = (next: boolean) => {
+    setOpen(next);
+    if (next) setError(false);
+  };
 
   const run = async (format: ExportFormat) => {
-    if (busy) return; // A closed-and-reopened menu resets `busy`; don't let a second export start while one is in flight.
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(format);
     setError(false);
     try {
@@ -49,6 +42,7 @@ export function DownloadMenu({ score, classItemTitle, sectionIndex, sectionCount
       console.error(`[playsense-export] ${format} export failed for class item ${classItemId} section ${sectionIndex + 1}`, e);
       setError(true);
     } finally {
+      inFlight.current = false;
       setBusy(null);
     }
   };
@@ -59,33 +53,33 @@ export function DownloadMenu({ score, classItemTitle, sectionIndex, sectionCount
   ];
 
   return (
-    <div ref={rootRef} className="relative">
-      <button type="button" onClick={() => setOpen(o => !o)} aria-haspopup="menu" aria-expanded={open}
+    <DropdownMenu open={open} onOpenChange={changeOpen}>
+      <DropdownMenuTrigger asChild>
+      <button type="button" data-score-preserve-selection
         title={t('playsenseExport.button')} aria-label={t('playsenseExport.button')}
         className={`grid h-[26px] w-7 place-items-center rounded-full border border-border bg-secondary transition-colors ${open ? 'bg-primary/[0.16] text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
         <Download className="h-4 w-4" />
       </button>
-      {open && (
-        <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-60 rounded-lg border border-border bg-popover/95 p-1 shadow-lg backdrop-blur">
+      </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="end" sideOffset={8} collisionPadding={12} data-score-preserve-selection className="w-60 max-w-[calc(100vw-24px)]">
           <div className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">{t('playsenseExport.title')}</div>
           {items.map(item => {
             const Icon = item.icon;
             return (
-              <button key={item.format} type="button" role="menuitem" disabled={busy !== null} onClick={() => void run(item.format)}
+              <DropdownMenuItem key={item.format} disabled={busy !== null} onSelect={event => { event.preventDefault(); void run(item.format); }}
                 className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-muted disabled:opacity-60">
                 <Icon className="h-[18px] w-[18px] shrink-0 text-primary" />
                 <span className="flex min-w-0 flex-col">
                   <span className="text-[13px] font-semibold">{busy === item.format ? t('playsenseExport.working') : item.label}</span>
                   <span className="text-[11px] text-muted-foreground">{item.hint}</span>
                 </span>
-              </button>
+              </DropdownMenuItem>
             );
           })}
           <div className="mx-2.5 mb-1.5 mt-1 border-t border-border pt-2 text-[10.5px] leading-snug text-muted-foreground">
             {error ? <span className="text-destructive">{t('playsenseExport.error')}</span> : t('playsenseExport.note')}
           </div>
-        </div>
-      )}
-    </div>
+        </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

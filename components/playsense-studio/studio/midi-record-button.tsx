@@ -1,4 +1,6 @@
 'use client';
+import {useSelectedAudio} from '../shared/use-audio-source';
+import {ORIGINAL_AUDIO,type AudioSourceSettings} from '@/lib/playsense-studio/audio-source';
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { VideoFullscreenButton } from '@/components/playsense-studio/shared/video-fullscreen-button';
 import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
@@ -18,7 +20,7 @@ import { StaffRenderer } from '../player/notation/renderers/staff-renderer';
 
 /** `waypoints` are TIMELINE time; `videoRef`/`onPosition` are the video's MEDIA
  *  time. Under Flex Time `flex` maps between the two (omitted = the same). */
-export type MidiRecordingSource = { videoUrl: string | null; videoRef: RefObject<HTMLVideoElement | null>; waypoints: Waypoint[]; onInsert: MidiRecordingInsert; onPosition: (seconds: number) => void; flex?: MidiRecordingWarp };
+export type MidiRecordingSource = { audioSource?:AudioSourceSettings; audioLoaded?:boolean; videoUrl: string | null; videoRef: RefObject<HTMLVideoElement | null>; waypoints: Waypoint[]; onInsert: MidiRecordingInsert; onPosition: (seconds: number) => void; flex?: MidiRecordingWarp };
 type Props = { score: ScoreDocument; trackIndex: number; targetMeasure: number; dispatch: Dispatch<EditorAction>; getCurrentSeconds?: () => number; recordingSource?: MidiRecordingSource; compact?: boolean };
 export function MidiRecordButton(props: Props) {
   const st = useStudioText();
@@ -58,6 +60,7 @@ function MidiRecorderPanel({ score, trackIndex, targetMeasure, dispatch, getCurr
   const plan = placement.plan;
   const context = plan?.context ?? recordingContext(originalScore, originalTrack, 0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const importedAudioError=useSelectedAudio(videoRef,recordingSource?.audioSource??ORIGINAL_AUDIO,{volume:1,muted:false,loaded:recordingSource?.audioLoaded??true});
   useEffect(() => { recordingSource?.videoRef.current?.pause(); }, [recordingSource?.videoRef]);
   const positionVideo = () => {
     if (videoRef.current && plan) { videoRef.current.currentTime = plan.videoStartMedia; videoRef.current.playbackRate = playbackRate; }
@@ -102,6 +105,7 @@ function MidiRecorderPanel({ score, trackIndex, targetMeasure, dispatch, getCurr
   const clockSeconds = (recordingSource?.videoUrl ? plan?.videoStartMedia ?? 0 : 0) + recorder.meter.elapsedMs / 1000;
   const clock = formatRecordingTime(clockSeconds);
   return <div className={recordingSource?.videoUrl ? 'grid min-w-0 gap-5 md:grid-cols-[1fr_1fr]' : 'min-w-0'}>
+    {importedAudioError&&<p role="alert" className="text-destructive">{importedAudioError}</p>}
     {recordingSource?.videoUrl && <div className="min-w-0 space-y-2 md:sticky md:top-0 md:self-start">
       <div className="relative overflow-hidden rounded-xl border border-border bg-black"><video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()} ref={videoRef} src={recordingSource.videoUrl} onLoadedMetadata={positionVideo} playsInline preload="auto" className="aspect-video w-full" aria-label={st("MIDI recording reference video")} /><VideoWatermark /><VideoFullscreenButton /></div>
       <div className="flex justify-between text-xs text-muted-foreground"><span>{st("Reference video")}</span><span>{playbackRate}{st("× speed · Video timing")}</span></div>

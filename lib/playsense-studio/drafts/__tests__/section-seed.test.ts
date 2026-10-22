@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sectionSeed } from '../seed';
+import { sectionSeed, sectionDraftRange, sectionTimelineSeeds, orderedScoreSections } from '../seed';
 import { EMPTY_TIMING } from '@/lib/playsense-studio/drafts/timing';
 
 const wp = (qn: number, s: number) => ({ musicalPositionQN: qn, videoTimeSeconds: s, measureNumber: null, beatInMeasure: null });
@@ -25,4 +25,45 @@ describe('sectionSeed', () => {
     expect(seed.timeMap?.waypoints).toEqual([wp(0, 2), wp(4, 4)]);
     expect(seed.anchorSeconds).toBe(2);
   });
+});
+
+describe('section draft timeline ranges', () => {
+  it('keeps independently placed drafts visible, including unpublished sections', () => {
+    const first = { ...base, studioDraft: { score: {}, timing: { ...EMPTY_TIMING, waypoints: [wp(0, 82), wp(8, 104)] } } };
+    const second = { ...base, sectionId: 's2', videoStartSeconds: null, videoEndSeconds: null,
+      studioDraft: { score: {}, timing: { ...EMPTY_TIMING, waypoints: [wp(0, 120), wp(8, 128)] } } };
+    expect([first, second].map(s => sectionDraftRange(s as never))).toEqual([
+      { startSeconds: 82, endSeconds: 104 }, { startSeconds: 120, endSeconds: 128 }
+    ]);
+    second.studioDraft.timing.waypoints = [wp(0, 140), wp(8, 148)];
+    expect(sectionDraftRange(second as never)).toEqual({ startSeconds: 140, endSeconds: 148 });
+    expect(sectionDraftRange(first as never)).toEqual({ startSeconds: 82, endSeconds: 104 });
+  });
+  it('does not revive a published placement when the draft is unplaced', () => {
+    expect(sectionDraftRange({ ...base, studioDraft: { score: {}, timing: EMPTY_TIMING } } as never))
+      .toEqual({ startSeconds: null, endSeconds: null });
+  });
+});
+
+it('previews new imports after earlier placements without changing either source', () => {
+  const score = { title:'New', initialTempo:120, initialTimeSignature:[4,4], tracks:[{measures:[{number:1, voices:[]}]}] };
+  const first = { ...base, studioDraft: null };
+  const second = { ...base, sectionId:'second', activeTimeMap:null, videoStartSeconds:null, videoEndSeconds:null,
+    scoreDocument:{...base.scoreDocument, parsedScore:score}, studioDraft:null };
+  const before = JSON.stringify([first,second]);
+  const lanes = sectionTimelineSeeds([first,second] as never);
+  expect(lanes.map(s=>[s.startSeconds,s.endSeconds,s.preview])).toEqual([[1,3,false],[3,5,true]]);
+  expect(JSON.stringify([first,second])).toBe(before);
+});
+
+it('orders identical titles by live draft position, then unplaced uploads, without mutating them', () => {
+ const source=[
+  {...base,sectionId:'late',sectionIndex:0,studioDraft:{score:{title:'Same'},timing:{...EMPTY_TIMING,waypoints:[wp(0,30),wp(4,32)]}}},
+  {...base,sectionId:'new',sectionIndex:2,studioDraft:{score:{title:'Same'},timing:EMPTY_TIMING}},
+  {...base,sectionId:'early',sectionIndex:1,studioDraft:{score:{title:'Same'},timing:{...EMPTY_TIMING,waypoints:[wp(0,10),wp(4,12)]}}},
+ ];
+ expect(orderedScoreSections(source as never).map(s=>s.sectionId)).toEqual(['early','late','new']);
+ expect(source.map(s=>s.sectionId)).toEqual(['late','new','early']);
+ source[0].studioDraft.timing.waypoints=[wp(0,5),wp(4,7)];
+ expect(orderedScoreSections(source as never).map(s=>s.sectionId)).toEqual(['late','early','new']);
 });

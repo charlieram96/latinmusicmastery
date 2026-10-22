@@ -1,0 +1,24 @@
+.student-screen-controls { position:fixed; right:12px; top:8px; z-index:60; display:flex; align-items:center; gap:6px; }
+.student-screen-controls > button { display:flex; align-items:center; gap:6px; min-height:36px; padding:8px; border:1px solid hsl(var(--primary) / .5); border-radius:9px; background:hsl(var(--background)); color:hsl(var(--primary)); box-shadow:0 2px 8px #0002; font-size:12px; }
+.student-screen-controls > button:focus-visible { outline:2px solid hsl(var(--primary)); outline-offset:2px; }
+[data-dashboard-shell][data-student-fullscreen=true] > [data-dashboard-navigation],
+[data-dashboard-shell][data-student-fullscreen=true] [data-dashboard-header],
+[data-dashboard-shell][data-student-fullscreen=true] [data-lesson-shell] > aside,
+[data-dashboard-shell][data-student-fullscreen=true] .lx-top { display:none !important; }
+[data-dashboard-shell][data-student-fullscreen=true] > [data-dashboard-frame] { margin-left:0; }
+[data-dashboard-shell][data-student-fullscreen=true] [data-lesson-shell] { grid-template-columns:minmax(0,1fr) !important; }
+[data-dashboard-shell][data-student-fullscreen=true] .lx-main { grid-template-rows:minmax(0,1fr) auto; padding-top:48px; }
+[data-dashboard-shell][data-student-fullscreen=true] [data-dashboard-main]:not([data-lesson-stage]) { padding-top:48px; }
+[data-dashboard-shell][data-student-fullscreen=true] [data-dashboard-content] { padding:0 12px 12px; }
+
+/* Full-screen study gives navigation and decorative margins back to the lesson. */
+[data-dashboard-shell][data-student-fullscreen=true] .lx-bottom { display:none !important; }
+[data-dashboard-shell][data-student-fullscreen=true] .lx-main { grid-template-rows:minmax(0,1fr); }
+[data-dashboard-shell][data-student-fullscreen=true] [data-lesson-shell] { --lesson-footer-space:0px !important; }
+[data-dashboard-shell][data-student-fullscreen=true] .lx-fill { max-width:none; padding:4px; }
+[data-dashboard-shell][data-student-fullscreen=true] .ws-frame[data-sizing=viewport] { height:calc(100dvh - 68px) !important; min-height:0 !important; max-height:none; }
+[data-dashboard-shell][data-student-fullscreen=true] [data-lesson-stage] .ws-frame { height:calc(100dvh - 76px) !important; min-height:0 !important; max-height:none; }
+[data-dashboard-shell][data-student-fullscreen=true] [data-lesson-stage] div:has(> .ws-frame) { height:calc(100dvh - 76px); max-height:none; }
+[data-student-fullscreen-slot] { display:flex; flex:none; align-items:center; }
+[data-student-fullscreen-slot] .student-screen-controls { position:static; }
+[data-dashboard-shell][data-student-fullscreen=true] [data-course-sequence] { display:none; }

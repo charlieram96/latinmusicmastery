@@ -1,3 +1,5 @@
+import { formatMediaDuration } from '@/lib/utils'
+import { usesLocalTimbalIntro, replaceTimbalIntroItems, TIMBAL_INTRO_CLASS, TIMBAL_INTRO_SOURCE, TIMBAL_INTRO_ORIGINAL, TIMBAL_RITMO_CLASS, TIMBAL_RITMO_ORIGINAL, TIMBAL_RITMO_SOURCE, TIMBAL_VARIACIONES_CLASS, TIMBAL_VARIACIONES_ORIGINAL, TIMBAL_VARIACIONES_SOURCE } from '@/lib/courses/local-timbal-intro'
 import { Suspense } from 'react'
 import { toSidebarSections } from '@/lib/courses/structure'
 import { notFound, redirect } from 'next/navigation'
@@ -25,19 +27,18 @@ interface PageProps {
     itemId?: string
     item?: string
     preview?: string
+    part?: string
   }>
 }
 
 function formatDuration(seconds: number | null): string | null {
   if (!seconds || seconds <= 0) return null
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
+  return formatMediaDuration(seconds)
 }
 
 export default async function ClassViewerPage({ params, searchParams }: PageProps) {
   const { courseId, classId } = await params
-  const { item: itemParam, itemId, preview } = await searchParams
+  const { item: itemParam, itemId, preview, part } = await searchParams
   const supabase = await createClient()
 
   // Get user
@@ -82,6 +83,10 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     notFound()
   }
 
+  const localIntro = [TIMBAL_INTRO_CLASS, TIMBAL_RITMO_CLASS, TIMBAL_VARIACIONES_CLASS].includes(classId) && await usesLocalTimbalIntro()
+  if (localIntro) classData.items = replaceTimbalIntroItems(classData.items)
+  const resolvedItemId = localIntro && itemId === TIMBAL_VARIACIONES_SOURCE ? TIMBAL_VARIACIONES_ORIGINAL : localIntro && itemId === TIMBAL_INTRO_SOURCE ? TIMBAL_INTRO_ORIGINAL : localIntro && itemId === TIMBAL_RITMO_SOURCE ? TIMBAL_RITMO_ORIGINAL : itemId
+
   // Localize the directly-fetched class/section/course to the viewer's language.
   // (The sidebar structure is localized separately in getCourseStructureForStudent.)
   const { t, locale } = await getServerTranslator()
@@ -104,7 +109,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
 
   // Active item index
   const activeIndex = Math.min(
-    Math.max(0, itemId ? items.findIndex((item: { id: string }) => item.id === itemId) : parseInt(itemParam || '0', 10) || 0),
+    Math.max(0, resolvedItemId ? items.findIndex((item: { id: string }) => item.id === resolvedItemId) : parseInt(itemParam || '0', 10) || 0),
     Math.max(0, items.length - 1)
   )
   const activeItem = items[activeIndex] || null
@@ -124,7 +129,9 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const teacherName = (course.teacher as { name?: string } | null)?.name ?? null
   const teacherImageUrl =
     (course.teacher as { image_url?: string | null } | null)?.image_url ?? null
-  const moduleTitle = section.title as string
+  // Resolve the module through the same local structure as the sidebar.
+  const displaySection = structure?.sections.find(s => s.classes.some(c => c.id === classId))
+  const moduleTitle = displaySection?.title ?? section.title as string
 
   // The lesson rail: this module's lessons as path nodes; the next lesson for the celebration.
   const structureSections = structure?.sections ?? []
@@ -157,8 +164,9 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
 
   const shared: Omit<LessonModeShellProps, 'parts' | 'activeIndex' | 'progress' | 'body' | 'comments' | 'commentCount' | 'about'> = {
     course: { id: courseId, title: course.title },
-    module: { id: section.id, title: moduleTitle, index: Math.max(0, moduleIndex) },
+    module: { id: displaySection?.id ?? section.id, title: moduleTitle, index: Math.max(0, moduleIndex) },
     lesson: { id: classId, title: classData.title },
+    theaterEmpty: items.length === 0 || (items.length === 1 && items[0].item_type === 'VIDEO' && !items[0].video_url && !items[0].soundslice_embed_url && !items[0].rich_content),
     rail,
     sections: toSidebarSections(structureSections),
     hasAccess: isStudent,
@@ -231,9 +239,9 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           <p>{locale === 'es' ? 'Abriendo' : 'Opening'} {activeItem.title}…</p>
         </div>
       }>
-        <ClassItemRenderer key={activeItem.id} item={activeItem} userId={user.id} playerLayout="split" teacherName={teacherName} previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} previewLesson={process.env.NODE_ENV === 'development' && preview === 'lesson'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
+        <ClassItemRenderer initialExercisePart={part === 'exercise' ? 'exercise' : 'watch'} key={`${activeItem.id}:${part ?? 'watch'}`} item={activeItem} userId={user.id} playerLayout="split" teacherName={teacherName} previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} previewLesson={process.env.NODE_ENV === 'development' && preview === 'lesson'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?itemId=${encodeURIComponent(items[activeIndex + 1].id)}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
       </Suspense>
-      {activeIndex===0 && lessonDescription && lessonDescription!==activeItem.description && <section data-lesson-summary className="mx-auto mb-6 w-full max-w-[78ch] rounded-xl border border-border bg-card px-5 py-4"><h2 className="mb-2 font-heading text-base font-semibold">{t('dashboard.pages.modules.aboutLesson')}</h2><p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{lessonDescription}</p></section>}
+      {activeIndex===0 && lessonDescription && lessonDescription!==activeItem.description && <section data-lesson-summary className="mx-auto mb-6 w-full max-w-[1200px] rounded-xl border border-border bg-card px-5 py-4"><h2 className="mb-2 font-heading text-base font-semibold">{t('dashboard.pages.modules.aboutLesson')}</h2><p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{lessonDescription}</p></section>}
     </div>
   ) : (
     <ClassViewerEmpty />

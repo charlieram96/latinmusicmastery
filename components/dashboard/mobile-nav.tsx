@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import { LearningIcon, LearningBrand } from '@/components/learning-mode/art'
 import { Settings } from 'lucide-react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { LearningModeToggle } from '@/components/learning-mode-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useTranslation } from '@/components/language-provider'
@@ -36,10 +38,10 @@ export function MobileNavSheet({
       <SheetContent side="left" className="w-[300px] gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
         <SheetTitle className="sr-only">{t('dashboard.nav.label')}</SheetTitle>
         <div className="flex h-14 items-center px-4">
-          <Image src="/logo-solo-color.svg" alt="Latin Music Mastery" width={32} height={24} className="h-6 w-8 object-contain" />
+          <LearningBrand><Image src="/logo-solo-color.svg" alt="Latin Music Mastery" width={32} height={24} className="h-6 w-8 object-contain" /></LearningBrand>
         </div>
-        <nav aria-label={t('dashboard.nav.label')} className="flex-1 overflow-y-auto px-3 pb-3">
-          {groups.map((group) => (
+        <nav aria-label={t('dashboard.nav.label')} className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+          {groups.filter(group => group.key !== 'manage').map((group) => (
             <div key={group.key} className="mb-1">
               <div className="px-2.5 pb-1 pt-[22px] text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 {t(`dashboard.nav.groups.${group.key}`)}
@@ -58,7 +60,7 @@ export function MobileNavSheet({
                       active && 'bg-primary/[0.12] text-primary hover:bg-primary/[0.16]'
                     )}
                   >
-                    <Icon className="h-5 w-5 shrink-0" />
+                    <LearningIcon name={item.labelKey} icon={Icon} />
                     <span className="truncate">{t(`dashboard.nav.${item.labelKey}`)}</span>
                   </Link>
                 )
@@ -66,12 +68,17 @@ export function MobileNavSheet({
             </div>
           ))}
         </nav>
-        <div className="border-t border-sidebar-border p-3">
+        <div className="shrink-0 border-t border-sidebar-border p-3">
+          {groups.filter(group => group.key === 'manage').map(group => <div key={group.key} data-management-navigation>
+            <div className="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{t('dashboard.nav.groups.manage')}</div>
+            {group.items.map(item => <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} className="flex h-10 items-center gap-[22px] rounded-lg pl-[10px] text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent"><LearningIcon name={item.labelKey} icon={item.icon}/>{t(`dashboard.nav.${item.labelKey}`)}</Link>)}
+          </div>)}
           <div className="group/rail" data-expanded="true">
             <LanguageToggle variant="rail" />
+            <LearningModeToggle />
             <ThemeToggle variant="rail" />
           </div>
-          <Link href="/dashboard/settings" onClick={()=>setMobileOpen(false)} className="flex h-10 items-center gap-[22px] rounded-lg pl-[10px] text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent"><Settings className="h-5 w-5" />{t('dashboard.nav.settings')}</Link>
+          <Link href="/dashboard/settings" onClick={()=>setMobileOpen(false)} className="flex h-10 items-center gap-[22px] rounded-lg pl-[10px] text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent"><LearningIcon name="settings" icon={Settings} />{t('dashboard.nav.settings')}</Link>
           <Link
             href="/dashboard/settings"
             onClick={() => setMobileOpen(false)}
@@ -117,7 +124,7 @@ export function MobileTabBar() {
               active && 'text-primary'
             )}
           >
-            <Icon className="h-5 w-5" />
+            <LearningIcon name={item.labelKey} icon={Icon} />
             {t(`dashboard.nav.tabs.${item.labelKey}`)}
           </Link>
         )

@@ -46,7 +46,7 @@ import type { ZoomEditing } from './use-zoom-editing';
 import { ZoomStaff, type ZoomHit, type ZoomLayout } from './zoom-staff';
 
 export interface ZoomState {
-  measureIndex: number; cursor: NoteCursor; value: NoteValue; dots: 0 | 1 | 2; pencil: boolean; restEntry?: boolean;
+  measureIndex: number; cursor: NoteCursor; value: NoteValue; dots: 0 | 1 | 2 | 3; pencil: boolean; restEntry?: boolean;
   /** The Keys panel (K), and the on-screen keyboard's octave while it's open (Task 5). */
   keysOpen?: boolean; octave?: number;
 }

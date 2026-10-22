@@ -1,3 +1,7 @@
+import {publishedContentEnabled} from '@/lib/release/content'
+import {publishedScoreDrafts} from '@/lib/release/studio'
+import {timingToTimeMap} from '@/lib/playsense-studio/drafts/timing'
+import { TheaterVideoSlot } from '@/components/learning-mode/theater/timbal-theater'
 import { EffectsPlayer } from '@/components/playsense-studio/studio/video-effects-preview'
 import { SOBAO_EFFECTS_ITEM_ID, SOBAO_EFFECTS_TITLE } from '@/lib/playsense-studio/video-preview-cues'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,6 +30,10 @@ import { parseSubtitles } from '@/lib/subtitles/tracks'
 import { LessonActivityBoundary } from './lesson-viewer/lesson-progress-context'
 import { LessonMediaEmbed } from './lesson-viewer/lesson-media-embed'
 import { completionRequirements } from '@/lib/courses/lesson-completion'
+import { headers } from 'next/headers'
+import { getStudioDrafts } from '@/app/actions/studio-drafts'
+import { previewPayload, previewSection } from '@/lib/playsense-studio/drafts/preview-payload'
+import { TIMBAL_RITMO_ORIGINAL } from '@/lib/courses/local-timbal-intro'
 
 // Feature flag — set PLAYSENSE_STUDIO_ENABLED=false in env to roll back to the legacy
 // iframe path even when a class item has a score attached. Default true so
@@ -58,6 +66,7 @@ interface ClassItemRendererProps {
     description: string | null
     quiz_settings?: unknown
   }
+  initialExercisePart?: 'watch' | 'exercise'
   userId: string
   /** 'split' renders the PlaySense media player as a resizable video|notation workspace. */
   playerLayout?: 'stack' | 'split'
@@ -71,7 +80,7 @@ interface ClassItemRendererProps {
   teacherName?: string | null
 }
 
-export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null, previewExercise = false, previewLesson = false, teacherName = null }: ClassItemRendererProps) {
+export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null, previewExercise = false, previewLesson = false, initialExercisePart = 'watch', teacherName = null }: ClassItemRendererProps) {
   const { t, locale } = await getServerTranslator()
 
   // Subtitle tracks for the demo video. Every language is passed to the
@@ -104,12 +113,27 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
     (item.item_type === 'VIDEO' || item.item_type === 'EXERCISE') && playsenseStudioEnabled && !!item.video_url
       ? getScoreSectionsForClassItem(item.id) : Promise.resolve(null),
   ])
-  const playsenseStudioData = scoreResult?.data ?? null
-  const videoSections = sectionsResult?.data ?? []
+  let playsenseStudioData = scoreResult?.data ?? null
+  let videoSections = sectionsResult?.data ?? []
+  // Local admin review follows the current draft. Production and non-admin
+  // sessions keep the published version; getStudioDrafts enforces admin access.
+  const host = process.env.NODE_ENV === 'development' ? (await headers()).get('host')?.split(':')[0] : null
+  // This source replacement already projects the reference clock onto the
+  // uploaded video. Like Studio, never overlay old reference-clock drafts.
+  const owners = [...(playsenseStudioData ? [{kind:'exercise' as const,id:item.id}] : []),...videoSections.map(section=>({kind:'section' as const,id:section.sectionId}))]
+  const localDrafts = publishedContentEnabled() && item.id !== TIMBAL_RITMO_ORIGINAL ? await publishedScoreDrafts(owners) : item.id !== TIMBAL_RITMO_ORIGINAL && (host === 'localhost' || host === '127.0.0.1')
+    ? (await getStudioDrafts([
+      ...(playsenseStudioData ? [{ kind: 'exercise' as const, id: item.id }] : []),
+      ...videoSections.map(section => ({ kind: 'section' as const, id: section.sectionId })),
+    ])).data : undefined
+  const exerciseDraft = localDrafts?.[`exercise:${item.id}`]
+  if (playsenseStudioData) playsenseStudioData = previewPayload(playsenseStudioData, exerciseDraft)
+  videoSections = videoSections.map(section => previewSection(section, localDrafts?.[`section:${section.sectionId}`]))
   const playerSections = videoSections
     .filter((s) => s.videoStartSeconds != null && s.activeTimeMap != null)
     .map((s) => ({
       id: s.sectionId,
+      continuousProject: s.continuousProject,
       label: s.label,
       videoStartSeconds: s.videoStartSeconds,
       videoEndSeconds: s.videoEndSeconds,
@@ -145,7 +169,8 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
       ? (await getExerciseMedia(item.id)).data ?? null
       : null
   const backingTracks = exerciseMedia?.backingTracks ?? []
-  const exerciseVideo = toExerciseVideo(exerciseMedia)
+  const publishedExerciseVideo = toExerciseVideo(exerciseMedia)
+  const exerciseVideo = publishedExerciseVideo && exerciseDraft ? {...publishedExerciseVideo, timeMap:timingToTimeMap(exerciseDraft.timing), metronomeAnchorSeconds: exerciseDraft.timing.anchor?.seconds ?? null} : publishedExerciseVideo
 
   // Quizzes (and legacy quiz-style exercises) are a series of questions stored
   // in quiz_questions. Fetch them server-side so the runner renders immediately.
@@ -180,8 +205,8 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
       required={completionRequirements(item.item_type, !!playsenseStudioData, quizQuestions.length > 0)}
       disabled={process.env.NODE_ENV === 'development' && (previewLesson || previewExercise)}>
       {/* VIDEO */}
-      {item.item_type === 'VIDEO' &&
-        (hasVideoSections && firstSection && item.video_url && playerLayout === 'split' ? (
+      {item.item_type === 'VIDEO' && <TheaterVideoSlot workspace={!!(item.video_url && playerLayout === 'split' && ((hasVideoSections && firstSection) || firstUnplacedSection))}>
+        { (hasVideoSections && firstSection && item.video_url && playerLayout === 'split' ? (
           // Placed + sync-mapped notation → split workspace with an accurate cursor.
           <PlaysenseStudioPlayer
             readOnly={process.env.NODE_ENV === 'development' && previewLesson}
@@ -220,7 +245,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
         ) : item.video_url && !item.soundslice_embed_url ? (
           // No notation → polished full-width player. Description + notes render
           // below the workspace (page body + rich-content card), not on the side.
-          <LessonVideoPlayer
+          <LessonVideoPlayer audioSourceItemId={item.id}
             metronome={{bpm:item.bpm??120,anchorSeconds:item.metronome_anchor_seconds??null}}
             src={item.video_url}
             subtitles={subtitleTracks}
@@ -245,7 +270,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
               )}
             </CardContent>
           </Card>
-        ))}
+        ))}</TheaterVideoSlot>}
 
       {/* QUIZ — optional intro video/notation above a multi-question runner */}
       {item.item_type === 'QUIZ' && (
@@ -299,6 +324,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
         <>
           {playsenseStudioData ? (
             <ExerciseView
+              initialPart={initialExercisePart}
               classItemId={item.id}
               videoUrl={playsenseStudioMediaUrl}
               score={playsenseStudioData.scoreDocument.parsedScore}
@@ -320,11 +346,26 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
               playerLayout={playerLayout}
               backingTracks={backingTracks}
               exerciseVideo={exerciseVideo}
-              play={exerciseMedia?.play ?? null}
+              play={exerciseDraft?.timing.play ?? exerciseMedia?.play ?? null}
               teacherName={teacherName}
             />
+          ) : item.video_url && (firstSection || firstUnplacedSection) ? (
+            <PlaysenseStudioPlayer
+              classItemId={item.id}
+              classItemTitle={item.title}
+              videoUrl={item.video_url}
+              score={firstSection?.score ?? firstUnplacedSection!.scoreDocument.parsedScore}
+              tracks={firstSection?.tracks ?? firstUnplacedSection!.tracks}
+              activeTimeMap={firstSection?.activeTimeMap ?? null}
+              sections={hasVideoSections ? playerSections : undefined}
+              layout={playerLayout}
+              subtitles={subtitleTracks}
+              defaultSubtitleLang={locale}
+              trimInSeconds={item.video_trim_in_seconds ?? 0}
+              trimOutSeconds={item.video_trim_out_seconds ?? null}
+            />
           ) : item.id === SOBAO_EFFECTS_ITEM_ID && (item.video_url || exerciseVideo?.url) ? (
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+            <TheaterVideoSlot><div className="mx-auto flex w-full flex-col gap-4">
               <EffectsPlayer
                 key={item.id}
                 videoUrl={(item.video_url || exerciseVideo?.url)!}
@@ -335,23 +376,23 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
                 anchorSeconds={item.metronome_anchor_seconds ?? 0}
                 preview={false}
               />
-            </div>
+            </div></TheaterVideoSlot>
           ) : item.video_url ? (
-            <LessonVideoPlayer
+            <TheaterVideoSlot><LessonVideoPlayer audioSourceItemId={item.id}
             metronome={{bpm:item.bpm??120,anchorSeconds:item.metronome_anchor_seconds??null}}
               src={item.video_url}
               subtitles={subtitleTracks}
               defaultSubtitleLang={locale}
               trimInSeconds={item.video_trim_in_seconds ?? 0}
               trimOutSeconds={item.video_trim_out_seconds ?? null}
-            />
+            /></TheaterVideoSlot>
           ) : exerciseVideo ? (
-            <LessonVideoPlayer
+            <TheaterVideoSlot><LessonVideoPlayer audioSourceItemId={item.id}
             metronome={{bpm:item.bpm??120,anchorSeconds:item.metronome_anchor_seconds??null}}
               src={exerciseVideo.url}
               trimInSeconds={exerciseVideo.startSeconds ?? 0}
               trimOutSeconds={exerciseVideo.trimOutSeconds ?? null}
-            />
+            /></TheaterVideoSlot>
           ) : null}
 
           {/* Optional comprehension questions authored for the exercise. */}
@@ -396,7 +437,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
                 {item.audio_url ? (
                   <audio controls className="w-full" src={item.audio_url} />
                 ) : item.video_url ? (
-                  <LessonVideoPlayer src={item.video_url} subtitles={subtitleTracks} defaultSubtitleLang={locale} />
+                  <LessonVideoPlayer audioSourceItemId={item.id} src={item.video_url} subtitles={subtitleTracks} defaultSubtitleLang={locale} />
                 ) : null}
                 {item.soundslice_embed_url && (
                   <div className="aspect-video bg-black rounded-lg overflow-hidden">

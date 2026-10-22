@@ -12,6 +12,11 @@ import {
   type PlaysenseStudioPlayerTimeMap,
 } from '@/components/playsense-studio/player/playsense-studio-player'
 import { ScoreExerciseGame } from './score-exercise-game'
+import { useLearningMode } from '@/components/learning-mode/store'
+import { Timbalito } from '@/components/learning-mode/timbalito'
+import theaterStyles from '@/components/learning-mode/theater/timbal-theater.module.css'
+import { TheaterVideoSlot } from '@/components/learning-mode/theater/timbal-theater'
+import { LessonVideoPlayer } from './lesson-video-player'
 import { ActionMessage, LessonAction } from './lesson-mode/lesson-frame'
 import { useTranslation } from '@/components/language-provider'
 import type { BackingTrack, ExerciseMedia } from '@/app/actions/playsense-studio'
@@ -19,6 +24,7 @@ import type { ScoreDocument } from '@/components/playsense-studio/shared/score-m
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
 
 interface ExerciseViewProps {
+  initialPart?: 'watch' | 'exercise'
   classItemId: string
   videoUrl: string | null
   score: ScoreDocument
@@ -27,8 +33,8 @@ interface ExerciseViewProps {
   /** Derived from `score` server-side via scoreToExerciseDefinition. */
   exercise: ExerciseDefinition
   /** Published, placed WATCH-part sections (scored notation synced to the demo
-   *  video). When non-empty, Watch mode uses the sectioned player; otherwise it
-   *  falls back to the graded score over the video. */
+   *  video). Without these sections Watch displays only its video; it never
+   *  borrows the graded score or tempo. */
   sections?: PlayerSection[]
   playerLayout?: 'stack' | 'split'
   /** Instrument backing tracks for the play part (student selects before starting). */
@@ -58,6 +64,7 @@ type Mode = 'watch' | 'play'
  */
 export function ExerciseView({
   classItemId,
+  initialPart = 'watch',
   videoUrl,
   score,
   tracks,
@@ -71,10 +78,13 @@ export function ExerciseView({
   teacherName = null,
 }: ExerciseViewProps) {
   // Demo first: start in Watch when there's a video; otherwise go straight to play.
-  const [mode, setMode] = useState<Mode>(videoUrl ? 'watch' : 'play')
+  const demoUrl = videoUrl || null
+  const [mode, setMode] = useState<Mode>(demoUrl && initialPart !== 'exercise' ? 'watch' : 'play')
   // Surfaces the big centered CTA once the demo has played to the end.
   const [videoEnded, setVideoEnded] = useState(false)
+  const [watchReplay, setWatchReplay] = useState(0)
   const { t } = useTranslation()
+  const kids = useLearningMode() === 'kids'
 
   // The game owns its immersive layout; the lesson sidebar preference is retained.
   const goToPlay = () => {
@@ -93,7 +103,7 @@ export function ExerciseView({
   }, [videoEnded])
 
   // No video → no Watch mode; just the graded highway + staff.
-  if (!videoUrl) {
+  if (!demoUrl) {
     return (
       <ScoreExerciseGame
         exercise={exercise}
@@ -106,12 +116,11 @@ export function ExerciseView({
   }
 
   if (mode === 'watch') {
-    // The authored WATCH part (sections synced to the demo) when it exists;
-    // otherwise fall back to the graded score over the video.
+    // Only the authored WATCH sections belong in the demonstration.
     const hasSections = !!sections && sections.length > 0
     const watched = hasSections
       ? { score: sections[0].score, tracks: sections[0].tracks, activeTimeMap: sections[0].activeTimeMap, sections }
-      : { score, tracks, activeTimeMap, sections: undefined }
+      : null
 
     // Demo finished → a card over the player offering the next step. The
     // player draws it over its own box (the full-bleed workspace in the split
@@ -125,6 +134,7 @@ export function ExerciseView({
           <motion.div
             key="turn-cta"
             data-testid="turn-cta"
+            data-timbalito-completion={kids ? "" : undefined}
             role="dialog"
             aria-label={t('dashboard.classViewer.exercise.demoFinished')}
             initial={{ opacity: 0 }}
@@ -134,13 +144,15 @@ export function ExerciseView({
             onClick={dismissCta}
             className="absolute inset-0 z-20 flex items-center justify-center bg-black/55 p-6 backdrop-blur-[2px]"
           >
+            <div className={kids ? theaterStyles.exerciseCompletion : 'contents'}>
+            {kids && <Timbalito celebrating/>}
             <motion.div
               initial={{ scale: 0.96, y: 8 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.98, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-sm rounded-2xl border border-white/10 bg-card/95 p-6 text-center shadow-2xl"
+              className={kids ? theaterStyles.exerciseBubble : "relative w-full max-w-sm rounded-2xl border border-white/10 bg-card/95 p-6 text-center shadow-2xl"}
             >
               <button
                 type="button"
@@ -150,7 +162,7 @@ export function ExerciseView({
               >
                 <X className="h-4 w-4" />
               </button>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">PlaySense</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">{kids ? "Timbalito" : "PlaySense"}</p>
               <h3 className="mt-2 font-heading text-xl font-bold tracking-tight text-foreground">
                 {t('dashboard.classViewer.exercise.demoFinished')}
               </h3>
@@ -176,16 +188,17 @@ export function ExerciseView({
                 {t('dashboard.classViewer.exercise.watchAgain')}
               </button>
             </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
     )
 
     return (
-      <div className="space-y-4">
-        <PlaysenseStudioPlayer
+      <div className="space-y-4" data-exercise-watch>
+        {watched ? <PlaysenseStudioPlayer
           classItemId={classItemId}
-          videoUrl={videoUrl}
+          videoUrl={demoUrl}
           score={watched.score}
           tracks={watched.tracks}
           activeTimeMap={watched.activeTimeMap}
@@ -193,7 +206,10 @@ export function ExerciseView({
           layout={playerLayout}
           onEnded={() => setVideoEnded(true)}
           overlay={turnCta}
-        />
+        /> : <TheaterVideoSlot><div className="relative">
+          <LessonVideoPlayer audioSourceItemId={classItemId} key={watchReplay} src={demoUrl} onEnded={() => setVideoEnded(true)} />
+          {turnCta({restart: () => setWatchReplay(n => n + 1)} as PlayerOverlayContext)}
+        </div></TheaterVideoSlot>}
 
         <LessonAction>
           <ActionMessage icon={<Video className="h-5 w-5" />}

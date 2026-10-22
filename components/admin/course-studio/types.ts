@@ -18,6 +18,7 @@ export interface CourseStudioCourse {
   musical_style_id: string | null
   teacher_id: string | null
   is_published: boolean
+  is_local_draft?: boolean
   thumbnail_url: string | null
   instrument: string | null
   is_fundamentals: boolean

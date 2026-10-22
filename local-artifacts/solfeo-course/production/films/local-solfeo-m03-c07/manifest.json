@@ -1,0 +1,788 @@
+{
+  "classId": "local-solfeo-m03-c07",
+  "duration": 203.643083,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Segundas mayores y menores",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 25.573417,
+      "kind": "explanation",
+      "title": "Segundas mayores y menores",
+      "sourceTopic": "intervalos-0",
+      "soundEvents": []
+    },
+    {
+      "start": 25.573417,
+      "end": 37.573417,
+      "kind": "notation",
+      "title": "Segundas mayores y menores",
+      "sourceTopic": "intervalos-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "interval-walks",
+        "height": 246,
+        "cards": [
+          {
+            "title": "Segundas · menor · 1 semitono",
+            "path": [
+              "C4",
+              "Db4"
+            ],
+            "semitones": 1
+          },
+          {
+            "title": "Segundas · mayor · 2 semitonos",
+            "path": [
+              "C4",
+              "C#4",
+              "D4"
+            ],
+            "semitones": 2
+          }
+        ],
+        "rowHeight": 123,
+        "_sourcePage": "intervalos-0",
+        "sourcePageId": "flow-cont-47"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "Db4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "C4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "D4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 37.573417,
+      "end": 52.573417,
+      "kind": "notation",
+      "title": "Preparación, intervalo ascendente y regreso",
+      "sourceTopic": "intervalos-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Preparación, intervalo ascendente y regreso",
+            "events": [
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "D4",
+                "dur": 1
+              },
+              {
+                "pitch": "E4",
+                "dur": 1
+              },
+              {
+                "pitch": "D4",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 97,
+        "_sourcePage": "intervalos-0",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "flow-cont-47"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 52.573417,
+      "end": 67.573417,
+      "kind": "explanation",
+      "title": "Segundas mayores y menores",
+      "sourceTopic": "intervalos-0",
+      "soundEvents": []
+    },
+    {
+      "start": 67.573417,
+      "end": 82.573417,
+      "kind": "explanation",
+      "title": "Segundas mayores y menores",
+      "sourceTopic": "segundas-control-0",
+      "soundEvents": []
+    },
+    {
+      "start": 82.573417,
+      "end": 94.573417,
+      "kind": "notation",
+      "title": "Segundas mayores: dos semitonos · ejemplo 1",
+      "sourceTopic": "segundas-control-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Segundas mayores: dos semitonos · ejemplo 1",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "segundas-control-0",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-52"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 94.573417,
+      "end": 106.573417,
+      "kind": "notation",
+      "title": "Segundas mayores: dos semitonos · ejemplo 2",
+      "sourceTopic": "segundas-control-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Segundas mayores: dos semitonos · ejemplo 2",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "segundas-control-0",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-52"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 106.573417,
+      "end": 118.573417,
+      "kind": "notation",
+      "title": "Segundas mayores: dos semitonos · ejemplo 3",
+      "sourceTopic": "segundas-control-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Segundas mayores: dos semitonos · ejemplo 3",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "Bb4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "C5",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "C5",
+                  "dur": 2
+                },
+                {
+                  "pitch": "Bb4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "segundas-control-0",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-52"
+      },
+      "soundEvents": [
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 118.573417,
+      "end": 132.597584,
+      "kind": "explanation",
+      "title": "Segundas mayores y menores",
+      "sourceTopic": "segundas-control-0",
+      "soundEvents": []
+    },
+    {
+      "start": 132.597584,
+      "end": 147.597584,
+      "kind": "explanation",
+      "title": "Segundas mayores y menores",
+      "sourceTopic": "segundas-control-1",
+      "soundEvents": []
+    },
+    {
+      "start": 147.597584,
+      "end": 159.597584,
+      "kind": "notation",
+      "title": "Segundas menores: un semitono · ejemplo 1",
+      "sourceTopic": "segundas-control-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Segundas menores: un semitono · ejemplo 1",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "segundas-control-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-52"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 159.597584,
+      "end": 171.597584,
+      "kind": "notation",
+      "title": "Segundas menores: un semitono · ejemplo 2",
+      "sourceTopic": "segundas-control-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Segundas menores: un semitono · ejemplo 2",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "A4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "Bb4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "Bb4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "segundas-control-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-52"
+      },
+      "soundEvents": [
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "Bb4",
+          "soundPitch": "Bb4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 171.597584,
+      "end": 183.597584,
+      "kind": "notation",
+      "title": "Segundas menores: un semitono · ejemplo 3",
+      "sourceTopic": "segundas-control-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "Segundas menores: un semitono · ejemplo 3",
+            "meter": "4/4",
+            "bars": [
+              [
+                {
+                  "pitch": "F#4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "F#4",
+                  "dur": 2
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "segundas-control-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-52"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 183.597584,
+      "end": 197.62175100000002,
+      "kind": "explanation",
+      "title": "Segundas mayores y menores",
+      "sourceTopic": "segundas-control-1",
+      "soundEvents": []
+    },
+    {
+      "start": 197.62175100000002,
+      "end": 203.62175100000002,
+      "kind": "completion",
+      "title": "¡Un paso más en tu música!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

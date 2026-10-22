@@ -1,0 +1,2207 @@
+{
+  "classId": "local-solfeo-m10-c06",
+  "duration": 210.334093,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Danza de cierre: acentuación cruzada",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 25,
+      "kind": "explanation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-1",
+      "soundEvents": []
+    },
+    {
+      "start": 25,
+      "end": 37,
+      "kind": "notation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "grand-study",
+        "height": 230,
+        "upperRow": {
+          "title": "Compases 1-2",
+          "clef": "G",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "C4",
+                "dur": 8,
+                "dynamic": "p"
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "A4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              }
+            ]
+          ],
+          "alignBeats": true,
+          "beams": [
+            [
+              0,
+              1,
+              2
+            ],
+            [
+              3,
+              4,
+              5
+            ],
+            [
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11
+            ]
+          ]
+        },
+        "lowerRow": {
+          "title": "",
+          "clef": "F",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "C3",
+                "dur": 4,
+                "dynamic": "p"
+              },
+              {
+                "pitch": "E3",
+                "dur": 4
+              },
+              {
+                "pitch": "G3",
+                "dur": 4
+              }
+            ],
+            [
+              {
+                "pitch": "G2",
+                "dur": 4
+              },
+              {
+                "pitch": "B2",
+                "dur": 4
+              },
+              {
+                "pitch": "D3",
+                "dur": 4
+              }
+            ]
+          ],
+          "alignBeats": true
+        },
+        "_sourcePage": "danza-conjunto-1",
+        "sourcePageId": "flow-cont-174"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 12,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 13,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 14,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.875,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 15,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.1875,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.5,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 16,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.8125,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.125,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 10,
+          "bar": 1
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.075,
+          "visualIndex": 17,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.4375,
+          "duration": 0.28750000000000003,
+          "gain": 0.075,
+          "visualIndex": 11,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 37,
+      "end": 49,
+      "kind": "notation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "grand-study",
+        "height": 230,
+        "upperRow": {
+          "title": "Compases 3-4",
+          "clef": "G",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "C4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "F4",
+                "dur": 8
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 4,
+                "dot": true
+              },
+              {
+                "pitch": "G4",
+                "dur": 4,
+                "dot": true
+              }
+            ]
+          ],
+          "alignBeats": true,
+          "beams": [
+            [
+              0,
+              1,
+              2
+            ],
+            [
+              3,
+              4,
+              5
+            ]
+          ]
+        },
+        "lowerRow": {
+          "title": "",
+          "clef": "F",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "C3",
+                "dur": 4
+              },
+              {
+                "pitch": "E3",
+                "dur": 4
+              },
+              {
+                "pitch": "G3",
+                "dur": 4
+              }
+            ],
+            [
+              {
+                "pitch": "G2",
+                "dur": 4
+              },
+              {
+                "pitch": "D3",
+                "dur": 4
+              },
+              {
+                "pitch": "B2",
+                "dur": 4
+              }
+            ]
+          ],
+          "alignBeats": true
+        },
+        "_sourcePage": "danza-conjunto-1",
+        "sourcePageId": "flow-cont-174"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.875,
+          "duration": 0.8625,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 1
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.8125,
+          "duration": 0.8625,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 49,
+      "end": 60.578188,
+      "kind": "explanation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-1",
+      "soundEvents": []
+    },
+    {
+      "start": 60.578188,
+      "end": 72.911521,
+      "kind": "explanation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-2",
+      "soundEvents": []
+    },
+    {
+      "start": 72.911521,
+      "end": 84.911521,
+      "kind": "notation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "grand-study",
+        "height": 230,
+        "upperRow": {
+          "title": "Compases 5-6",
+          "clef": "G",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "G4",
+                "dur": 8,
+                "dynamic": "p"
+              },
+              {
+                "pitch": "A4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              }
+            ],
+            [
+              {
+                "rest": true,
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 4
+              },
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8,
+                "dynamic": "mf"
+              }
+            ]
+          ],
+          "alignBeats": true,
+          "beams": [
+            [
+              0,
+              1,
+              2
+            ],
+            [
+              3,
+              4,
+              5
+            ],
+            [
+              9,
+              10
+            ]
+          ],
+          "hairpin": "cresc",
+          "hairpinFrom": 0,
+          "hairpinTo": 10
+        },
+        "lowerRow": {
+          "title": "",
+          "clef": "F",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "F2",
+                "dur": 4
+              },
+              {
+                "pitch": "A2",
+                "dur": 4
+              },
+              {
+                "pitch": "C3",
+                "dur": 4
+              }
+            ],
+            [
+              {
+                "pitch": "C3",
+                "dur": 4
+              },
+              {
+                "pitch": "E3",
+                "dur": 4
+              },
+              {
+                "pitch": "G3",
+                "dur": 4
+              }
+            ]
+          ],
+          "alignBeats": true
+        },
+        "_sourcePage": "danza-conjunto-2",
+        "sourcePageId": "flow-cont-175"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.07,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F2",
+          "soundPitch": "F2",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.09000000000000001,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.11000000000000001,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.13,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.15000000000000002,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.1875,
+          "duration": 0.28750000000000003,
+          "gain": 0.21,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.23000000000000004,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 4.125,
+          "duration": 0.28750000000000003,
+          "gain": 0.25,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.4375,
+          "duration": 0.28750000000000003,
+          "gain": 0.27,
+          "visualIndex": 9,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 84.911521,
+      "end": 96.911521,
+      "kind": "notation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "grand-study",
+        "height": 230,
+        "upperRow": {
+          "title": "Compases 7-8",
+          "clef": "G",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              },
+              {
+                "pitch": "C4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              }
+            ],
+            [
+              {
+                "pitch": "G4",
+                "dur": 4,
+                "dot": true
+              },
+              {
+                "pitch": "G4",
+                "dur": 4,
+                "dot": true
+              }
+            ]
+          ],
+          "alignBeats": true,
+          "beams": [
+            [
+              0,
+              1,
+              2
+            ],
+            [
+              3,
+              4,
+              5
+            ]
+          ]
+        },
+        "lowerRow": {
+          "title": "",
+          "clef": "F",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "G2",
+                "dur": 4
+              },
+              {
+                "pitch": "B2",
+                "dur": 4
+              },
+              {
+                "pitch": "D3",
+                "dur": 4
+              }
+            ],
+            [
+              {
+                "pitch": "G2",
+                "dur": 4
+              },
+              {
+                "pitch": "D3",
+                "dur": 4
+              },
+              {
+                "pitch": "G2",
+                "dur": 4
+              }
+            ]
+          ],
+          "alignBeats": true
+        },
+        "_sourcePage": "danza-conjunto-2",
+        "sourcePageId": "flow-cont-175"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.875,
+          "duration": 0.8625,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 1
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.8125,
+          "duration": 0.8625,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 96.911521,
+      "end": 108.48970899999999,
+      "kind": "explanation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-2",
+      "soundEvents": []
+    },
+    {
+      "start": 108.48970899999999,
+      "end": 120.82304199999999,
+      "kind": "explanation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-3",
+      "soundEvents": []
+    },
+    {
+      "start": 120.82304199999999,
+      "end": 132.823042,
+      "kind": "notation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "grand-study",
+        "height": 230,
+        "upperRow": {
+          "title": "Compases 9-10",
+          "clef": "G",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "C4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "A4",
+                "dur": 8
+              },
+              {
+                "pitch": "B4",
+                "dur": 8
+              },
+              {
+                "pitch": "A4",
+                "dur": 8
+              }
+            ],
+            [
+              {
+                "pitch": "C5",
+                "dur": 8
+              },
+              {
+                "pitch": "B4",
+                "dur": 8
+              },
+              {
+                "pitch": "A4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              }
+            ]
+          ],
+          "alignBeats": true,
+          "beams": [
+            [
+              0,
+              1,
+              2
+            ],
+            [
+              3,
+              4,
+              5
+            ],
+            [
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11
+            ]
+          ]
+        },
+        "lowerRow": {
+          "title": "",
+          "clef": "F",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "C3",
+                "dur": 4
+              },
+              {
+                "pitch": "E3",
+                "dur": 4
+              },
+              {
+                "pitch": "G3",
+                "dur": 4
+              }
+            ],
+            [
+              {
+                "pitch": "F2",
+                "dur": 4
+              },
+              {
+                "pitch": "A2",
+                "dur": 4
+              },
+              {
+                "pitch": "C3",
+                "dur": 4
+              }
+            ]
+          ],
+          "alignBeats": true
+        },
+        "_sourcePage": "danza-conjunto-3",
+        "sourcePageId": "flow-cont-176"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E3",
+          "soundPitch": "E3",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 2.875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "F2",
+          "soundPitch": "F2",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 3.1875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 3.5,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 16,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.8125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 4.125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 1
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.4375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 132.823042,
+      "end": 144.823042,
+      "kind": "notation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "grand-study",
+        "height": 230,
+        "upperRow": {
+          "title": "Compases 11-12",
+          "clef": "G",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              }
+            ],
+            [
+              {
+                "pitch": "E4",
+                "dur": 4,
+                "dot": true
+              },
+              {
+                "pitch": "G4",
+                "dur": 4,
+                "dot": true
+              }
+            ]
+          ],
+          "alignBeats": true,
+          "beams": [
+            [
+              0,
+              1,
+              2
+            ],
+            [
+              3,
+              4,
+              5
+            ]
+          ]
+        },
+        "lowerRow": {
+          "title": "",
+          "clef": "F",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "D3",
+                "dur": 4
+              },
+              {
+                "pitch": "F3",
+                "dur": 4
+              },
+              {
+                "pitch": "A3",
+                "dur": 4
+              }
+            ],
+            [
+              {
+                "pitch": "G2",
+                "dur": 4
+              },
+              {
+                "pitch": "B2",
+                "dur": 4
+              },
+              {
+                "pitch": "D3",
+                "dur": 4
+              }
+            ]
+          ],
+          "alignBeats": true
+        },
+        "_sourcePage": "danza-conjunto-3",
+        "sourcePageId": "flow-cont-176"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.875,
+          "duration": 0.8625,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 1
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.8125,
+          "duration": 0.8625,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 144.823042,
+      "end": 156.40123,
+      "kind": "explanation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-3",
+      "soundEvents": []
+    },
+    {
+      "start": 156.40123,
+      "end": 168.734563,
+      "kind": "explanation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-4",
+      "soundEvents": []
+    },
+    {
+      "start": 168.734563,
+      "end": 180.734563,
+      "kind": "notation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "grand-study",
+        "height": 230,
+        "upperRow": {
+          "title": "Compases 13-14",
+          "clef": "G",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              },
+              {
+                "pitch": "C4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              }
+            ],
+            [
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "F4",
+                "dur": 8
+              },
+              {
+                "pitch": "E4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              },
+              {
+                "pitch": "C4",
+                "dur": 8
+              }
+            ]
+          ],
+          "alignBeats": true,
+          "beams": [
+            [
+              0,
+              1,
+              2
+            ],
+            [
+              3,
+              4,
+              5
+            ],
+            [
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11
+            ]
+          ],
+          "spans": [
+            {
+              "text": "rall."
+            }
+          ]
+        },
+        "lowerRow": {
+          "title": "",
+          "clef": "F",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "F2",
+                "dur": 4
+              },
+              {
+                "pitch": "A2",
+                "dur": 4
+              },
+              {
+                "pitch": "C3",
+                "dur": 4
+              }
+            ],
+            [
+              {
+                "pitch": "D3",
+                "dur": 4
+              },
+              {
+                "pitch": "F3",
+                "dur": 4
+              },
+              {
+                "pitch": "A3",
+                "dur": 4
+              }
+            ]
+          ],
+          "alignBeats": true
+        },
+        "_sourcePage": "danza-conjunto-4",
+        "sourcePageId": "flow-cont-177"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F2",
+          "soundPitch": "F2",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.3125,
+          "duration": 0.292824074074074,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "A2",
+          "soundPitch": "A2",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.630787037037037,
+          "duration": 0.29834905660377364,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1.9550794898672257,
+          "duration": 0.3040865384615384,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.2856083360210717,
+          "duration": 0.3100490196078431,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.6226181399426403,
+          "duration": 0.31625000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.9663681399426403,
+          "duration": 0.32270408163265285,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.317133446065089,
+          "duration": 0.3294270833333332,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "F3",
+          "soundPitch": "F3",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 16,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.6752063627317555,
+          "duration": 0.3364361702127657,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.040897852093457,
+          "duration": 0.3437500000000001,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.4145391564412835,
+          "duration": 0.3513888888888891,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.796483600885728,
+          "duration": 0.359375,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 180.734563,
+      "end": 192.734563,
+      "kind": "notation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "grand-study",
+        "height": 230,
+        "upperRow": {
+          "title": "Compases 15-16",
+          "clef": "G",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "B4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              },
+              {
+                "pitch": "B4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              },
+              {
+                "pitch": "B4",
+                "dur": 8
+              },
+              {
+                "pitch": "D4",
+                "dur": 8
+              }
+            ],
+            [
+              {
+                "pitch": "C4",
+                "dur": 4,
+                "dot": true
+              },
+              {
+                "pitch": "C4",
+                "dur": 4,
+                "dot": true,
+                "mark": "fermata"
+              }
+            ]
+          ],
+          "alignBeats": true,
+          "beams": [
+            [
+              0,
+              1,
+              2
+            ],
+            [
+              3,
+              4,
+              5
+            ]
+          ],
+          "barStyles": {
+            "1": "final"
+          }
+        },
+        "lowerRow": {
+          "title": "",
+          "clef": "F",
+          "meter": "6/8",
+          "bars": [
+            [
+              {
+                "pitch": "G2",
+                "dur": 4
+              },
+              {
+                "pitch": "B2",
+                "dur": 4
+              },
+              {
+                "pitch": "D3",
+                "dur": 4
+              }
+            ],
+            [
+              {
+                "pitch": "C3",
+                "dur": 2,
+                "dot": true,
+                "mark": "fermata"
+              }
+            ]
+          ],
+          "alignBeats": true,
+          "barStyles": {
+            "1": "final"
+          }
+        },
+        "_sourcePage": "danza-conjunto-4",
+        "sourcePageId": "flow-cont-177"
+      },
+      "soundEvents": [
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G2",
+          "soundPitch": "G2",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "B2",
+          "soundPitch": "B2",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "D3",
+          "soundPitch": "D3",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.875,
+          "duration": 0.8625,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "C3",
+          "soundPitch": "C3",
+          "start": 2.875,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 3.8125,
+          "duration": 1.4375,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 192.734563,
+      "end": 204.31275100000002,
+      "kind": "explanation",
+      "title": "Danza de cierre: acentuación cruzada",
+      "sourceTopic": "danza-conjunto-4",
+      "soundEvents": []
+    },
+    {
+      "start": 204.31275100000002,
+      "end": 210.31275100000002,
+      "kind": "completion",
+      "title": "¡Bien hecho!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

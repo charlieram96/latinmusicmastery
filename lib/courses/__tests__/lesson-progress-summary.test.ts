@@ -10,7 +10,7 @@ describe('summarizeLessonProgress', () => {
   it('is in progress before anything finishes, with the next part as destination', () => {
     const s = summarizeLessonProgress(base, {})
     expect(s).toMatchObject({ label: 'inProgress', done: false, lessonDone: false, next: 'part', hasNextPart: true,
-      nextHref: '/dashboard/course/c/class/k?item=1', prevHref: null, completedCount: 0 })
+      nextHref: '/dashboard/course/c/class/k?itemId=b', prevHref: null, completedCount: 0 })
     expect(s.detail).toEqual({ key: 'partsCompleted', params: { count: 0, total: 2 } })
   })
 
@@ -35,7 +35,7 @@ describe('summarizeLessonProgress', () => {
   it('goes to the next lesson from the last part, and says the lesson is complete', () => {
     const s = summarizeLessonProgress({ ...base, currentIndex: 1, activeItemId: 'b' }, { completedItemIds: ['a', 'b'] })
     expect(s).toMatchObject({ label: 'lessonComplete', lessonDone: true, next: 'lesson', hasNextPart: false,
-      nextHref: '/dashboard/course/c/class/k2', prevHref: '/dashboard/course/c/class/k?item=0' })
+      nextHref: '/dashboard/course/c/class/k2', prevHref: '/dashboard/course/c/class/k?itemId=a' })
   })
 
   it('goes back to the course after the last lesson', () => {

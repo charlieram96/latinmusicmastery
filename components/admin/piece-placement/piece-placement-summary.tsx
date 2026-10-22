@@ -1,4 +1,5 @@
 'use client'
+import { timbalSoundKind } from '@/lib/quiz/timbal-sounds'
 
 import { AdminText } from '@/components/admin/admin-text'
 
@@ -25,7 +26,7 @@ export function PiecePlacementSummary(props: BuilderProps) {
       <Label><AdminText text={"Stage &amp; pieces"} /></Label>
       <div className="grid grid-cols-[120px_1fr] items-center gap-3.5 rounded-xl border border-border bg-raised p-3">
         <div className="relative overflow-hidden rounded-lg border border-border" style={{ aspectRatio: aspect }}>
-          <CompositionBackground background={background} />
+          <CompositionBackground background={background} musicStage={pieces.some(piece => timbalSoundKind(piece.label ?? '') !== null)} />
           {pieces.map((p) => {
             const c = centreOf(p.area)
             return p.imageUrl ? (

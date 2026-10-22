@@ -44,11 +44,12 @@ function durationOnlyXml(e: NoteBase): string {
 
 /** type/dot/time-modification, in schema order — these follow tie/instrument/voice inside <note>. */
 function typeDotTimeModXml(e: NoteBase): string {
-  const base = e.triplet ? e.durationQN * 1.5 : e.durationQN;
-  const code = vexflowDurationCode(base, e.dotted);
+  const dots = e.dots ?? (e.dotted ? 1 : 0);
+  const tuplet = e.tuplet ?? (e.triplet ? { n: 3, m: 2 } : null);
+  const code = vexflowDurationCode(e.durationQN, dots, tuplet ? tuplet.m / tuplet.n : 1);
   const parts = [`<type>${TYPE_BY_CODE[code] ?? 'quarter'}</type>`];
-  if (e.dotted) parts.push('<dot/>');
-  if (e.triplet) parts.push('<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>');
+  for (let i = 0; i < dots; i++) parts.push('<dot/>');
+  if (tuplet) parts.push(`<time-modification><actual-notes>${tuplet.n}</actual-notes><normal-notes>${tuplet.m}</normal-notes></time-modification>`);
   return parts.join('');
 }
 
@@ -156,7 +157,8 @@ function attributesXml(track: Track, score: ScoreDocument, m: Measure, first: bo
   const key = first ? (m.keyFifths ?? score.initialKeyFifths) : m.keyFifths;
   if (key !== undefined) items.push(`<key><fifths>${key}</fifths></key>`);
   const ts = first ? (m.timeSignature ?? score.initialTimeSignature) : m.timeSignature;
-  if (ts) items.push(`<time><beats>${ts[0]}</beats><beat-type>${ts[1]}</beat-type></time>`);
+  if (m.senzaMisura) items.push("<time><senza-misura/></time>");
+  else if (ts) items.push(`<time><beats>${ts[0]}</beats><beat-type>${ts[1]}</beat-type></time>`);
   if (first) items.push(clefXml(track), tuningXml(track));
   return items.length ? `<attributes>${items.join('')}</attributes>` : '';
 }
@@ -190,20 +192,26 @@ function partXml(score: ScoreDocument, track: Track, partId: string, instrumentI
   const body = measures.map((entry, i) => {
     const m = entry.measure;
     if (m.timeSignature) timeSignature = m.timeSignature;
-    const parts: string[] = [`<measure number="${i + 1}">`];
-    if (entry.repeatStart) parts.push('<barline location="left"><bar-style>heavy-light</bar-style><repeat direction="forward"/></barline>');
+    const parts: string[] = [`<measure number="${i + 1}"${m.durationQN !== undefined ? ' implicit="yes"' : ''}>`];
+    if (entry.repeatStart || m.repeatStart || m.volta) {
+      parts.push(`<barline location="left">${entry.repeatStart || m.repeatStart ? '<bar-style>heavy-light</bar-style>' : ''}${m.volta ? `<ending number="${m.volta.replace('.', '')}" type="start"/>` : ''}${entry.repeatStart || m.repeatStart ? '<repeat direction="forward"/>' : ''}</barline>`);
+    }
     parts.push(attributesXml(track, score, m, i === 0));
     if (i === 0) parts.push(tempoXml(score.initialTempo));
     else if (m.tempoChange !== undefined) parts.push(tempoXml(m.tempoChange));
     const [v1, ...rest] = m.voices;
     if (v1) parts.push(voiceXml(track, v1, stateFor(v1.number), instrumentIds));
     for (const v of rest) {
-      parts.push(`<backup><duration>${Math.round(measureLengthInQN(timeSignature) * DIVISIONS)}</duration></backup>`);
+      parts.push(`<backup><duration>${Math.round(measureLengthInQN(timeSignature, m) * DIVISIONS)}</duration></backup>`);
       parts.push(voiceXml(track, v, stateFor(v.number), instrumentIds));
     }
     const last = i === measures.length - 1;
-    if (entry.repeatEnd) parts.push(`<barline location="right"><bar-style>light-heavy</bar-style><repeat direction="backward" times="${entry.repeatEnd}"/></barline>`);
-    else if (m.endBarline === 'final' || (last && m.endBarline !== 'single')) parts.push('<barline location="right"><bar-style>light-heavy</bar-style></barline>');
+    const repeatEnd = entry.repeatEnd ?? (m.repeatEnd ? 2 : undefined);
+    const style = repeatEnd || m.endBarline === 'final' || (last && m.endBarline === undefined)
+      ? 'light-heavy' : m.endBarline === 'double' ? 'light-light' : 'regular';
+    if (repeatEnd || m.endBarline || last || m.volta) {
+      parts.push(`<barline location="right"><bar-style>${style}</bar-style>${m.volta ? `<ending number="${m.volta.replace('.', '')}" type="stop"/>` : ''}${repeatEnd ? `<repeat direction="backward" times="${repeatEnd}"/>` : ''}</barline>`);
+    }
     parts.push('</measure>');
     return parts.join('');
   }).join('');

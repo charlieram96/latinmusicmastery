@@ -72,3 +72,22 @@ it('applies final, double and single barlines to the selected measure with undo'
   expect(editorReducer(after,{type:'undo'}).score).toEqual(before.score);
  }
 });
+
+it('places measure symbols only on the chosen staff, with chronological undo and redo',()=>{
+ for(const [symbol,props] of [
+  ['unpitchedPercussionClef1',{clef:'percussion'}], ['Tenor clef',{clef:'tenor'}],
+  ['6/8',{timeSignature:[6,8]}], ['repeatLeft',{repeatStart:true}],
+  ['repeatRight',{repeatEnd:true}], ['First ending',{volta:'1.'}], ['Second ending',{volta:'2.'}],
+ ] as const){
+  const before=seed();
+  const plan=paletteActions(symbol,before.score,[],[{trackIndex:1,measureIndex:0}]);
+  expect(plan.error).toBeUndefined();
+  const after=editorReducer(before,{type:'apply-palette-actions',actions:plan.actions});
+  if ('timeSignature' in props) expect(after.score.initialTimeSignature).toEqual(props.timeSignature);
+  else expect(after.score.tracks[1].measures[0]).toMatchObject(props);
+  expect(after.score.tracks[0]).toEqual(before.score.tracks[0]);
+  const undone=editorReducer(after,{type:'undo'});
+  expect(undone.score).toEqual(before.score);
+  expect(editorReducer(undone,{type:'redo'}).score).toEqual(after.score);
+ }
+});

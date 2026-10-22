@@ -59,3 +59,16 @@ describe('useMetronome count-in', () => {
     act(() => { result.current.stopMetronome() })
   })
 })
+
+it('does not schedule a new downbeat at the end while grading finishes', () => {
+  vi.useFakeTimers()
+  const { result } = renderHook(() => useMetronome({ bpm: 120, timeSignature: [4, 4], countInBeats: 0, silent: false, durationSeconds: 2 }))
+  const { ctx, oscillators } = fakeAudioContext()
+  let start = 0
+  act(() => { start = result.current.startMetronome(ctx) })
+  ;(ctx as unknown as { currentTime: number }).currentTime = start + 2.35
+  act(() => { vi.advanceTimersByTime(100) })
+  expect(oscillators).toHaveLength(4)
+  expect(oscillators.every(o => o.start.mock.calls[0][0] < start + 2)).toBe(true)
+  act(() => { result.current.stopMetronome() })
+})

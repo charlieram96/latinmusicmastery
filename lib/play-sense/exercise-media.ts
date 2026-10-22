@@ -47,6 +47,7 @@ export function resolveLegacyAudioUrl(args: {
 }
 
 export interface ExerciseVideoProp {
+  metronomeAnchorSeconds?: number | null
   url: string
   startSeconds: number
   trimOutSeconds: number | null
@@ -66,6 +67,7 @@ export function toExerciseVideo(media: ExerciseMedia | null): ExerciseVideoProp 
     startSeconds: media.videoStartSeconds,
     trimOutSeconds: media.videoTrimOutSeconds,
     timeMap: media.timeMap,
+    metronomeAnchorSeconds: media.metronomeAnchorSeconds,
   }
 }
 

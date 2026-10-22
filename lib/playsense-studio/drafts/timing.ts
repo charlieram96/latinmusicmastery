@@ -85,7 +85,8 @@ export function timingToTimeMap(t: StudioTiming): {
   waypoints: StudioWaypoint[];
   nudges: StudioNudge[];
   flex: FlexPoint[];
+  params: Record<string, unknown>;
 } | null {
   if (t.waypoints.length < 2) return null;
-  return { id: 'draft', method: t.method, waypoints: t.waypoints, nudges: readNudges(t.params), flex: readFlex(t.params) };
+  return { id: 'draft', params: t.params, method: t.method, waypoints: t.waypoints, nudges: readNudges(t.params), flex: readFlex(t.params) };
 }

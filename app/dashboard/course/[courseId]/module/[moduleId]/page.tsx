@@ -1,3 +1,5 @@
+import { TIMBAL_WELCOME_MODULE, TIMBAL_BASIC_MODULE } from '@/lib/courses/local-module-presentation'
+import { usesLocalTimbalIntro } from '@/lib/courses/local-timbal-intro'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
@@ -45,6 +47,7 @@ interface SectionRow {
 export default async function ModuleOverviewPage({ params }: PageProps) {
   const { courseId, moduleId } = await params
   const supabase = await createClient()
+  const isLocalWelcome = moduleId === TIMBAL_WELCOME_MODULE && await usesLocalTimbalIntro()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
@@ -73,7 +76,7 @@ export default async function ModuleOverviewPage({ params }: PageProps) {
         teacher:teachers (name, image_url)
       )
     `)
-    .eq('id', moduleId)
+    .eq('id', isLocalWelcome ? TIMBAL_BASIC_MODULE : moduleId)
     .single()
 
   const section = sectionData as unknown as SectionRow | null
@@ -149,6 +152,7 @@ export default async function ModuleOverviewPage({ params }: PageProps) {
         <>
           <ModuleOverviewBody
             courseId={courseId}
+            moduleId={moduleId}
             moduleIndex={moduleIndex}
             description={structureModule.description ?? null}
             hasAccess={hasAccess}

@@ -20,3 +20,17 @@ it('compacts independently, keeps content mounted and remembers the layout',()=>
   act(()=>buttons[0].click());expect(buttons[0].getAttribute('aria-expanded')).toBe('true');
  }finally{act(()=>root.unmount());localStorage.clear();}
 });
+it('does not hide a new score because another exercise or sync view was compacted',()=>{
+ Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});localStorage.clear();
+ localStorage.setItem('lmm-compact-score','true');
+ const host=document.createElement('div');const root=createRoot(host);
+ const render=(scope:string)=>act(()=>root.render(<CompactSection name="Score" storageId="score" storageScope={scope} icon={Music}>notes</CompactSection>));
+ const expanded=()=>host.querySelector('button')!.getAttribute('aria-expanded');
+ try{
+  render('exercise-a:sync');expect(expanded()).toBe('true');
+  act(()=>host.querySelector('button')!.click());expect(expanded()).toBe('false');
+  render('exercise-b:score');expect(expanded()).toBe('true');
+  render('exercise-a:score');expect(expanded()).toBe('true');
+  render('exercise-a:sync');expect(expanded()).toBe('false');
+ }finally{act(()=>root.unmount());localStorage.clear();}
+});

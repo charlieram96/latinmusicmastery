@@ -20,6 +20,13 @@ vi.mock('@/lib/playsense-studio/score-to-vexflow', async (importOriginal) => {
 import { IntegratedEditor, type IntegratedEditorMeasureTiming } from '../integrated-editor';
 
 beforeAll(() => {
+  // jsdom has no fullscreen surface. Its selector engine recursively calls
+  // Element.matches(':fullscreen') when Floating UI checks the top layer.
+  const matches = Element.prototype.matches;
+  vi.spyOn(Element.prototype, 'matches').mockImplementation(function (this: Element, selector: string) {
+    if (selector.includes(':fullscreen')) return false;
+    return matches.call(this, selector);
+  });
   // VexFlow measures text through a canvas; jsdom has none.
   const ctx = { measureText: (s: string) => ({ width: String(s).length * 7, actualBoundingBoxAscent: 8, actualBoundingBoxDescent: 2, fontBoundingBoxAscent: 8, fontBoundingBoxDescent: 2 }), font: '' };
   HTMLCanvasElement.prototype.getContext = (() => ctx) as never;
@@ -67,6 +74,67 @@ function render(measureTimings: IntegratedEditorMeasureTiming[]) {
 }
 
 describe('IntegratedEditor strip items', () => {
+  it.each([
+    {pageWorkspace:false,instrument:'staff'}, {pageWorkspace:true,instrument:'staff'},
+    {pageWorkspace:false,instrument:'perc-timbal'}, {pageWorkspace:true,instrument:'perc-timbal'},
+  ])('opens inserted bars for writing and reopens empty bars ($instrument, pages=$pageWorkspace)', ({pageWorkspace,instrument}) => {
+    const initial = {...score, tracks:score.tracks.map(t=>({...t,instrument}))} as ScoreDocument;
+    let current: ScoreDocument = initial;
+    let setPages: React.Dispatch<React.SetStateAction<boolean>>;
+    function Harness() {
+      const [state, dispatch] = useReducer(editorReducer, initial, (score): EditorState => ({ score, past: [], future: [], isDirty: false }));
+      current = state.score;
+      const [pages, updatePages] = React.useState(pageWorkspace);
+      setPages = updatePages;
+      const measureTimings = state.score.tracks[0].measures.map((m, i) => ({ measureNumber: m.number, startVideoTimeSeconds: i * 2, endVideoTimeSeconds: i * 2 + 2 }));
+      return <IntegratedEditor pageWorkspace={pages} score={state.score} dispatch={dispatch} measureTimings={measureTimings} pixelsPerSecond={100} scrollLeftPx={0} viewportWidth={800} onRequestZoom={noop}/>;
+    }
+    act(() => root.render(<Harness/>));
+    const click = (text: string) => act(() => Array.from(host.querySelectorAll('button')).find(b => b.textContent === text)!.click());
+    const key = (key: string) => act(() => window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true })));
+    click('Normal');
+    // Use the common gap controls, also present in the page editor.
+    act(() => host.querySelector<HTMLButtonElement>('[aria-label="Select staff 1, measure 1"]')!.click());
+    // The measure toolbar's before/after commands exercise the actual reducer.
+    const insert = (label: string) => {
+      const button = Array.from(host.querySelectorAll<HTMLButtonElement>('button')).find(b => b.textContent === label || b.getAttribute('aria-label') === label)!;
+      // A real mouse press runs the document's outside-selection handler
+      // before click. Clearing the range here would remove the selectors,
+      // move the button away from the pointer and swallow the click.
+      const range = host.querySelector('[aria-label="From measure"]');
+      act(() => button.dispatchEvent(new MouseEvent('pointerdown', {bubbles:true,button:0})));
+      if (range) expect(host.querySelector('[aria-label="From measure"]')).not.toBeNull();
+      expect(button.isConnected).toBe(true);
+      act(() => button.click());
+    };
+    insert('Add measure before');
+    expect(current.tracks[0].measures).toHaveLength(3);
+    expect(host.querySelector('[data-testid="normal-note-editor"]')).not.toBeNull();
+    const writeNote = (measure: number) => {
+      const bar=host.querySelector<HTMLButtonElement>(`[aria-label="Select staff 1, measure ${measure}"]`)!;
+      const bands=host.querySelectorAll<HTMLElement>(`[data-score-highlight="${bar.dataset.scoreSelection}"]`);
+      const band=bands[bands.length-1];
+      const x=parseFloat(band.style.left)+parseFloat(band.style.width)*.6;
+      const y=parseFloat(band.style.top)+parseFloat(band.style.height)*.5;
+      act(()=>bar.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0,clientX:x,clientY:y})));
+    };
+    writeNote(1); key('0');
+    expect(current.tracks[0].measures[0].voices[0].events.map(e => e.kind)).toEqual(['note', 'rest']);
+    expect(current.tracks[0].measures[1].voices[0].events).toEqual(score.tracks[0].measures[0].voices[0].events);
+    // Inserting again must stay available while editing the new bar.
+    insert('Add measure after');
+    expect(current.tracks[0].measures).toHaveLength(4);
+    click('Done');
+    act(() => setPages(pageWorkspace));
+    const blank = host.querySelector<HTMLButtonElement>('[aria-label="Select staff 1, measure 2"]')!;
+    act(() => blank.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+    expect(host.querySelector('[data-testid="normal-note-editor"]')).not.toBeNull();
+    expect(Array.from(host.querySelectorAll('button')).find(b => b.textContent === 'Pencil')?.getAttribute('aria-pressed')).toBe('true');
+    writeNote(2);
+    expect(current.tracks[0].measures[1].voices[0].events.map(e => e.kind)).toEqual(['note']);
+    expect(current.tracks[0].measures[2].voices[0].events).toEqual(score.tracks[0].measures[0].voices[0].events);
+  });
+
   it('uses horizontal strips for every staff when synchronization explicitly disables pages', () => {
     const grouped: ScoreDocument = { ...score, tracks: [0, 1].map(index => ({
       ...score.tracks[0], index, staffGroup: 'piano', staffNumber: index + 1,
@@ -205,13 +273,13 @@ describe('IntegratedEditor strip items', () => {
     const label=kind==='note'?'Select staff 1, measure 1, voice 1, note 1, pitch 1':'Select staff 1, measure 1';
     act(()=>host.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)!.click());
     const utilities=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Utilities')!;
-    await act(async()=>utilities.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+    await act(async()=>{utilities.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));});
     for(const text of ['Noteheads','Other noteheads']) {
       const item=Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(e=>e.textContent===text)!;
-      await act(async()=>item.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));
+      await act(async()=>{item.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));});
     }
     const plus=Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(e=>e.textContent?.endsWith('Plus'))!;
-    await act(async()=>plus.click());
+    act(()=>plus.click());
     expect(dispatch).toHaveBeenLastCalledWith({type:'set-noteheads',notehead:'plus',refs:[{trackIndex:0,measureIndex:0,voice:0,eventIndex:0,...(kind==='note'?{member:0}:{})}]});
   });
 
@@ -221,9 +289,9 @@ describe('IntegratedEditor strip items', () => {
     act(()=>root.render(<IntegratedEditor score={timbal} dispatch={dispatch} measureTimings={timings(0)} pixelsPerSecond={100} scrollLeftPx={0} viewportWidth={800} onRequestZoom={noop}/>));
     act(()=>host.querySelector<HTMLButtonElement>('[aria-label="Select staff 1, measure 1, voice 1, note 1, pitch 1"]')!.click());
     const utilities=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Utilities')!;
-    await act(async()=>utilities.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+    await act(async()=>{utilities.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));});
     const trigger=Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(e=>e.textContent==='Noteheads')!;
-    await act(async()=>trigger.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));
+    await act(async()=>{trigger.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));});
     const menu=document.querySelector<HTMLElement>('[data-slot="dropdown-menu-sub-content"]')!;
     expect(menu.textContent).toContain('Instrument legend · Timbales');
     // Sixteen original strokes, the Others submenu and restore.
@@ -231,7 +299,7 @@ describe('IntegratedEditor strip items', () => {
     expect(menu.textContent).toContain('Low cross-stick');
     expect(menu.textContent).toContain('Elbow strike');
     const cascara=Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(e=>e.textContent?.includes('Cáscara · high'))!;
-    await act(async()=>cascara.click());
+    act(()=>cascara.click());
     expect(dispatch).toHaveBeenLastCalledWith({type:'set-legend-stroke',strokeId:'cascara',refs:[{trackIndex:0,measureIndex:0,voice:0,eventIndex:0,member:0}]});
   });
 
@@ -282,5 +350,28 @@ describe('IntegratedEditor strip items', () => {
     expect(dock().querySelector('[aria-label="Quarter"]')!.getAttribute('aria-pressed')).toBe('true');
     key('6'); // KEY_VALUE: 6 is Half
     expect(dock().querySelector('[aria-label="Half"]')!.getAttribute('aria-pressed')).toBe('true');
+  });
+});
+
+
+describe('simultaneous section notation', () => {
+  it('keeps the other score engraved at its own time and selectable without editing it', () => {
+    const select = vi.fn();
+    const other = structuredClone(score);
+    const before = JSON.stringify(other);
+    const waypoints = [0, 4, 8].map((qn, i) => ({ musicalPositionQN: qn, videoTimeSeconds: 12 + i * 2, measureNumber: i < 2 ? i + 1 : null, beatInMeasure: i < 2 ? 1 : null }));
+    act(() => root.render(<IntegratedEditor score={score} dispatch={noop} pageWorkspace={false}
+      measureTimings={timings(0)} pixelsPerSecond={100} scrollLeftPx={0} viewportWidth={2000} onRequestZoom={noop}
+      sectionsContext={{ activeSectionId: 'a', onSelectSection: select, sections: [
+        { sectionId:'b', label:'Second', startSeconds:12, endSeconds:16, score:other,
+          timing:{ method:'drag', params:{}, anchor:null, waypoints } }
+      ] }} />));
+    const sibling = host.querySelector<HTMLElement>('[data-section-score="b"]')!;
+    expect(sibling).not.toBeNull();
+    expect(sibling.querySelector('svg')).not.toBeNull();
+    expect(sibling.style.clipPath).toContain('1600px');
+    expect(JSON.stringify(other)).toBe(before);
+    // Both the editable and sibling strips remain mounted together.
+    expect(host.querySelectorAll('.st-sync-selection').length).toBeGreaterThanOrEqual(2);
   });
 });

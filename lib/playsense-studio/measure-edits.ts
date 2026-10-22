@@ -50,7 +50,7 @@ export interface MeasureClip {
 export type StructuralAction =
   | { type: 'insert-measure'; trackIndex: number; index: number }
   | { type: 'delete-measures'; trackIndex: number; start: number; count: number }
-  | { type: 'paste-measures'; trackIndex: number; index: number; clip: MeasureClip }
+  | { type: 'paste-measures'; trackIndex: number; index: number; clip: MeasureClip; mode?: 'replace' }
   | { type: 'append-score'; score: ScoreDocument }
   | { type: 'repeat-measures'; trackIndex: number; start: number; end: number; count: number; id: string }
   | { type: 'set-repeat-count'; trackIndex: number; id: string; count: number }
@@ -165,7 +165,6 @@ export function structuralEditProblem(score: ScoreDocument, action: StructuralAc
     case 'insert-measure': {
       if (!Number.isInteger(action.index) || action.index < 0 || action.index > n) return INVALID;
       if (n + 1 > MAX_MEASURES) return `Scores are limited to ${MAX_MEASURES} measures.`;
-      if (insideGroup(track, action.index)) return 'Unlink this repeat before inserting inside it.';
       return null;
     }
     case 'delete-measures': {
@@ -182,6 +181,17 @@ export function structuralEditProblem(score: ScoreDocument, action: StructuralAc
         return isPercussion(action.clip.instrument)
           ? 'Copied from a percussion part; paste into a percussion part.'
           : 'Copied from a pitched part; it cannot go into a percussion part.';
+      }
+      if (action.mode === 'replace') {
+        if (action.index + action.clip.measures.length > n) return 'Select enough existing measures to paste into.';
+        for (let k = 0; k < action.clip.measures.length; k++) {
+          const target = track.measures[action.index + k];
+          if (target.repeat) return 'Unlink this repeat before replacing its measures.';
+          const ts = contextAt(score, track, action.index + k).timeSignature;
+          const capacity = target.durationQN ?? ts[0] * 4 / ts[1];
+          if (action.clip.measures[k].voices.some(v => v.events.reduce((sum, e) => sum + e.durationQN, 0) > capacity + 1e-6)) return 'The copied notes do not fit in the destination measure.';
+        }
+        return null;
       }
       if (n + action.clip.measures.length > MAX_MEASURES) return `Scores are limited to ${MAX_MEASURES} measures.`;
       if (insideGroup(track, action.index)) return 'Unlink this repeat before inserting inside it.';
@@ -208,7 +218,7 @@ export function structuralEditProblem(score: ScoreDocument, action: StructuralAc
     case 'set-repeat-count': {
       const g = repeatGroups(track).find((x) => x.id === action.id);
       if (!g) return 'That repeat no longer exists.';
-      if (!Number.isInteger(action.count) || action.count < 2 || action.count > 8) return 'Choose between 2 and 8 times.';
+      if (!Number.isInteger(action.count) || action.count < 1 || action.count > 8) return 'Choose between 2 and 8 times.';
       if (action.count === g.count) return 'It already plays that many times.';
       if (n + g.length * (action.count - g.count) > MAX_MEASURES) return `Scores are limited to ${MAX_MEASURES} measures.`;
       return null;
@@ -306,6 +316,18 @@ export function applyMeasureEdit(score: ScoreDocument, action: StructuralAction)
       const index = action.type === 'add-measure' ? n : action.index;
       const flowing = contextAt(score, original, index - 1);
       const resume = contextAt(score, original, index);
+      // A local insertion changes just this written occurrence. Retain every
+      // expanded bar, but unlink the affected repeat in the same transaction.
+      const interrupted = repeatGroups(track).find(g => g.start < index && index < g.start + g.length * g.count);
+      if (interrupted) {
+        for (const measure of track.measures) {
+          if (measure.repeat?.id === interrupted.id) delete measure.repeat;
+        }
+      }
+      // Appending extends the ending; it must not leave the former last bar closed.
+      if (index === n && n > 0 && track.measures[n - 1].endBarline === 'final') {
+        delete track.measures[n - 1].endBarline;
+      }
       track.measures.splice(index, 0, emptyMeasure(index + 1));
       if (index < n) stampContext(track, index + 1, contextDiff(flowing, resume));
       renumber(track);
@@ -325,6 +347,16 @@ export function applyMeasureEdit(score: ScoreDocument, action: StructuralAction)
       const { index, clip } = action;
       // A paste is a new copy: fresh ids, with the slurs inside it remapped.
       const { measures: pasted, spans: copied } = reidMeasures(clip.measures.map(stripOverrides), clip.notationSpans);
+      if (action.mode === 'replace') {
+        pasted.forEach((measure, k) => {
+          // Keep the destination's clock, context and closing/repeat signs.
+          // Only its musical contents are replaced, with new event IDs.
+          track.measures[index + k].voices = measure.voices;
+          delete track.measures[index + k].emptyText;
+        });
+        next.spans = [...(pruneSpans(next) ?? []), ...copied];
+        return { ok: true, score: next, splice: { index, removeCount: pasted.length, insertCount: pasted.length } };
+      }
       if (copied.length) next.spans = [...(next.spans ?? []), ...copied];
       const flowing = contextAt(score, original, index - 1);
       const resume = contextAt(score, original, index);
@@ -390,6 +422,9 @@ export function applyMeasureEdit(score: ScoreDocument, action: StructuralAction)
       const keepEnd = g.start + g.length * action.count;
       const removeCount = groupEnd - keepEnd;
       track.measures.splice(keepEnd, removeCount);
+      if (action.count === 1) {
+        for (let i = g.start; i < keepEnd; i++) delete track.measures[i].repeat;
+      }
       if (next.spans) next.spans = pruneSpans(next);
       renumber(track);
       return { ok: true, score: next, splice: { index: keepEnd, removeCount, insertCount: 0 } };

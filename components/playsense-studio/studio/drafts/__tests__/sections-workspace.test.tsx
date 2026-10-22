@@ -6,15 +6,19 @@
 // by use-studio-draft.test.tsx) so this test can drive VideoSectionsWorkspace's
 // onDraftContent handler directly and check it reseeds the reselected section.
 import React, { act } from 'react';
+vi.mock('@/app/actions/continuous-score-project',()=>({getContinuousScoreProject:vi.fn().mockResolvedValue(undefined),startContinuousScoreProject:vi.fn()}));
+vi.mock('@/components/playsense-studio/studio/score-import-dialog', () => ({ ScoreImportDialog: () => null }));
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const stub = vi.hoisted(() => ({
+  lanes: [] as Array<{sectionId:string;label:string}>,
   mounts: [] as Array<{ sectionId: string; title: string }>,
   current: null as null | { sectionId: string; onDraftContent?: (c: { score: { title: string }; timing: unknown }) => void },
 }));
 vi.mock('@/components/playsense-studio/studio/score-section-editor', () => ({
-  ScoreSectionEditor: (props: { sectionId: string; initialScore: { title: string }; onDraftContent?: (c: { score: { title: string }; timing: unknown }) => void }) => {
+  ScoreSectionEditor: (props: { sections?: Array<{sectionId:string;label:string}>; sectionId: string; initialScore: { title: string }; onDraftContent?: (c: { score: { title: string }; timing: unknown }) => void }) => {
+    stub.lanes=props.sections ?? [];
     stub.mounts.push({ sectionId: props.sectionId, title: props.initialScore.title });
     stub.current = { sectionId: props.sectionId, onDraftContent: props.onDraftContent };
     return null;
@@ -71,9 +75,10 @@ afterEach(() => {
 
 function clickRow(startsWith: string) {
   const btn = Array.from(host.querySelectorAll('button')).find(
-    (b) => b.className.includes('min-w-0 flex-1') && b.textContent?.startsWith(startsWith)
+    (b) => b.closest('nav[aria-label="Scored sections"]') && b.textContent?.startsWith(startsWith)
   );
   if (!btn) throw new Error(`row not found: ${startsWith}`);
+  act(() => btn.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
   act(() => btn.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 }
 
@@ -103,14 +108,29 @@ describe('VideoSectionsWorkspace — onDraftContent reseeds a reselected section
     });
 
     // Leave the section (select B — A's stub instance unmounts)...
-    clickRow('B');
+    clickRow('1 · B');
     expect(stub.current?.sectionId).toBe('sec-b');
 
     // ...then come back to A. A fresh stub instance mounts; it must open on
     // the edited content, not the stale live title.
-    clickRow('A');
+    clickRow('2 · A');
     expect(stub.current?.sectionId).toBe('sec-a');
     const aMounts = stub.mounts.filter((m) => m.sectionId === 'sec-a');
     expect(aMounts.at(-1)?.title).toBe('A edited');
   });
+});
+
+it('shows numbered matching titles in continuous score rows and timeline lanes',async()=>{
+ const api=await import('@/app/actions/continuous-score-project');
+ vi.mocked(api.getContinuousScoreProject).mockResolvedValueOnce({version:1,title:'Continuous',classItemId:'ci-1',sectionIds:['sec-a','sec-b'],durationSeconds:10,backupPath:''});
+ const same=[sectionA,sectionB].map(s=>({...s,scoreDocument:{...s.scoreDocument,title:'Left hand',parsedScore:{title:'Left hand'} as never}}));
+ await act(async()=>{root.render(<VideoSectionsWorkspace classItemId="ci-1" title="Lesson" videoUrl={null} videoDurationSeconds={null} initialSections={same}/>);});
+ expect(stub.lanes.map(s=>s.label)).toEqual(['1 · Continuous','2 · Left hand']);
+ const cards=[...host.querySelectorAll('[data-score-section-card]')];
+ expect(cards).toHaveLength(2);
+ expect(cards[0].textContent).toContain('1 · Continuous');
+ expect(cards[1].textContent).toContain('2 · Left hand');
+ const nav=host.querySelector('nav[aria-label="Scored sections"]')!;
+ expect(nav.textContent).toContain('1 · Continuous');
+ expect(nav.textContent).toContain('2 · Left hand');
 });

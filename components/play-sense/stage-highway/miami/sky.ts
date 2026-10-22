@@ -95,7 +95,7 @@ export function createSea(uniforms: SkyUniforms) {
         float gust = smoothstep(.3, .78, psNoise(p * .016 + vec2(psTime * .012, psTime * .004) * psCloudMotion));
         slope *= mix(.35, 1.1, gust);
         // Distant water flattens into a mirror; close water keeps its chop.
-        slope *= 1. / (1. + dist * .018);
+        slope *= 1. / (1. + dist * .009);
         vec3 normal = normalize(vec3(-slope.x, 1., -slope.y));
         vec3 reflected = reflect(view, normal);
         reflected.y = max(reflected.y, .004);
@@ -105,7 +105,10 @@ export function createSea(uniforms: SkyUniforms) {
         vec3 color = mix(deep, psSky(reflected), fresnel);
         float glint = pow(max(dot(reflected, psSunDir), 0.), 160.);
         color += vec3(1.6, .7, .28) * glint * (.6 + .4 * psNoise(p * .9 + psTime * .3 * psCloudMotion)) / (1. + footprint * 3.);
-        color *= mix(.7, 1., smoothstep(10., 70., dist));
+        // Fine, moving wave crests pick up the bay's cool fill between warm reflections.
+        float crest = pow(max(0., sin(dot(p,vec2(.18,1.6)) + psTime * 1.2 * psCloudMotion + psNoise(p*.24)*3.)), 12.);
+        color += vec3(.015,.035,.045) * crest / (1. + footprint * 2.);
+        color *= mix(.78, 1., smoothstep(10., 70., dist));
         // Dissolve the far edge into the horizon haze.
         vec3 horizonDir = normalize(vec3(view.x, .002, view.z));
         color = mix(color, psSkyClear(horizonDir), smoothstep(160., 900., dist));

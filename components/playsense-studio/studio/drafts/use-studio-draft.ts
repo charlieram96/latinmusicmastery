@@ -4,6 +4,7 @@
 // the live score directly. Score changes arrive via useEditor's isDirty; timing
 // changes via setTiming (SyncPanel). Both are saved together as one draft row.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { historyReducer, type HistoryState } from '@/hooks/use-history';
 import { saveStudioDraft } from '@/app/actions/studio-drafts';
 import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -11,10 +12,20 @@ import type { StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { ownerKey, type StudioDraftOwner } from '@/lib/playsense-studio/drafts/types';
 import { useStudioDrafts } from './drafts-context';
 
+type EditSnapshot = {score: ScoreDocument; timing: StudioTiming};
+// Navigation between Studio documents must not silently discard undo. A stale
+// cache is never applied over content changed by another editor/session.
+const documentHistories = new Map<string, HistoryState<EditSnapshot>>();
+
 export const DRAFT_AUTOSAVE_MS = 1000;
 
 export interface StudioDraftApi {
   timing: StudioTiming;
+  checkpoint(): void;
+  undo(): void;
+  redo(): void;
+  canUndo: boolean;
+  canRedo: boolean;
   /** Bumps when timing is replaced wholesale (restore/discard); key SyncPanel on it. */
   timingEpoch: number;
   setTiming(patch: Partial<StudioTiming>): void;
@@ -103,6 +114,7 @@ export function useStudioDraft(opts: {
     timingRef.current = next;
     latest.current.timing = next;
     latest.current.timingDirty = true;
+    onDraftContentRef.current?.({ score: latest.current.score, timing: next });
     setTimingState(next);
     setTimingDirty(true);
   }, []);
@@ -115,6 +127,48 @@ export function useStudioDraft(opts: {
     setTimingDirty(false);
     setTimingEpoch((e) => e + 1);
   }, []);
+
+  const [seedHistory] = useState(() => {
+    const present={score,timing:opts.initialTiming};
+    const saved=documentHistories.get(key);
+    return saved && JSON.stringify(saved.present)===JSON.stringify(present) ? saved : {past:[],present,future:[]};
+  });
+  const historyRef = useRef<HistoryState<EditSnapshot>>(seedHistory);
+  const rememberHistory = useCallback(() => {
+    documentHistories.delete(key);
+    documentHistories.set(key,historyRef.current);
+    if(documentHistories.size>30)documentHistories.delete(documentHistories.keys().next().value!);
+  },[key]);
+  const [historyVersion, setHistoryVersion] = useState(0);
+  const recordSnapshot = useCallback(() => {
+    const next = historyReducer(historyRef.current, {type:'commit', next:{score:latest.current.score,timing:timingRef.current}});
+    if (next !== historyRef.current) {historyRef.current=next;rememberHistory();setHistoryVersion(v=>v+1);}
+  }, [rememberHistory]);
+  // A React commit is one editing transaction: score and sync changes made by
+  // the same action share a snapshot rather than competing undo stacks.
+  useLayoutEffect(recordSnapshot, [score, timing, recordSnapshot]);
+  const checkpoint=useCallback(()=>{preFlushFns.current.forEach(fn=>fn());recordSnapshot();},[recordSnapshot]);
+  const travel = useCallback((type:'undo'|'redo') => {
+    // Finish a pending drag before stepping back, otherwise it can arrive late
+    // and overwrite the restored timing or appear to undo an unrelated note.
+    preFlushFns.current.forEach(fn=>fn());
+    recordSnapshot();
+    const next=historyReducer(historyRef.current,{type});
+    if(next===historyRef.current)return;
+    historyRef.current=next;
+    rememberHistory();
+    generationRef.current+=1;
+    latest.current.score=next.present.score;
+    replaceScore(next.present.score);
+    replaceTiming(next.present.timing);
+    latest.current.timingDirty=true;
+    setTimingDirty(true);
+    setSaveState('idle');setError(null);
+    setHistoryVersion(v=>v+1);
+  },[recordSnapshot,replaceScore,replaceTiming,rememberHistory]);
+  const undo=useCallback(()=>travel('undo'),[travel]);
+  const redo=useCallback(()=>travel('redo'),[travel]);
+  void historyVersion;
 
   const { setStatus, setPending, register } = ctx;
 
@@ -142,7 +196,9 @@ export function useStudioDraft(opts: {
       return { error: res.error };
     }
     setStatus(memoOwner, { unpublished: true, label: snap.label });
-    onDraftContentRef.current?.({ score: snap.score, timing: snap.timing });
+    if (latest.current.score === snap.score && timingRef.current === snap.timing) {
+      onDraftContentRef.current?.({ score: snap.score, timing: snap.timing });
+    }
     if (saveOpts?.silent) return {};
     setSaveState('saved');
     // Only clean what this save covered; later edits keep their dirty flags.
@@ -240,5 +296,5 @@ export function useStudioDraft(opts: {
     setStatus(memoOwner, { label });
   }, [memoOwner, label, setStatus]);
 
-  return { timing, timingEpoch, setTiming, replaceTiming, flush, registerPreFlush, saveState, error, pending };
+  return { timing, timingEpoch, setTiming, replaceTiming, flush, registerPreFlush, saveState, error, pending, checkpoint, undo, redo, canUndo:historyRef.current.past.length>0, canRedo:historyRef.current.future.length>0 };
 }

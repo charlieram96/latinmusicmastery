@@ -3,6 +3,9 @@ import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const mode = vi.hoisted(() => ({ value: 'classic' }))
+vi.mock('@/components/learning-mode/store', () => ({ useLearningMode: () => mode.value }))
+
 vi.mock('@/components/language-provider', () => ({
   useTranslation: () => ({ t: (key: string, params?: Record<string, string | number>) => params ? `${key}(${Object.values(params).join(',')})` : key }),
 }))
@@ -13,6 +16,7 @@ const handlers = () => ({ onStart: vi.fn(), onStop: vi.fn(), onPause: vi.fn(), o
 let root: Root
 let host: HTMLDivElement
 beforeEach(() => {
+  mode.value = 'classic'
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   host = document.createElement('div')
   document.body.appendChild(host)
@@ -96,4 +100,16 @@ it('toggles the metronome directly even when settings are available', () => {
   act(() => byLabel('Metronome').click())
   expect(h.onClickToggle).toHaveBeenCalledTimes(2)
   expect(byLabel('Metronome').getAttribute('aria-pressed')).toBe('false')
+})
+
+it('keeps only the transport Play in kids mode and preserves Finish', () => {
+  mode.value = 'kids'
+  const h = handlers()
+  render({ ...h, state: 'selecting' })
+  expect(host.querySelector('[data-transport-start]')).toBeNull()
+  act(() => byLabel('dashboard.classViewer.lessonMode.transport.play').click())
+  expect(h.onStart).toHaveBeenCalledOnce()
+  render({ ...h, state: 'playing' })
+  act(() => (host.querySelector('[data-finish-take]') as HTMLButtonElement).click())
+  expect(h.onFinish).toHaveBeenCalledOnce()
 })

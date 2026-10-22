@@ -1,5 +1,7 @@
 'use client'
 
+import { KidsQuiz } from './quiz/kids-quiz'
+import { useLearningMode } from '@/components/learning-mode/store'
 import { MotionConfig } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '@/components/language-provider'
@@ -27,8 +29,9 @@ interface QuizRunnerProps {
 }
 
 /** Shell: owns the engine and the finished flag, picks the layout mode, marks completion once. */
-export function QuizRunner({ questions, kind = 'Quiz', settings, nextHref = null, title }: QuizRunnerProps) {
+export function QuizRunner({ classItemId, questions, kind = 'Quiz', settings, nextHref = null, title }: QuizRunnerProps) {
   const { t } = useTranslation()
+  const learningMode = useLearningMode()
   const kindLabel = t(kind === 'Exercise' ? 'dashboard.pages.modules.exercise' : 'dashboard.pages.modules.quiz')
   const ordered = useMemo(() => [...questions].sort((a, b) => a.order_index - b.order_index), [questions])
   const engine = useQuizEngine(ordered)
@@ -57,12 +60,14 @@ export function QuizRunner({ questions, kind = 'Quiz', settings, nextHref = null
   const body = (
     <MotionConfig reducedMotion="user">
       <div data-quiz-root className={cn(styles.root, inLesson && styles.rootLesson)}>
-        {mode === 'sheet' ? (
+        {learningMode === 'kids' ? (
+          <KidsQuiz rewardId={kind==='Quiz'?classItemId:undefined} questions={ordered} engine={engine} finished={finished} onFinish={() => setFinished(true)} onRestart={restart} nextHref={nextHref}/>
+        ) : mode === 'sheet' ? (
           <ExamSheet questions={ordered} engine={engine} kindLabel={kindLabel} title={title} nextHref={nextHref} onSubmit={() => setFinished(true)} onRestart={restart} />
         ) : finished ? (
           <ResultsScreen kind={kindLabel} questions={ordered} answers={engine.state.answers} graded={engine.state.graded} onRestart={restart} nextHref={nextHref} />
         ) : (
-          <FocusStage questions={ordered} engine={engine} kindLabel={kindLabel} title={title} onFinish={() => setFinished(true)} />
+          <FocusStage reviewBeforeResults={kind === 'Quiz'} questions={ordered} engine={engine} kindLabel={kindLabel} title={title} onFinish={() => setFinished(true)} />
         )}
       </div>
     </MotionConfig>

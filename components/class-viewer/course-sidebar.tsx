@@ -58,34 +58,10 @@ export async function CourseSidebar({ courseId, currentClassId, sections, course
           defaultValue={activeSectionId}
         >
           {sections.map((section) => (
-            <AccordionItem key={section.id} value={section.id}>
+            <AccordionItem key={section.id} value={section.id} data-current-module={section.id === activeSectionId ? true : undefined}>
               <AccordionTrigger className="text-sm hover:no-underline">
                 <div className="flex items-center gap-2 text-left">
-                  {/* Progress ring */}
-                  <div className="relative h-6 w-6 flex-shrink-0">
-                    <svg className="h-6 w-6 -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-muted" strokeWidth="3" />
-                      <circle
-                        cx="18"
-                        cy="18"
-                        r="15.5"
-                        fill="none"
-                        className={cn(
-                          section.completedItems === section.totalItems && section.totalItems > 0
-                            ? 'text-green-500'
-                            : 'text-primary'
-                        )}
-                        strokeWidth="3"
-                        strokeDasharray={`${section.totalItems > 0 ? (section.completedItems / section.totalItems) * 100 : 0} 100`}
-                        strokeLinecap="round"
-                        stroke="currentColor"
-                      />
-                    </svg>
-                  </div>
-                  <span className="truncate">{section.title}</span>
-                  <span className="text-xs text-muted-foreground ml-auto flex-shrink-0">
-                    {section.completedItems}/{section.totalItems}
-                  </span>
+                  <span className="lmm-navigation-title min-w-0 flex-1">{section.title}</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
@@ -96,6 +72,8 @@ export async function CourseSidebar({ courseId, currentClassId, sections, course
                     return (
                       <Link
                         key={cls.id}
+                        aria-current={isCurrent ? "page" : undefined}
+                        data-current-location={isCurrent ? "lesson" : undefined}
                         href={`/dashboard/course/${courseId}/class/${cls.id}`}
                         className={cn(
                           'flex items-center gap-2 p-2 rounded-lg text-sm transition-colors',
@@ -110,7 +88,7 @@ export async function CourseSidebar({ courseId, currentClassId, sections, course
                             isCurrent ? 'border-primary' : 'border-muted-foreground/30'
                           )} />
                         )}
-                        <span className="truncate">{cls.title}</span>
+                        <span className="lmm-navigation-title min-w-0 flex-1">{cls.title}</span>
                         <span className="text-xs text-muted-foreground ml-auto">
                           {cls.completedItems}/{cls.totalItems}
                         </span>

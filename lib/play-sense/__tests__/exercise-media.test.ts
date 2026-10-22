@@ -56,6 +56,7 @@ const MEDIA: ExerciseMedia = {
 describe('toExerciseVideo (Studio rework P5, Task 8)', () => {
   it('projects the media into the ScoreExerciseGame video shape', () => {
     expect(toExerciseVideo(MEDIA)).toEqual({
+      metronomeAnchorSeconds: null,
       url: 'https://example.com/jam.mp3',
       startSeconds: 1.5,
       trimOutSeconds: 30,

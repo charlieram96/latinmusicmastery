@@ -10,9 +10,9 @@ describe('hasFinalBarline', () => {
     expect(measures.map((_, i) => hasFinalBarline(measures, i))).toEqual([false, false, true]);
   });
 
-  it('lets the author remove the bar from the last measure', () => {
+  it('keeps a closing double bar even when the last imported measure says single', () => {
     const measures = [measure(1), measure(2, { endBarline: 'single' })];
-    expect(hasFinalBarline(measures, 1)).toBe(false);
+    expect(hasFinalBarline(measures, 1)).toBe(true);
   });
 
   it('lets the author place a final bar on an inner measure', () => {
@@ -25,4 +25,9 @@ describe('hasFinalBarline', () => {
     expect(hasFinalBarline([], 0)).toBe(false);
     expect(hasFinalBarline([measure(1)], 5)).toBe(false);
   });
+});
+
+it('closes an expanded repeat even when its imported ending was double',()=>{
+ const bars=[measure(1),measure(2,{endBarline:'double',repeat:{id:'r',pass:2,count:3,offset:1,length:2}})];
+ expect(hasFinalBarline(bars,1)).toBe(true);
 });

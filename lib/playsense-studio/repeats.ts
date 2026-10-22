@@ -73,7 +73,7 @@ export function repeatProjection(score: ScoreDocument, trackIndex: number) {
   const displayed = [...walkMeasures(compact.tracks[trackIndex], compact)];
   const rows = original.map((row, i) => {
     const target = displayed.find(d => d.measure === track.measures[sourceIndices[i]])!;
-    const qnLength = measureLengthInQN(row.state.timeSignature);
+    const qnLength = measureLengthInQN(row.state.timeSignature, row.measure);
     return {
       originalMs: row.state.cumulativeMs, originalQN: row.state.cumulativeQN,
       compactMs: target.state.cumulativeMs, compactQN: target.state.cumulativeQN,

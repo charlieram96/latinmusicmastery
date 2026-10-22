@@ -1,0 +1,12 @@
+.story{max-width:850px;margin:0 auto;color:var(--garden-ink,#263b58)}
+.picture{max-width:650px;margin:auto;animation:appear .4s ease-out}
+.roof{display:block;text-align:center;font-size:48px;line-height:1}
+.picture svg{width:100%;max-height:260px;overflow:visible}
+.picture text{fill:currentColor;font-size:17px;font-weight:700}
+.narration{display:flex;align-items:center;gap:18px;padding:20px;border:2px solid #9c83bc66;border-radius:28px;background:var(--garden-card,#ffffffbb)}
+.narration h3{font-size:22px;margin:6px 0}.narration p{margin:0;line-height:1.65}.narration small{color:var(--garden-accent,#8053ad);font-weight:700}
+.mascot{flex:0 0 85px;background:none;border:0;cursor:pointer}.mascot svg{width:85px;height:100px}.mascot:disabled{cursor:default}
+.actions{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}.actions button{background:#ff9819;color:#34230e;border:2px solid #ffc067;border-radius:18px;padding:12px 20px;font-weight:700;cursor:pointer}.actions p{width:100%;text-align:center;margin:0}.actions button:focus-visible,.mascot:focus-visible{outline:3px solid #8c65bf;outline-offset:4px}
+@keyframes appear{from{opacity:.5;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.picture{animation:none}}
+@media(max-width:600px){.narration{padding:14px;gap:8px}.mascot{flex-basis:54px}.mascot svg{width:54px;height:70px}.narration h3{font-size:19px}.roof{font-size:36px}}

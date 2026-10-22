@@ -1,5 +1,13 @@
 'use server';
 
+import { publishedContentEnabled } from '@/lib/release/content';
+import {continuousSections,addContinuousMusic,editContinuousMusic} from '@/lib/playsense-studio/drafts/continuous-project-store';
+
+import { usesLocalTimbalIntro, TIMBAL_RITMO_ORIGINAL } from '@/lib/courses/local-timbal-intro';
+import { ritmoSectionOnSource } from '@/lib/playsense-studio/ritmo-source-timing';
+import { usesLocalSolfeo } from '@/lib/courses/local-solfeo-draft';
+import { localStudio, localStudioSections, addLocalSection, findLocalSection, localMediaDefault } from '@/lib/courses/local-solfeo-studio';
+
 // PlaySense Studio server actions — score document CRUD, time map publishing, clip management.
 //
 // Surface lands across milestones:
@@ -170,7 +178,7 @@ export async function getScoreDocumentForClassItem(
   const result = await fetchScorePayload(supabase, item.score_document_id, item.active_time_map_id);
   if (result.data) {
     result.data.scoreDocument.parsedScore = localExerciseTimingReset(
-      result.data.scoreDocument.parsedScore, classItemId, process.env.NODE_ENV === 'development'
+      result.data.scoreDocument.parsedScore, classItemId, process.env.NODE_ENV === 'development' || publishedContentEnabled()
     );
   }
   return result;
@@ -183,6 +191,7 @@ export async function getScoreDocumentForClassItem(
 // ============================================
 
 export interface ClassItemScoreSection extends ClassItemScorePayload {
+  continuousProject?: import('@/lib/playsense-studio/continuous-project').ContinuousScoreProject;
   sectionId: string;
   sectionIndex: number;
   label: string | null;
@@ -210,6 +219,8 @@ export interface ClassItemScoreSection extends ClassItemScorePayload {
 export async function getScoreSectionsForClassItem(
   classItemId: string
 ): Promise<{ data?: ClassItemScoreSection[]; error?: string }> {
+  const continuous=await continuousSections(classItemId);if(continuous)return {data:continuous};
+  if (await usesLocalSolfeo(classItemId)) return localStudioSections(classItemId, false);
   const supabase = await createClient();
 
   const { data: rows, error } = await supabase
@@ -240,7 +251,7 @@ export async function getScoreSectionsForClassItem(
     });
   }
 
-  return { data: out };
+  return { data: classItemId === TIMBAL_RITMO_ORIGINAL && await usesLocalTimbalIntro() ? out.map(ritmoSectionOnSource) : out };
 }
 
 /** Same sections as above, PLUS each one's unpublished draft (studioDraft).
@@ -250,8 +261,11 @@ export async function getScoreSectionsForClassItem(
 export async function getStudioScoreSectionsForClassItem(
   classItemId: string
 ): Promise<{ data?: ClassItemScoreSection[]; error?: string }> {
+  if (await usesLocalSolfeo(classItemId)) return localStudioSections(classItemId);
   const res = await getScoreSectionsForClassItem(classItemId);
   if (res.error || !res.data) return res;
+  // The local source preview uses the remapped published timing, never stale reference-clock drafts.
+  if (classItemId === TIMBAL_RITMO_ORIGINAL && await usesLocalTimbalIntro()) return res;
   const drafts = await getStudioDrafts(res.data.map((s) => ({ kind: 'section' as const, id: s.sectionId })));
   if (drafts.error) return { error: drafts.error };
   for (const s of res.data) s.studioDraft = drafts.data?.[`section:${s.sectionId}`] ?? null;
@@ -1016,9 +1030,11 @@ export async function createBlankSection(input: {
   classItemId: string;
   title?: string;
 }): Promise<{ sectionId?: string; scoreDocumentId?: string; error?: string }> {
+  if (await usesLocalSolfeo(input.classItemId)) return addLocalSection(input.classItemId, buildBlankScore(input.title || 'Nueva sección'));
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
+  const local=await addContinuousMusic(input.classItemId,buildBlankScore(input.title || 'Nueva música'));if(local)return local;
 
   const inserted = await insertScore(supabase, buildBlankScore(input.title || 'New section'), admin.userId);
   if ('error' in inserted) return { error: inserted.error };
@@ -1036,9 +1052,11 @@ export async function createSectionFromImport(input: {
   scoreDocument: ScoreDocument;
   sourceFilename?: string;
 }): Promise<{ sectionId?: string; scoreDocumentId?: string; error?: string }> {
+  if (await usesLocalSolfeo(input.classItemId)) return addLocalSection(input.classItemId, input.scoreDocument);
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
+  const local=await addContinuousMusic(input.classItemId,input.scoreDocument);if(local)return local;
 
   const inserted = await insertScore(supabase, input.scoreDocument, admin.userId);
   if ('error' in inserted) return { error: inserted.error };
@@ -1062,9 +1080,11 @@ export async function replaceSectionScore(input: {
   scoreDocument: ScoreDocument;
   sourceFilename?: string;
 }): Promise<{ scoreDocumentId?: string; error?: string }> {
+  if (await usesLocalSolfeo(input.sectionId)) return localStudio(input.sectionId, store => { const section=findLocalSection(store,input.sectionId); section.score=input.scoreDocument; section.draft=null; section.timing={method:'tempo',params:{},waypoints:[],anchor:null}; return {scoreDocumentId:section.id}; },true);
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
+  if(await editContinuousMusic(input.sectionId,input.scoreDocument))return {scoreDocumentId:input.sectionId};
 
   const { data: section, error: secErr } = await supabase
     .from('class_item_score_sections')
@@ -1106,9 +1126,11 @@ export async function replaceSectionScore(input: {
 export async function deleteSection(
   sectionId: string
 ): Promise<{ success?: true; error?: string }> {
+  if (await usesLocalSolfeo(sectionId)) return localStudio(sectionId, store => { findLocalSection(store,sectionId);store.sections=store.sections.filter(s=>s.id!==sectionId);return {success:true as const}; },true);
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
+  if(await editContinuousMusic(sectionId))return {success:true};
 
   const { data: section, error: secErr } = await supabase
     .from('class_item_score_sections')
@@ -1524,6 +1546,7 @@ export async function getExerciseMedia(
         beatInMeasure: w.beat_in_measure,
       })),
       nudges: readNudges(tm.params),
+      params: (tm.params ?? {}) as Record<string, unknown>,
     };
   }
 
@@ -1853,6 +1876,7 @@ export async function updateClassItemVideoTrim(input: {
   trimOutSeconds: number | null;
   durationSeconds?: number | null;
 }): Promise<{ data?: MediaTrim; error?: string }> {
+  if (await usesLocalSolfeo(input.classItemId)) return localStudio(input.classItemId, store => {const trim=normalizeMediaTrim({trimInSeconds:input.trimInSeconds,trimOutSeconds:input.trimOutSeconds},input.durationSeconds??null);store.media[input.classItemId]={...localMediaDefault,...store.media[input.classItemId],...trim};return {data:trim};},true);
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
@@ -2048,6 +2072,7 @@ export async function setClassItemMetronomeAnchor(input: {
 
 /** Lesson-wide click before the first placed score; independent of section timing. */
 export async function getLessonMetronome(classItemId: string) {
+  if (await usesLocalSolfeo(classItemId)) return localStudio(classItemId,store=>({data:store.media[classItemId]??localMediaDefault}));
   const supabase=await createClient();
   const admin=await requireAdmin(supabase);
   if('error' in admin)return {error:admin.error};
@@ -2055,6 +2080,7 @@ export async function getLessonMetronome(classItemId: string) {
   return error?{error:error.message}:{data:{bpm:data.bpm??120,anchorSeconds:data.metronome_anchor_seconds}};
 }
 export async function saveLessonMetronome(input:{classItemId:string;bpm:number;anchorSeconds:number}) {
+  if (await usesLocalSolfeo(input.classItemId)) {if(!Number.isFinite(input.bpm)||input.bpm<20||input.bpm>400||!Number.isFinite(input.anchorSeconds)||input.anchorSeconds<0)return {error:'Invalid metronome settings'};return localStudio(input.classItemId,store=>{const data={...localMediaDefault,...store.media[input.classItemId],bpm:input.bpm,anchorSeconds:input.anchorSeconds};store.media[input.classItemId]=data;return {data,error:undefined};},true);}
   const supabase=await createClient();
   const admin=await requireAdmin(supabase);
   if('error' in admin)return {error:admin.error};

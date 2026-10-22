@@ -1,0 +1,9 @@
+# Authored documents and media are served from the verified Storage snapshot.
+local-artifacts/
+public/local-course-assets/
+output/
+art/
+scripts/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx

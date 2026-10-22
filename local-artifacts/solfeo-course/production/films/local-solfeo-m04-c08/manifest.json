@@ -1,0 +1,1236 @@
+{
+  "classId": "local-solfeo-m04-c08",
+  "duration": 270.636583,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 20,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-3-8",
+      "soundEvents": []
+    },
+    {
+      "start": 20,
+      "end": 32,
+      "kind": "notation",
+      "title": "3/8 · ascenso y descenso",
+      "sourceTopic": "compuesto-practica-3-8",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "3/8 · ascenso y descenso",
+            "meter": "3/8",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 8,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "mark": "accent"
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 140,
+        "_sourcePage": "compuesto-practica-3-8",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-68"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 32,
+      "end": 53,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-3-8",
+      "soundEvents": []
+    },
+    {
+      "start": 53,
+      "end": 65,
+      "kind": "notation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-3-8",
+      "diagram": {
+        "type": "diagram",
+        "kind": "blank",
+        "height": 180,
+        "_sourcePage": "compuesto-practica-3-8",
+        "sourcePageId": "flow-cont-69"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 65,
+      "end": 74.403813,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-3-8",
+      "soundEvents": []
+    },
+    {
+      "start": 74.403813,
+      "end": 89.403813,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-6-4",
+      "soundEvents": []
+    },
+    {
+      "start": 89.403813,
+      "end": 101.403813,
+      "kind": "notation",
+      "title": "6/4 · ascenso y descenso",
+      "sourceTopic": "compuesto-practica-6-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "6/4 · ascenso y descenso",
+            "meter": "6/4",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4,
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4,
+                  "mark": null
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4,
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4,
+                  "mark": null
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 140,
+        "_sourcePage": "compuesto-practica-6-4",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "flow-cont-69"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.5750000000000001,
+          "gain": 0.20400000000000001,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.20400000000000001,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.125,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.75,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 5.375,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 6,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 6.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 7.25,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 7.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 101.403813,
+      "end": 116.403813,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-6-4",
+      "soundEvents": []
+    },
+    {
+      "start": 116.403813,
+      "end": 128.403813,
+      "kind": "notation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-6-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "blank",
+        "height": 180,
+        "_sourcePage": "compuesto-practica-6-4",
+        "sourcePageId": "flow-cont-69"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 128.403813,
+      "end": 137.80762600000003,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-6-4",
+      "soundEvents": []
+    },
+    {
+      "start": 137.80762600000003,
+      "end": 152.80762600000003,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-9-8",
+      "soundEvents": []
+    },
+    {
+      "start": 152.80762600000003,
+      "end": 164.80762600000003,
+      "kind": "notation",
+      "title": "9/8 · ascenso y descenso",
+      "sourceTopic": "compuesto-practica-9-8",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "9/8 · ascenso y descenso",
+            "meter": "9/8",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 8,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8,
+                  "mark": null
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                3,
+                4,
+                5
+              ],
+              [
+                6,
+                7,
+                8
+              ],
+              [
+                9,
+                10,
+                11
+              ],
+              [
+                12,
+                13,
+                14
+              ],
+              [
+                15,
+                16,
+                17
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 140,
+        "_sourcePage": "compuesto-practica-9-8",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "compuesto-practica-9-8"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.875,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.1875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.5,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.8125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.4375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4.75,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 5.0625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 5.375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5.6875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 6,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 16,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 6.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 164.80762600000003,
+      "end": 179.80762600000003,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-9-8",
+      "soundEvents": []
+    },
+    {
+      "start": 179.80762600000003,
+      "end": 191.80762600000003,
+      "kind": "notation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-9-8",
+      "diagram": {
+        "type": "diagram",
+        "kind": "blank",
+        "height": 180,
+        "_sourcePage": "compuesto-practica-9-8",
+        "sourcePageId": "compuesto-practica-9-8"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 191.80762600000003,
+      "end": 201.21143900000004,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-9-8",
+      "soundEvents": []
+    },
+    {
+      "start": 201.21143900000004,
+      "end": 216.21143900000004,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-12-8",
+      "soundEvents": []
+    },
+    {
+      "start": 216.21143900000004,
+      "end": 228.21143900000004,
+      "kind": "notation",
+      "title": "12/8 · ascenso y descenso",
+      "sourceTopic": "compuesto-practica-12-8",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 97,
+        "rows": [
+          {
+            "title": "12/8 · ascenso y descenso",
+            "meter": "12/8",
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 8,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "mark": "accent"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8,
+                  "mark": null
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8,
+                  "mark": null
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                3,
+                4,
+                5
+              ],
+              [
+                6,
+                7,
+                8
+              ],
+              [
+                9,
+                10,
+                11
+              ],
+              [
+                12,
+                13,
+                14
+              ],
+              [
+                15,
+                16,
+                17
+              ],
+              [
+                18,
+                19,
+                20
+              ],
+              [
+                21,
+                22,
+                23
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 66
+          }
+        ],
+        "rowHeight": 140,
+        "_sourcePage": "compuesto-practica-12-8",
+        "rowHeights": [
+          97
+        ],
+        "sourcePageId": "compuesto-practica-9-8"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.875,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.1875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.5,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 3.8125,
+          "duration": 0.28750000000000003,
+          "gain": 0.20400000000000001,
+          "visualIndex": 9,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.4375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.75,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 5.0625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5.375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 5.6875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 6,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 16,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 6.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 6.625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 18,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 6.9375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 19,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 7.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 20,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 7.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 21,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 7.875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 22,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 8.1875,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 23,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 228.21143900000004,
+      "end": 243.21143900000004,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-12-8",
+      "soundEvents": []
+    },
+    {
+      "start": 243.21143900000004,
+      "end": 255.21143900000004,
+      "kind": "notation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-12-8",
+      "diagram": {
+        "type": "diagram",
+        "kind": "blank",
+        "height": 180,
+        "_sourcePage": "compuesto-practica-12-8",
+        "sourcePageId": "flow-cont-70"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 255.21143900000004,
+      "end": 264.61525200000005,
+      "kind": "explanation",
+      "title": "Lectura en 3/8, 6/8, 6/4, 9/8 y 12/8",
+      "sourceTopic": "compuesto-practica-12-8",
+      "soundEvents": []
+    },
+    {
+      "start": 264.61525200000005,
+      "end": 270.61525200000005,
+      "kind": "completion",
+      "title": "¡Bien hecho!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

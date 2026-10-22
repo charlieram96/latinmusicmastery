@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from '@/components/language-provider'
 
 /** SVG ring that counts up to `pct`. The number scales with the ring (26% of its size) so small rings never overflow. */
-export function ScoreRing({ pct, size = 156, stroke = 13 }: { pct: number; size?: number; stroke?: number }) {
+export function ScoreRing({ pct, size = 156, stroke = 13, label }: { pct: number; size?: number; stroke?: number; label?:string }) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
   const r = (size - stroke) / 2
@@ -35,7 +35,7 @@ export function ScoreRing({ pct, size = 156, stroke = 13 }: { pct: number; size?
           {display}%
         </span>
         <span className="mt-1 font-semibold uppercase tracking-[0.1em] text-muted-foreground" style={{ fontSize: Math.max(8, Math.round(size * 0.07)) }}>
-          {t('dashboard.classViewer.quiz.results.score')}
+          {label??t('dashboard.classViewer.quiz.results.score')}
         </span>
       </div>
     </div>

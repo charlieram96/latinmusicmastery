@@ -5,7 +5,8 @@
 // descriptions. Rendered inside LessonShell (sidebar + header come from it).
 
 import Link from 'next/link'
-import { BookOpen, Check, Clock, Layers, Lock, Play, Unlock } from 'lucide-react'
+import { ModuleCoverArt, hasModuleCoverArt } from '@/components/learning-mode/module-cover-art'
+import { BookOpen, Check, Clock, Layers, Lock, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/components/language-provider'
 import { LessonProgressButton } from '@/components/class-viewer/lesson-viewer/lesson-sidebar'
@@ -29,6 +30,7 @@ export interface ModuleOverviewLesson {
 
 interface ModuleOverviewBodyProps {
   courseId: string
+  moduleId?: string
   moduleIndex: number
   description: string | null
   hasAccess: boolean
@@ -70,12 +72,13 @@ const sectionHeadingClass =
 export function ModuleOverviewBody({
   courseId,
   moduleIndex,
+  moduleId,
   description,
   hasAccess,
   summary,
   lessons,
 }: ModuleOverviewBodyProps) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
 
   const nextLesson = lessons.find((l) => l.id === summary.nextClassId) ?? null
   const nextLocked = nextLesson ? !nextLesson.isFree && !hasAccess : false
@@ -180,20 +183,21 @@ export function ModuleOverviewBody({
           below xl. With no description the lessons take the full width. */}
       <div
         className={cn(
-          'mt-8 grid gap-10',
-          description && 'xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)] xl:gap-14'
+          'mt-8 grid gap-8'
         )}
       >
-        {description && (
-          <section className={cn('min-w-0', styles.rise)} style={{ animationDelay: '160ms' }}>
-            <h2 className={sectionHeadingClass}>
+        {(
+          <section className={cn('min-w-0 rounded-3xl border border-primary/20 bg-card p-6 md:p-8 shadow-sm', styles.rise)} style={{ animationDelay: '160ms' }}>
+            <div className={cn(hasModuleCoverArt(moduleId) && 'grid items-center gap-8 xl:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]')}>
+            <div><h2 className={sectionHeadingClass}>
               {t('dashboard.pages.moduleOverview.aboutModule')}
             </h2>
             <Paragraphs
-              text={description}
+              text={description || (locale === 'es' ? 'Explora las clases de este módulo. Elige una para conocer su contenido y avanzar paso a paso en tu aprendizaje.' : 'Explore the classes in this module. Choose one to discover its content and move forward step by step in your learning.')}
               className="max-w-[80ch] text-[15.5px] leading-[1.75] text-foreground"
-              dimAfterFirst
-            />
+            /></div>
+            {moduleId && <ModuleCoverArt moduleId={moduleId}/>}
+            </div>
           </section>
         )}
 
@@ -219,7 +223,7 @@ export function ModuleOverviewBody({
                     <Link
                       href={classHref(courseId, lesson.id)}
                       className={cn(
-                        'group flex items-start gap-3.5 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-primary/40 hover:bg-primary/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                        'group flex items-center gap-3.5 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-primary/40 hover:bg-primary/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                         state === 'locked' && 'opacity-80'
                       )}
                     >
@@ -237,40 +241,11 @@ export function ModuleOverviewBody({
                         )}
                       </span>
 
-                      <div className="min-w-0 flex-1 pt-0.5">
+                      <div className="min-w-0 flex-1">
                         <div className="font-heading text-[14.5px] font-bold leading-snug tracking-[-0.01em] text-foreground">
                           {lesson.title}
                         </div>
-                        {lesson.description && (
-                          <div className="mt-1.5">
-                            <Paragraphs
-                              text={lesson.description}
-                              className="text-[13px] leading-relaxed text-muted-foreground"
-                            />
-                          </div>
-                        )}
-                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-muted-foreground">
-                          <span>
-                            {t(
-                              lesson.totalItems === 1
-                                ? 'dashboard.pages.course.itemCountOne'
-                                : 'dashboard.pages.course.itemCountOther',
-                              { count: lesson.totalItems }
-                            )}
-                          </span>
-                          {lesson.durationSeconds > 0 && (
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatDurationFromSeconds(lesson.durationSeconds)}
-                            </span>
-                          )}
-                          {lesson.isFree && !hasAccess && (
-                            <span className="inline-flex items-center gap-1 font-semibold text-gold">
-                              <Unlock className="h-3 w-3" />
-                              {t('dashboard.pages.moduleOverview.freePreview')}
-                            </span>
-                          )}
-                        </div>
+
                       </div>
 
                       <span className="self-center">

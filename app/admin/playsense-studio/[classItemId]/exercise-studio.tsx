@@ -48,6 +48,7 @@ import { UnpublishedDot } from '@/components/playsense-studio/studio/drafts/unpu
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { StudioWorkspace } from './studio-workspace';
 import { VideoSectionsWorkspace } from './video-sections-workspace';
+import { studentHrefFromAdmin } from '@/lib/playsense-studio/admin-nav';
 
 type Part = 'watch' | 'exercise';
 
@@ -197,6 +198,7 @@ export function ExerciseStudio({
       <WatchVideoSetup classItemId={classItemId} classItemTitle={title} appBarExtra={toggle} />
     ) : (
       <VideoSectionsWorkspace
+        studentHref={studentHrefFromAdmin(backHref, 'watch')}
         key={`watch-${switchCount}`}
         classItemId={classItemId}
         backHref={backHref}

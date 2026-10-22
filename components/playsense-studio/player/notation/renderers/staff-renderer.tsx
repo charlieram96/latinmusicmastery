@@ -1,4 +1,7 @@
-'use client';
+'use client'
+import { applyMeasureSymbols } from '@/lib/playsense-studio/notation/measure-symbols';
+import {drawEmptyMeasure} from '@/lib/playsense-studio/notation/empty-measure';
+import { measureLengthInQN } from '@/lib/playsense-studio/time-mapping';
 
 // PlaySense Studio — VexFlow staff renderer.
 //
@@ -127,7 +130,7 @@ const ROW_START_CLEF_WIDTH = 40;
 const PER_NOTE_MIN_WIDTH = MEASURE_WIDTH.PER_NOTE_MIN_WIDTH;
 const QN_WIDTH = MEASURE_WIDTH.QN_WIDTH;
 /** Space for measure labels and beat guides between wrapped staff rows. */
-const WRAP_ROW_GAP = 96;
+const WRAP_ROW_GAP = 48;
 /** Fallback model width when the container hasn't been measured yet. */
 const WRAP_FALLBACK_WIDTH = 760;
 /**
@@ -139,7 +142,7 @@ const WRAP_FALLBACK_WIDTH = 760;
  */
 const BASE_SCALE = 1.3;
 /** User-zoom bounds, applied on top of BASE_SCALE. */
-export const ZOOM_MIN = 0.5;
+export const ZOOM_MIN = 0.1;
 export const ZOOM_MAX = 2.6;
 /**
  * Scrolling-music mode: the cursor is anchored at this fraction of the
@@ -451,7 +454,7 @@ class StaffRendererImpl implements ScoreRenderer {
     if (this.layoutMode === 'scroll') {
       let x = SYSTEM_PADDING_X + (hasLeading ? interludeWidth : 0);
       const placements: MeasurePlacement[] = measureBlocks.map((block, i) => {
-        const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
+        const quarterNotes = measureLengthInQN(block.timeSignature, block.measure);
         const width = Math.max(quarterNotes * 64, block.events.length * 24 + 24)
           + (i === 0 ? firstMeasureExtraWidth : 0);
         const placement: MeasurePlacement = {
@@ -496,10 +499,10 @@ class StaffRendererImpl implements ScoreRenderer {
     // room only for the bar in that position, not every column.
     const paged = this.layoutMode === 'paged';
     // Every page sits at the same height; only the current one is shown.
-    const systemPitch = paged ? 0 : Math.max(STAFF_LINE_SPAN + WRAP_ROW_GAP, this.staffFootprint + 10);
+    const systemPitch = paged ? 0 : Math.max(STAFF_LINE_SPAN + WRAP_ROW_GAP, this.staffFootprint + 8);
     const requiredWidths = measureBlocks.map((block, index) => {
-      const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
-      return Math.max(MEASURE_WIDTH.MIN, quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
+      const quarterNotes = measureLengthInQN(block.timeSignature, block.measure);
+      return Math.max(MEASURE_WIDTH.MIN, block.measure.senzaMisura ? 0 : quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
         + (index === 0 ? firstMeasureExtraWidth : 0);
     });
     const rowStartExtra = measureBlocks.map((block, index) =>
@@ -696,12 +699,12 @@ class StaffRendererImpl implements ScoreRenderer {
         y: p.y,
         width: p.width,
         startMs: qnToTrackMs(track, score, block.cumulativeQN),
-        endMs: qnToTrackMs(track, score, block.cumulativeQN + block.timeSignature[0] * 4 / block.timeSignature[1]),
+        endMs: qnToTrackMs(track, score, block.cumulativeQN + measureLengthInQN(block.timeSignature, block.measure)),
       });
       const stave = new Stave(p.x, p.y + this.staffLineTop - STAFF_LINE_TOP, p.width);
       const repeat = block.measure.repeat;
       if (repeat?.offset === 0) stave.setBegBarType(BarlineType.REPEAT_BEGIN);
-      if (repeat && repeat.offset === repeat.length - 1) {
+      if (p.blockIndex !== track.measures.length - 1 && repeat && repeat.offset === repeat.length - 1 && !(block.measure.endBarline==='final'&&repeat.pass===repeat.count-1)) {
         stave.setEndBarType(BarlineType.REPEAT_END);
       } else if (hasFinalBarline(track.measures, p.blockIndex)) {
         // The section's last measure closes with a final bar, like the end of a piece.
@@ -714,6 +717,7 @@ class StaffRendererImpl implements ScoreRenderer {
       const staffGroup = ctx.openGroup('ps-staff-lines') as SVGElement;
       staffGroup?.setAttribute('data-score-stave', '');
       ctx.setLineWidth(STAFF_LINE_WIDTH);
+      applyMeasureSymbols(stave, block.measure);
       stave.setContext(ctx).draw();
       ctx.closeGroup();
       for (const modifier of stave.getModifiers()) {
@@ -728,7 +732,7 @@ class StaffRendererImpl implements ScoreRenderer {
       // stays correct no matter how many sharps/flats a key signature draws.
       const built = buildMeasure([block.events, block.voice2Events], block.timeSignature, block.clef);
       // A blank measure (the studio persists these) is just the empty stave.
-      if (!built) continue;
+      if (!built) { drawEmptyMeasure(ctx,stave,block.timeSignature,block.measure.emptyText); continue; }
       formatMeasure(built, Math.max(40, stave.getNoteEndX() - stave.getNoteStartX() - 12));
       drawMeasure(ctx, stave, built);
 
@@ -995,6 +999,23 @@ class StaffRendererImpl implements ScoreRenderer {
         }));
       }
 
+      // Empty authored bars are speaking intervals too, including the opening
+      // bar of a later section. Reuse the same staff/countdown as the intro.
+      for (const placement of plan.placements.filter(p => !p.isGap)) {
+        const block = measureBlocks[placement.blockIndex];
+        if (block.events.length || block.voice2Events.length) continue;
+        const startMs = qnToTrackMs(track, score, block.cumulativeQN);
+        const endMs = qnToTrackMs(track, score, block.cumulativeQN + measureLengthInQN(block.timeSignature, block.measure));
+        this.interludes.push(createNotationInterlude(this.rowDivs[placement.system] ?? rendererDiv, {
+          kind: 'leading', x: placement.x * this.scale,
+          y: (placement.y + this.staffLineTop) * this.scale - INTERLUDE_EXTRA_HEIGHT / 2,
+          width: placement.width * this.scale,
+          height: STAFF_LINE_SPAN * this.scale + INTERLUDE_EXTRA_HEIGHT,
+          staffHeight: STAFF_LINE_SPAN * this.scale,
+          startMs, durationMs: endMs - startMs, detail: 'Follow along with your instructor.',
+        }));
+      }
+
       const overlay = document.createElementNS(NS, 'rect');
       overlay.setAttribute('data-playsense-studio-drag-overlay', 'true');
       overlay.setAttribute('y', `${this.staveTop - 4}`);
@@ -1047,8 +1068,8 @@ class StaffRendererImpl implements ScoreRenderer {
         event.preventDefault();
         this.hideHoverCursor();
         const rect = target.getBoundingClientRect();
-        this.dragStartModelX = (event.clientX - rect.left) / this.scale;
-        this.dragStartModelY = (event.clientY - rect.top) / this.scale;
+        this.dragStartModelX = (event.clientX - rect.left) / (rect.width > 0 ? rect.width / this.totalWidth : this.scale);
+        this.dragStartModelY = (event.clientY - rect.top) / (rect.height > 0 ? rect.height / this.stageHeight : this.scale);
         this.dragCurrentModelX = this.dragStartModelX;
         this.dragCurrentModelY = this.dragStartModelY;
         this.dragIsActive = false;
@@ -1068,16 +1089,16 @@ class StaffRendererImpl implements ScoreRenderer {
         if (this.dragStartModelX === null) {
           const rect = target.getBoundingClientRect();
           this.updateHoverCursor(
-            (event.clientX - rect.left) / this.scale,
-            (event.clientY - rect.top) / this.scale
+            (event.clientX - rect.left) / (rect.width > 0 ? rect.width / this.totalWidth : this.scale),
+            (event.clientY - rect.top) / (rect.height > 0 ? rect.height / this.stageHeight : this.scale)
           );
           return;
         }
         if (this.boundPointerId !== event.pointerId) return;
         event.preventDefault();
         const rect = target.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / this.scale;
-        const y = (event.clientY - rect.top) / this.scale;
+        const x = (event.clientX - rect.left) / (rect.width > 0 ? rect.width / this.totalWidth : this.scale);
+        const y = (event.clientY - rect.top) / (rect.height > 0 ? rect.height / this.stageHeight : this.scale);
         this.dragCurrentModelX = x;
         this.dragCurrentModelY = y;
         const delta = Math.abs((x - this.dragStartModelX) * this.scale);
@@ -1282,9 +1303,9 @@ class StaffRendererImpl implements ScoreRenderer {
     this.measureGeoms.forEach((g, index) => {
       const block = blocks[index];
       const barStartQn = block.cumulativeQN;
-      const barQn = block.timeSignature[0] * 4 / block.timeSignature[1];
+      const barQn = measureLengthInQN(block.timeSignature, block.measure);
       const marks = barCounts(block.cumulativeQN, block.timeSignature, helpers.and).filter(mark => mark.beat);
-      const barEndQn = block.cumulativeQN + block.timeSignature[0] * 4 / block.timeSignature[1];
+      const barEndQn = block.cumulativeQN + measureLengthInQN(block.timeSignature, block.measure);
       marks.forEach((mark, k) => {
         const ms = qnToMs(mark.qn);
         const endMs = qnToMs(marks[k + 1]?.qn ?? barEndQn);
@@ -1295,6 +1316,8 @@ class StaffRendererImpl implements ScoreRenderer {
           : pos.system === g.system ? pos.x : g.x + g.width / 2;
         const el = document.createElement('span');
         el.className = 'ps-staff-count';
+        el.style.fontSize = `${14 * s}px`;
+        el.style.lineHeight = '1.2';
         el.dataset.beat = String(mark.beat);
         el.dataset.active = 'false';
         el.textContent = mark.label;
@@ -1726,6 +1749,13 @@ class StaffRendererImpl implements ScoreRenderer {
       };
     }
 
+    // Blank measures still occupy real media time; never jump to the next note.
+    const bar = this.measureGeoms.findIndex(g => clamped >= g.startMs && clamped < g.endMs);
+    const geom = this.measureGeoms[bar];
+    if (geom && !this.hits.some(hit => hit.bar === bar)) {
+      const fraction = (clamped - geom.startMs) / Math.max(1, geom.endMs - geom.startMs);
+      return { x: geom.x + 8 + Math.max(0, geom.width - 16) * fraction, system: geom.system };
+    }
     if (this.hits.length === 0) return { x: 0, system: 0 };
     return scoreCursorAt(clamped, this.hits, this.gapStartMs, this.systemRowEndX);
   }
@@ -1864,8 +1894,7 @@ export function formatMeasureVoice(
 function qnAtEnd(blocks: ReturnType<typeof extractTrackEvents>): number {
   if (blocks.length === 0) return 0;
   const last = blocks[blocks.length - 1];
-  const ts = last.timeSignature;
-  return last.cumulativeQN + (ts[0] * 4) / ts[1];
+  return last.cumulativeQN + measureLengthInQN(last.timeSignature, last.measure);
 }
 
 function lookupMeasureNumber(

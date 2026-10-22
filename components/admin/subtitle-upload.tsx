@@ -1,5 +1,6 @@
 'use client'
 
+import { uploadLocalSolfeoMedia } from '@/lib/courses/upload-local-solfeo-media'
 import { AdminText } from '@/components/admin/admin-text'
 
 
@@ -59,6 +60,7 @@ export function SubtitleUpload({
     try {
       const vtt = srtToVtt(await file.text())
       const fileName = `${itemId}-${lang}-${Date.now()}.vtt`
+      if (itemId.startsWith('local-solfeo-')) {const src=await uploadLocalSolfeoMedia(itemId,new File([vtt],fileName,{type:'text/vtt'}));setUrl(src);onChanged(src);return}
       const supabase = createClient()
       const { error: uploadError } = await supabase.storage
         .from('lesson-subtitles')

@@ -2,6 +2,7 @@
 
 // Playback controls and the main take action share the same exercise session.
 
+import { useLearningMode } from '@/components/learning-mode/store'
 import { Pendulum } from '@/components/playsense-studio/player/transport/chronometer-control'
 import type { ReactNode } from 'react'
 import { Check, ChevronDown, Eye, Gauge, Pause, Play, RotateCcw, Square } from 'lucide-react'
@@ -34,6 +35,7 @@ const BASE = 'dashboard.classViewer.lessonMode.transport'
 
 export function LessonTransport({ state, bpm, countdownBeat, click, mix, metronomeSettings, calibrationControl, onStart, onPause, onResume, onRestart, onStop, loading = false, onFinish, onClickToggle, onWatchDemo }: LessonTransportProps) {
   const { t, locale } = useTranslation()
+  const kids = useLearningMode() === 'kids'
   const running = state === 'playing' || state === 'countdown'
   const inTake = state !== 'selecting'
   const iconBtn = 'grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground transition-colors duration-tap ease-smooth hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
@@ -80,6 +82,6 @@ export function LessonTransport({ state, bpm, countdownBeat, click, mix, metrono
     </div>
     {inTake
       ? <Button type="button" variant="chunky-ghost" data-finish-take="" onClick={onFinish} disabled={state === 'countdown'} aria-label={t(`${BASE}.finish`)} title={t(`${BASE}.finish`)}><Check aria-hidden className="h-5 w-5" /></Button>
-      : <Button type="button" variant="chunky-success" data-primary="" data-transport-start="" disabled={loading} onClick={onStart} aria-label={t(`${BASE}.start`)} title={t(`${BASE}.start`)}><Play aria-hidden className="h-5 w-5" /></Button>}
+      : !kids && <Button type="button" variant="chunky-success" data-primary="" data-transport-start="" disabled={loading} onClick={onStart} aria-label={t(`${BASE}.start`)} title={t(`${BASE}.start`)}><Play aria-hidden className="h-5 w-5" /></Button>}
   </>
 }

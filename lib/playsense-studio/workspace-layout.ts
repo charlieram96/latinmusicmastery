@@ -1,10 +1,11 @@
 /** Geometry and persistence for the lesson workspace (video · staff · highway). Pure. */
 
-export type WorkspaceLayout = 'side' | 'stack' | 'pip' | 'music'
+export type WorkspaceLayout = 'side' | 'stack' | 'pip' | 'music' | 'video'
 export type PipCorner = 'tl' | 'tr' | 'bl' | 'br'
 
 export interface WorkspaceState {
   layout: WorkspaceLayout
+  paneOrder?: WorkspacePane[]
   /** % of the stage given to the media (video) region in side and stack. */
   split: number
   /** % of the music region given to the staff when the highway sits below it. */
@@ -19,7 +20,7 @@ export interface WorkspaceState {
 
 export interface Bounds { min: number; max: number }
 
-export const WORKSPACE_LAYOUTS: readonly WorkspaceLayout[] = ['side', 'stack', 'pip', 'music']
+export const WORKSPACE_LAYOUTS: readonly WorkspaceLayout[] = ['side', 'stack', 'pip', 'music', 'video']
 export const PIP_CORNERS: readonly PipCorner[] = ['tl', 'tr', 'bl', 'br']
 export const SPLIT_BOUNDS: Bounds = { min: 22, max: 78 }
 export const MUSIC_SPLIT_BOUNDS: Bounds = { min: 25, max: 80 }
@@ -89,6 +90,7 @@ export function parseWorkspaceState(raw: string | null | undefined, defaults: Wo
   const num = (x: unknown, b: Bounds, fallback: number) =>
     typeof x === 'number' && Number.isFinite(x) ? round1(clamp(x, b)) : fallback
   return {
+    ...(Array.isArray(o.paneOrder) && o.paneOrder.length === 3 && new Set(o.paneOrder).size === 3 && o.paneOrder.every(p => DEFAULT_PANE_ORDER.includes(p)) ? { paneOrder: o.paneOrder as WorkspacePane[] } : {}),
     layout: layouts.includes(o.layout as WorkspaceLayout) ? o.layout as WorkspaceLayout : defaults.layout,
     split: num(o.split, SPLIT_BOUNDS, defaults.split),
     musicSplit: num(o.musicSplit, MUSIC_SPLIT_BOUNDS, defaults.musicSplit),
@@ -99,5 +101,24 @@ export function parseWorkspaceState(raw: string | null | undefined, defaults: Wo
 }
 
 export function serializeWorkspaceState(s: WorkspaceState): string {
-  return JSON.stringify({ v: 1, layout: s.layout, split: s.split, musicSplit: s.musicSplit, corner: s.corner, pipWidth: s.pipWidth, swap: s.swap })
+  return JSON.stringify({ v: 1, ...(s.paneOrder ? { paneOrder: s.paneOrder } : {}), layout: s.layout, split: s.split, musicSplit: s.musicSplit, corner: s.corner, pipWidth: s.pipWidth, swap: s.swap })
+}
+
+export type WorkspacePane = 'video' | 'score' | 'highway'
+export const DEFAULT_PANE_ORDER: readonly WorkspacePane[] = ['score', 'video', 'highway']
+export function orderedPanes(state: WorkspaceState, visible: Record<WorkspacePane, boolean>): WorkspacePane[] {
+  return (state.paneOrder ?? DEFAULT_PANE_ORDER).filter(pane => visible[pane])
+}
+/** Keep hidden panes in their saved positions when two visible panes trade places. */
+export function exchangePanes(state: WorkspaceState, a: WorkspacePane, b: WorkspacePane): WorkspacePane[] {
+  return (state.paneOrder ?? DEFAULT_PANE_ORDER).map(p => p === a ? b : p === b ? a : p)
+}
+/** First pane occupies one side; the remaining two share the other. No DOM moves. */
+export function paneGrid(panes: readonly WorkspacePane[], layout: 'side' | 'stack', swap: boolean): string {
+  const area = { video: 'v', score: 's', highway: 'h' }
+  const [a,b,c] = panes.map(p=>area[p])
+  if (!b) return `"${a}"`
+  if (!c) return layout === 'side' ? `"${swap ? b : a} d ${swap ? a : b}"` : `"${swap ? b : a}" "d" "${swap ? a : b}"`
+  if(layout === 'side') return swap ? `"${b} d ${a}" "e d ${a}" "${c} d ${a}"` : `"${a} d ${b}" "${a} d e" "${a} d ${c}"`
+  return swap ? `"${b} e ${c}" "d d d" "${a} ${a} ${a}"` : `"${a} ${a} ${a}" "d d d" "${b} e ${c}"`
 }

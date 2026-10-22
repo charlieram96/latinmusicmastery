@@ -46,7 +46,7 @@ export function createFireworks() {
     meshes: fx.meshes,
     launch(count: number) {
       for (let n = 0; n < count; n++) {
-        const x = (n - (count - 1) / 2) * 48 + (random() - .5) * 40, z = -140 - random() * 45, apex = 27 + random() * 13
+        const x = (n - (count - 1) / 2) * 48 + (random() - .5) * 40, z = -195 - random() * 40, apex = 18 + random() * 8
         const rise = 1 + random() * .3 + n * .35
         const start = fx.time.value
         // Rocket: one slow streak climbing to the break point, with a faint shimmer trail.

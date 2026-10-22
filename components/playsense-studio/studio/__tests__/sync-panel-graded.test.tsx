@@ -4,7 +4,7 @@
 // editor are stubbed so the test drives the panel's own wiring: grid bar
 // lines from bar 1 (locked), the bar 1 drag with snap, Auto-align, the
 // count-in / pre-roll controls and the "notes on a hit" readout.
-import { act, StrictMode, type ReactNode, type ComponentProps } from 'react';
+import { act, useReducer, StrictMode, type ReactNode, type ComponentProps } from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRoot, type Root } from 'react-dom/client';
@@ -13,10 +13,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 type DragFn = (delta: number, phase: 'move' | 'end', mods?: { snap: boolean }) => void;
 const stub = vi.hoisted(() => ({
   canvas: null as null | {
-    handles: Array<{ videoTimeSeconds: number; isDownbeat: boolean }>;
+    handles: Array<{ videoTimeSeconds: number; isDownbeat: boolean; measureNumber: number; beatInMeasure: number }>;
+    noteTicks: Array<{qn:number;videoTimeSeconds:number;nudged:boolean}>;
+    onNoteDrag?: (time:number,qn?:number)=>void;
+    onSelect?: (target: { kind: "marker"; ref: { measureNumber: number; beatInMeasure: number } }) => void;
     markersLocked?: boolean;
     onBackgroundDrag?: DragFn;
     metronomeAnchorSeconds?: number | null;
+    onAnchorDrag?: (seconds:number)=>void;
     flexMode?: boolean;
     flexDeleteMode?: boolean;
     flexAddMode?: boolean;
@@ -64,6 +68,10 @@ vi.mock('@/components/playsense-studio/studio/score-import-dialog', () => ({
   ScoreImportDialog: (p: { trigger: ReactNode }) => p.trigger,
 }));
 vi.mock('@/components/playsense-studio/player/state/use-video-click-track', () => ({ useVideoClickTrack: (p:{grid:number[]}) => {stub.clickGrid=p.grid;} }));
+
+import { editorReducer, type EditorState } from '@/lib/playsense-studio/editor-state';
+import type { IntegratedEditor } from '../integrated-editor';
+vi.mock('@/components/playsense-studio/shared/use-audio-source', () => { const settings = {selected: 'original', offsetSeconds: 0}; return {useAudioSource: (_item: string, _part: string, video: string) => ({loaded: true, sourceUrl: video, settings}), useSelectedAudio: () => ''} });
 
 import { SyncPanel } from '../sync-panel';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -174,6 +182,77 @@ afterEach(() => {
 });
 
 describe('SyncPanel graded mode', () => {
+  it('hands repeat timing to the draft in the same transaction as the score', async () => {
+    const dispatch = vi.fn();
+    await act(async () => root.render(<SyncPanel classItemId="ci-1" mode="graded" publishTarget="exercise"
+      videoUrl="https://example.test/play.mp4" score={SCORE} dispatch={dispatch} activeTimeMap={null}
+      onTimingChange={onTimingChange} videoDurationSeconds={30} play={{bar1Seconds:2,countInBars:1,preroll:true}} />));
+    onTimingChange.mockClear();
+    const editor = stub.editor as unknown as ComponentProps<typeof IntegratedEditor>;
+    act(() => {
+      editor.dispatch({type:'repeat-measures',trackIndex:0,start:0,end:0,count:3,id:'repeat-test'});
+      // No debounce or render is needed: both halves of the edit are committed now.
+      expect(onTimingChange).toHaveBeenCalledOnce();
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({type:'apply-structural-score'}));
+    });
+    expect(dispatch.mock.calls[0][0].score.tracks[0].measures).toHaveLength(4);
+  });
+
+  it('inserts before the imported first bar through synchronized dispatch and accepts music in the new bar', async () => {
+    let current = SCORE;
+    function Harness() {
+      const [state, dispatch] = useReducer(editorReducer, SCORE, (score): EditorState => ({score,past:[],future:[],isDirty:false}));
+      current = state.score;
+      return <SyncPanel classItemId="ci-1" mode="graded" publishTarget="exercise" videoUrl="https://example.test/play.mp4"
+        score={state.score} dispatch={dispatch} activeTimeMap={null} onTimingChange={onTimingChange} videoDurationSeconds={30} play={{bar1Seconds:2,countInBars:1,preroll:true}} />;
+    }
+    await act(async () => root.render(<Harness/>));
+    const editor = () => stub.editor as unknown as ComponentProps<typeof IntegratedEditor>;
+    await act(async () => editor().dispatch({type:'insert-measure',trackIndex:0,index:0}));
+    expect(editor().notice).toBeFalsy();
+    expect(current.tracks[0].measures).toHaveLength(3);
+    expect(editor().measureTimings).toHaveLength(3);
+    expect(editor().measureTimings[0].endVideoTimeSeconds-editor().measureTimings[0].startVideoTimeSeconds).toBe(2);
+    await act(async () => editor().dispatch({type:'write-event',at:{trackIndex:0,measureIndex:0,voice:0,eventIndex:'end'},kind:'rest',value:'q',dots:0}));
+    expect(current.tracks[0].measures[0].voices[0].events).toMatchObject([{kind:'rest',durationQN:1}]);
+    expect(current.tracks[0].measures[1].voices[0].events).toEqual(SCORE.tracks[0].measures[0].voices[0].events);
+  });
+
+  it.each(['graded', 'video'] as const)('keeps all beats available in both bars in %s when selection changes', async (mode) => {
+    await renderPanel(undefined, false, { mode });
+    const expected = [1, 2].flatMap(measureNumber =>
+      [1, 2, 3, 4].map(beatInMeasure => ({ measureNumber, beatInMeasure })));
+    const visible = () => stub.canvas!.handles.map(({ measureNumber, beatInMeasure }) => ({ measureNumber, beatInMeasure }));
+    expect(visible()).toEqual(expected);
+    for (const measureNumber of [2, 1]) {
+      await act(async () => stub.canvas!.onSelect!({ kind: 'marker', ref: { measureNumber, beatInMeasure: 2 } }));
+      expect(visible()).toEqual(expected);
+    }
+  });
+
+  it('updates the click to 151 BPM on a score tempo edit and preserves bar one', async () => {
+    await renderPanel(undefined,false,{initialMetronomeAnchorSeconds:2});
+    await renderPanel(undefined, false, { initialMetronomeAnchorSeconds:2, score: { ...SCORE, initialTempo: 151 } });
+    expect(downbeats()[0]).toBe(2);
+    expect(stub.clickGrid[1] - stub.clickGrid[0]).toBeCloseTo(60 / 151, 8);
+    expect(downbeats()[1]).toBeCloseTo(2 + 4 * 60 / 151, 8);
+    await renderPanel(undefined, false, { initialMetronomeAnchorSeconds:2, score: SCORE });
+    expect(downbeats()).toEqual([2, 4]);
+  });
+
+  it('moves the last eighth-note handle without a selected staff note', async () => {
+    const lastNoteScore = { ...SCORE, tracks: [{ ...SCORE.tracks[0], measures: [
+      SCORE.tracks[0].measures[0],
+      {number:2, voices:[{number:1,events:[quarter,quarter,quarter,{...quarter,durationQN:.5},{...quarter,durationQN:.5}]}]},
+    ] }] } as ScoreDocument;
+    await renderPanel(undefined,false,{score:lastNoteScore});
+    const before=stub.canvas!.noteTicks.find(n=>n.qn===7.5)!;
+    expect(before).toBeDefined();
+    await act(async()=>stub.canvas!.onNoteDrag!(before.videoTimeSeconds+.1,7.5));
+    expect(stub.canvas!.noteTicks.find(n=>n.qn===7.5)!.videoTimeSeconds).toBeCloseTo(before.videoTimeSeconds+.1);
+    expect(downbeats()).toEqual([2,4]);
+  });
+
   it('restores Flex and saves anchor edits without moving the score grid', async () => {
     const onFlexChange = vi.fn();
     await renderPanel(undefined,false,{initialFlex:[{src:2,dst:2,anchor:true},{src:3,dst:3,anchor:false},{src:6,dst:6,anchor:true}],onFlexChange});
@@ -186,13 +265,14 @@ describe('SyncPanel graded mode', () => {
     expect(onPlayChange).not.toHaveBeenCalled();
   });
 
-  it('moves one bar boundary and persists the map with matching metronome beats', async () => {
+  it('persists note-sync edits without moving the authored metronome pulse', async () => {
     await renderPanel();
+    const clicks = [...stub.clickGrid];
     act(()=>stub.canvas!.onMarkerDrag!({measureNumber:2,beatInMeasure:1},4.5,'single',{snap:false}));
     expect(downbeats()).toEqual([2,4.5]);
-    expect(stub.clickGrid).toContain(4.5);
+    expect(stub.clickGrid).toEqual(clicks);
     act(()=>stub.canvas!.onMarkerDrag!({measureNumber:1,beatInMeasure:2},2.8,'single',{snap:false}));
-    expect(stub.clickGrid).toContain(2.8);
+    expect(stub.clickGrid).toEqual(clicks);
     act(()=>vi.advanceTimersByTime(2000));
     expect(onTimingChange).toHaveBeenCalledWith(expect.objectContaining({params:expect.objectContaining({manualScoreSync:true})}));
     expect(onTimingChange.mock.calls.at(-1)![0].waypoints).toEqual(expect.arrayContaining([expect.objectContaining({videoTimeSeconds:2.8})]));
@@ -207,6 +287,23 @@ describe('SyncPanel graded mode', () => {
   it('exposes the same quantize and local Flex reset tools in exercise Sync',async()=>{
     await renderPanel();
     for(const key of ['onQuantizePlan','onQuantizeApply','onResetFlex','flexInfo'] as const) expect(typeof stub.editor?.[key]).toBe('function');
+  });
+
+  it('keeps quantize available and undoes successive applications without a selected bar', async () => {
+    await renderPanel();
+    expect(button('Quantize audio')).toBeTruthy();
+    const original=structuredClone(stub.canvas!.flexPoints);
+    const apply=()=> (stub.editor!.onQuantizeApply as (a:number,b:number,s:number)=>void)(0,1,70);
+    act(apply);
+    const first=structuredClone(stub.canvas!.flexPoints);
+    expect(first).not.toEqual(original);
+    expect(button('Undo quantization')).toBeTruthy();
+    act(apply);
+    act(()=>button('Undo quantization')!.click());
+    expect(stub.canvas!.flexPoints).toEqual(first);
+    act(()=>button('Undo quantization')!.click());
+    expect(stub.canvas!.flexPoints).toEqual(original);
+    expect(button('Quantize audio')).toBeTruthy();
   });
 
   it('creates draggable transient anchors with one visible button', async () => {
@@ -329,11 +426,51 @@ describe('SyncPanel graded mode', () => {
     expect(onTimingChange).not.toHaveBeenCalled();
   });
 
-  it('seeds editable bar lines on the grid from bar 1, ignoring a legacy map and anchor', async () => {
+  it('confirms multiple starts, preserves them through note edits, and removes only the selected anchor', async()=>{
+    await renderPanel();
+    act(()=>stub.canvas!.onAnchorDrag!(3.125));
+    expect(onTimingChange).not.toHaveBeenCalled();
+    act(()=>inspectorButton('Confirm click anchor')!.click());
+    act(()=>stub.canvas!.onAnchorDrag!(4.375));
+    act(()=>inspectorButton('Confirm click anchor')!.click());
+    const anchors=onTimingChange.mock.calls.at(-1)![0].params.clickAnchors;
+    expect(anchors.map((a:{seconds:number})=>a.seconds)).toEqual([3.125,4.375,7]);
+    expect(stub.clickGrid).toEqual([3.125,3.625,4.125,4.375,4.875,5.375,5.875]);
+    act(()=>stub.canvas!.onMarkerDrag!({measureNumber:1,beatInMeasure:2},2.8,'single',{snap:false}));
+    act(()=>vi.advanceTimersByTime(2000));
+    expect(onTimingChange.mock.calls.at(-1)![0].params.clickAnchors).toEqual(anchors);
+    act(()=>inspectorHost.querySelector<HTMLButtonElement>('[aria-label="Delete anchor 2"]')!.click());
+    expect(onTimingChange.mock.calls.at(-1)![0].params.clickAnchors.map((a:{seconds:number})=>a.seconds)).toEqual([3.125,7]);
+  });
+
+  it('drags a confirmed click anchor in one timing edit and preserves the other starts', async()=>{
+    await renderPanel();
+    act(()=>stub.canvas!.onAnchorDrag!(3.125));
+    act(()=>inspectorButton('Confirm click anchor')!.click());
+    const before=onTimingChange.mock.calls.at(-1)![0].params.clickAnchors;
+    onTimingChange.mockClear();
+    const anchor=host.querySelector<HTMLButtonElement>('[aria-label="Anchor 1 · 3.125 s"]')!;
+    anchor.setPointerCapture=vi.fn();anchor.releasePointerCapture=vi.fn();
+    const pointer=(type:string,x:number)=>new MouseEvent(type,{bubbles:true,button:0,clientX:x});
+    act(()=>anchor.dispatchEvent(pointer('pointerdown',100)));
+    act(()=>anchor.dispatchEvent(pointer('pointermove',120)));
+    expect(onTimingChange).not.toHaveBeenCalled();
+    act(()=>anchor.dispatchEvent(pointer('pointerup',120)));
+    expect(onTimingChange).toHaveBeenCalledOnce();
+    const after=onTimingChange.mock.calls[0][0].params.clickAnchors;
+    expect(after).toHaveLength(before.length);
+    expect(after.find((a:{id:string})=>a.id===before[0].id).seconds).toBeGreaterThan(3.125);
+    expect(after.find((a:{id:string})=>a.id===before[1].id)).toEqual(before[1]);
+    act(()=>anchor.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true})));
+    expect(onTimingChange.mock.calls.at(-1)![0].params.clickAnchors.find((a:{id:string})=>a.id===before[0].id).seconds)
+      .toBeCloseTo(after.find((a:{id:string})=>a.id===before[0].id).seconds-0.01);
+  });
+
+  it('seeds bar lines from bar 1 and retains the independent click anchor', async () => {
     await renderPanel();
     expect(downbeats()).toEqual([2, 4]);
     expect(stub.canvas!.markersLocked).toBe(false);
-    expect(stub.canvas!.metronomeAnchorSeconds).toBeUndefined();
+    expect(stub.canvas!.metronomeAnchorSeconds).toBe(7);
     expect(lane().sections.map((s) => s.label)).toEqual(['Exercise']);
     expect(lane().activeRange).toEqual({ startSeconds: 2, endSeconds: 6 });
   });
@@ -342,6 +479,20 @@ describe('SyncPanel graded mode', () => {
     await renderPanel({ bar1Seconds: null, countInBars: 1, preroll: true });
     expect(downbeats()).toEqual([1, 3]);
   });
+
+
+  it('keeps both anchor actions directly after score placement in the left inspector and saves the first-beat anchor', async () => {
+    await renderPanel()
+    const labels=Array.from(inspectorHost.querySelectorAll('button')).map(b=>b.textContent?.trim())
+    const placement=labels.indexOf('Place score at playhead')
+    expect(labels.slice(placement+1,placement+3)).toEqual(['Anchor at playhead','Place anchor · first beat'])
+    act(()=>inspectorButton('Place anchor · first beat')!.click())
+    expect(onTimingChange).not.toHaveBeenCalled();
+    const confirm=inspectorButton('Confirm click anchor')!;
+    act(()=>{confirm.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));confirm.click();});
+    expect(onTimingChange).toHaveBeenLastCalledWith({params:expect.objectContaining({clickAnchors:[expect.objectContaining({seconds:2}),{id:'legacy',seconds:7}]})});
+    expect(stub.clickGrid[0]).toBe(2)
+  })
 
   it('shows both individual marker and Flex controls', async () => {
     await renderPanel();
@@ -359,7 +510,8 @@ describe('SyncPanel graded mode', () => {
     expect(button('Auto-place bars')).toBeUndefined();
     expect(button('Ripple')).toBeDefined();
     expect(host.textContent).not.toContain('Anchor at playhead');
-    expect(inspectorText).not.toContain('Anchor at playhead');
+    expect(inspectorText).toContain('Anchor at playhead');
+    expect(inspectorText).toContain('Place anchor · first beat');
   });
 
   it('writes count-in and pre-roll changes through onPlayChange', async () => {
@@ -451,4 +603,16 @@ it('restores the cached waveform in StrictMode and only re-analyzes on explicit 
   expect(loadOrComputePeaks).toHaveBeenCalledWith('ci-1','https://example.test/play.mp4',expect.anything(),expect.objectContaining({force:true}));
   expect(downbeats()[0]).toBe(2);
   expect(onPlayChange).not.toHaveBeenCalled();
+});
+
+it('auditions the score anchor and BPM without a video-level pulse before it', async () => {
+  await renderPanel({bar1Seconds:7,countInBars:1,preroll:true}, false, {
+    initialMetronomeAnchorSeconds: 7,
+    lessonMetronome: {bpm: 120, anchorSeconds: 0},
+    score: {...SCORE, initialTempo: 151},
+  });
+  expect(stub.clickGrid.length).toBeGreaterThan(1);
+  expect(stub.clickGrid[0]).toBe(7);
+  expect(stub.clickGrid.every(t => t >= 7)).toBe(true);
+  expect(stub.clickGrid[1]-stub.clickGrid[0]).toBeCloseTo(60/151, 8);
 });

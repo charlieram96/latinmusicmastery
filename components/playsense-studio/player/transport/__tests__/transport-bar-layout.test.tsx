@@ -46,3 +46,28 @@ it('derives BPM from speed and resets both controls to the score reference',()=>
  act(()=>host.querySelector<HTMLButtonElement>('[aria-label="Increase tempo"]')!.click());
  expect(rate).toHaveBeenLastCalledWith(181/120);
 });
+
+it('sets video loop endpoints at the playhead and reflects the shared staff range', () => {
+ const onSetLoopA = vi.fn(), onSetLoopB = vi.fn(), onToggleLoop = vi.fn();
+ act(() => root.render(<TransportBar {...base} onSetLoopA={onSetLoopA} onSetLoopB={onSetLoopB} onToggleLoop={onToggleLoop}/>));
+ const button = (name: string) => host.querySelector(`[aria-label="${name}"]`) as HTMLButtonElement;
+ expect(button('Set loop end (B)').disabled).toBe(true);
+ act(() => button('Set loop start (A)').click());
+ expect(onSetLoopA).toHaveBeenCalledWith(5);
+ act(() => root.render(<TransportBar {...base} currentSeconds={8} loopA={5} loopB={10} loopEnabled onSetLoopA={onSetLoopA} onSetLoopB={onSetLoopB} onToggleLoop={onToggleLoop}/>));
+ expect(button('Set loop start (A)').getAttribute('aria-pressed')).toBe('true');
+ expect(button('Set loop end (B)').getAttribute('aria-pressed')).toBe('true');
+ act(() => button('Set loop end (B)').click());
+ expect(onSetLoopB).toHaveBeenCalledWith(8);
+ act(() => (host.querySelector('[title="Loop on"]') as HTMLButtonElement).click());
+ expect(onToggleLoop).toHaveBeenCalledOnce();
+});
+
+it('exposes manual metronome on/off without opening the tempo menu',()=>{
+ const onClickOnChange=vi.fn();
+ act(()=>root.render(<TransportBar {...base} clickOn={true} onClickOnChange={onClickOnChange}/>));
+ const toggle=host.querySelector<HTMLButtonElement>('[aria-label="Turn metronome off"]')!;
+ expect(toggle).toBeTruthy();
+ act(()=>{toggle.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));toggle.click();});
+ expect(onClickOnChange).toHaveBeenCalledWith(false);
+});

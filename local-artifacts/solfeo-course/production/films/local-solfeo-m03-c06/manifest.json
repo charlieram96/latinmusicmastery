@@ -1,0 +1,1613 @@
+{
+  "classId": "local-solfeo-m03-c06",
+  "duration": 458.483542,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Número y especie de los intervalos",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 25.333333,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "intervalo",
+      "soundEvents": []
+    },
+    {
+      "start": 25.333333,
+      "end": 42.733333,
+      "kind": "notation",
+      "title": "Segunda: Do-Re · Tercera: Do-Mi · Cuarta: Do-Fa",
+      "sourceTopic": "intervalo",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Segunda: Do-Re · Tercera: Do-Mi · Cuarta: Do-Fa",
+            "events": [
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "D4",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "E4",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "F4",
+                "dur": 1
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "intervalo",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "intervalo"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 42.733333,
+      "end": 64.955555,
+      "kind": "notation",
+      "title": "Quinta: Do-Sol · Sexta: Do-La · Séptima: Do-Si · Octava: Do-Do",
+      "sourceTopic": "intervalo",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 83,
+        "rows": [
+          {
+            "title": "Quinta: Do-Sol · Sexta: Do-La · Séptima: Do-Si · Octava: Do-Do",
+            "events": [
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "A4",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "B4",
+                "dur": 1
+              },
+              {
+                "pitch": "C4",
+                "dur": 1
+              },
+              {
+                "pitch": "C5",
+                "dur": 1
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "intervalo",
+        "rowHeights": [
+          83
+        ],
+        "sourcePageId": "intervalo"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 15.4,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 17.8,
+          "duration": 2.207999999999999,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 64.955555,
+      "end": 87.06666600000001,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "intervalo",
+      "soundEvents": []
+    },
+    {
+      "start": 87.06666600000001,
+      "end": 98.79202000000001,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "intervalo",
+      "soundEvents": []
+    },
+    {
+      "start": 98.79202000000001,
+      "end": 120.68781200000001,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-0",
+      "soundEvents": []
+    },
+    {
+      "start": 120.68781200000001,
+      "end": 132.687812,
+      "kind": "notation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-0",
+      "diagram": {
+        "type": "diagram",
+        "kind": "interval-atlas-paths",
+        "height": 440,
+        "cards": [
+          {
+            "number": 1,
+            "quality": "justo",
+            "semitones": 0,
+            "distance": "0 S",
+            "examples": [
+              [
+                "C4",
+                "C4"
+              ],
+              [
+                "D4",
+                "D4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D4"
+            ]
+          },
+          {
+            "number": 1,
+            "quality": "aumentado",
+            "semitones": 1,
+            "distance": "1 S",
+            "examples": [
+              [
+                "C4",
+                "C#4"
+              ],
+              [
+                "D4",
+                "D#4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4"
+            ]
+          },
+          {
+            "number": 2,
+            "quality": "disminuida",
+            "semitones": 0,
+            "distance": "0 S",
+            "examples": [
+              [
+                "C4",
+                "Dbb4"
+              ],
+              [
+                "D4",
+                "Ebb4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "Ebb4"
+            ]
+          },
+          {
+            "number": 2,
+            "quality": "menor",
+            "semitones": 1,
+            "distance": "1 S",
+            "examples": [
+              [
+                "C4",
+                "Db4"
+              ],
+              [
+                "D4",
+                "Eb4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "Eb4"
+            ]
+          }
+        ],
+        "_sourcePage": "atlas-intervalos-0",
+        "sourcePageId": "flow-cont-40"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "D4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "D#4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "D4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 4
+        },
+        {
+          "pitch": "Ebb4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 5
+        },
+        {
+          "pitch": "D4",
+          "start": 4.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 6
+        },
+        {
+          "pitch": "Eb4",
+          "start": 5.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 7
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 132.687812,
+      "end": 149.316333,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-0",
+      "soundEvents": []
+    },
+    {
+      "start": 149.316333,
+      "end": 171.212125,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-1",
+      "soundEvents": []
+    },
+    {
+      "start": 171.212125,
+      "end": 183.212125,
+      "kind": "notation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "interval-atlas-paths",
+        "height": 440,
+        "cards": [
+          {
+            "number": 2,
+            "quality": "mayor",
+            "semitones": 2,
+            "distance": "1 T",
+            "examples": [
+              [
+                "C4",
+                "D4"
+              ],
+              [
+                "D4",
+                "E4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4"
+            ]
+          },
+          {
+            "number": 2,
+            "quality": "aumentada",
+            "semitones": 3,
+            "distance": "1 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "D#4"
+              ],
+              [
+                "D4",
+                "E#4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "E#4"
+            ]
+          },
+          {
+            "number": 3,
+            "quality": "disminuida",
+            "semitones": 2,
+            "distance": "1 T",
+            "examples": [
+              [
+                "C4",
+                "Ebb4"
+              ],
+              [
+                "D4",
+                "Fb4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "Fb4"
+            ]
+          },
+          {
+            "number": 3,
+            "quality": "menor",
+            "semitones": 3,
+            "distance": "1 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "Eb4"
+              ],
+              [
+                "D4",
+                "F4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4"
+            ]
+          }
+        ],
+        "_sourcePage": "atlas-intervalos-1",
+        "sourcePageId": "flow-cont-41"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "E4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "D4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "E#4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "D4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 4
+        },
+        {
+          "pitch": "Fb4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 5
+        },
+        {
+          "pitch": "D4",
+          "start": 4.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 6
+        },
+        {
+          "pitch": "F4",
+          "start": 5.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 7
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 183.212125,
+      "end": 199.840646,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-1",
+      "soundEvents": []
+    },
+    {
+      "start": 199.840646,
+      "end": 221.736438,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-2",
+      "soundEvents": []
+    },
+    {
+      "start": 221.736438,
+      "end": 233.736438,
+      "kind": "notation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "interval-atlas-paths",
+        "height": 440,
+        "cards": [
+          {
+            "number": 3,
+            "quality": "mayor",
+            "semitones": 4,
+            "distance": "2 T",
+            "examples": [
+              [
+                "C4",
+                "E4"
+              ],
+              [
+                "D4",
+                "F#4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4"
+            ]
+          },
+          {
+            "number": 3,
+            "quality": "aumentada",
+            "semitones": 5,
+            "distance": "2 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "E#4"
+              ],
+              [
+                "D4",
+                "F##4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "F##4"
+            ]
+          },
+          {
+            "number": 4,
+            "quality": "disminuida",
+            "semitones": 4,
+            "distance": "2 T",
+            "examples": [
+              [
+                "C4",
+                "Fb4"
+              ],
+              [
+                "D4",
+                "Gb4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "Gb4"
+            ]
+          },
+          {
+            "number": 4,
+            "quality": "justa",
+            "semitones": 5,
+            "distance": "2 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "F4"
+              ],
+              [
+                "D4",
+                "G4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4"
+            ]
+          }
+        ],
+        "_sourcePage": "atlas-intervalos-2",
+        "sourcePageId": "flow-cont-42"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "F#4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "D4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "F##4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "D4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 4
+        },
+        {
+          "pitch": "Gb4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 5
+        },
+        {
+          "pitch": "D4",
+          "start": 4.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 6
+        },
+        {
+          "pitch": "G4",
+          "start": 5.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 7
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 233.736438,
+      "end": 250.364959,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-2",
+      "soundEvents": []
+    },
+    {
+      "start": 250.364959,
+      "end": 272.260751,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-3",
+      "soundEvents": []
+    },
+    {
+      "start": 272.260751,
+      "end": 284.260751,
+      "kind": "notation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-3",
+      "diagram": {
+        "type": "diagram",
+        "kind": "interval-atlas-paths",
+        "height": 440,
+        "cards": [
+          {
+            "number": 4,
+            "quality": "aumentada",
+            "semitones": 6,
+            "distance": "3 T",
+            "examples": [
+              [
+                "C4",
+                "F#4"
+              ],
+              [
+                "D4",
+                "G#4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4"
+            ]
+          },
+          {
+            "number": 5,
+            "quality": "disminuida",
+            "semitones": 6,
+            "distance": "3 T",
+            "examples": [
+              [
+                "C4",
+                "Gb4"
+              ],
+              [
+                "D4",
+                "Ab4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "Ab4"
+            ]
+          },
+          {
+            "number": 5,
+            "quality": "justa",
+            "semitones": 7,
+            "distance": "3 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "G4"
+              ],
+              [
+                "D4",
+                "A4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4"
+            ]
+          },
+          {
+            "number": 5,
+            "quality": "aumentada",
+            "semitones": 8,
+            "distance": "4 T",
+            "examples": [
+              [
+                "C4",
+                "G#4"
+              ],
+              [
+                "D4",
+                "A#4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4"
+            ]
+          }
+        ],
+        "_sourcePage": "atlas-intervalos-3",
+        "sourcePageId": "flow-cont-43"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "G#4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "D4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "Ab4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "D4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 4
+        },
+        {
+          "pitch": "A4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 5
+        },
+        {
+          "pitch": "D4",
+          "start": 4.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 6
+        },
+        {
+          "pitch": "A#4",
+          "start": 5.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 7
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 284.260751,
+      "end": 300.889272,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-3",
+      "soundEvents": []
+    },
+    {
+      "start": 300.889272,
+      "end": 322.785064,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-4",
+      "soundEvents": []
+    },
+    {
+      "start": 322.785064,
+      "end": 334.785064,
+      "kind": "notation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-4",
+      "diagram": {
+        "type": "diagram",
+        "kind": "interval-atlas-paths",
+        "height": 440,
+        "cards": [
+          {
+            "number": 6,
+            "quality": "disminuida",
+            "semitones": 7,
+            "distance": "3 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "Abb4"
+              ],
+              [
+                "D4",
+                "Bbb4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "Bbb4"
+            ]
+          },
+          {
+            "number": 6,
+            "quality": "menor",
+            "semitones": 8,
+            "distance": "4 T",
+            "examples": [
+              [
+                "C4",
+                "Ab4"
+              ],
+              [
+                "D4",
+                "Bb4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "Bb4"
+            ]
+          },
+          {
+            "number": 6,
+            "quality": "mayor",
+            "semitones": 9,
+            "distance": "4 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "A4"
+              ],
+              [
+                "D4",
+                "B4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "B4"
+            ]
+          },
+          {
+            "number": 6,
+            "quality": "aumentada",
+            "semitones": 10,
+            "distance": "5 T",
+            "examples": [
+              [
+                "C4",
+                "A#4"
+              ],
+              [
+                "D4",
+                "B#4"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "B4",
+              "B#4"
+            ]
+          }
+        ],
+        "_sourcePage": "atlas-intervalos-4",
+        "sourcePageId": "flow-cont-44"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "Bbb4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "D4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "Bb4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "D4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 4
+        },
+        {
+          "pitch": "B4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 5
+        },
+        {
+          "pitch": "D4",
+          "start": 4.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 6
+        },
+        {
+          "pitch": "B#4",
+          "start": 5.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 7
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 334.785064,
+      "end": 351.41358499999996,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-4",
+      "soundEvents": []
+    },
+    {
+      "start": 351.41358499999996,
+      "end": 373.309377,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-5",
+      "soundEvents": []
+    },
+    {
+      "start": 373.309377,
+      "end": 385.309377,
+      "kind": "notation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-5",
+      "diagram": {
+        "type": "diagram",
+        "kind": "interval-atlas-paths",
+        "height": 440,
+        "cards": [
+          {
+            "number": 7,
+            "quality": "disminuida",
+            "semitones": 9,
+            "distance": "4 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "Bbb4"
+              ],
+              [
+                "D4",
+                "Cb5"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "Cb5"
+            ]
+          },
+          {
+            "number": 7,
+            "quality": "menor",
+            "semitones": 10,
+            "distance": "5 T",
+            "examples": [
+              [
+                "C4",
+                "Bb4"
+              ],
+              [
+                "D4",
+                "C5"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "B4",
+              "C5"
+            ]
+          },
+          {
+            "number": 7,
+            "quality": "mayor",
+            "semitones": 11,
+            "distance": "5 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "B4"
+              ],
+              [
+                "D4",
+                "C#5"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "B4",
+              "C5",
+              "C#5"
+            ]
+          },
+          {
+            "number": 7,
+            "quality": "aumentada",
+            "semitones": 12,
+            "distance": "6 T",
+            "examples": [
+              [
+                "C4",
+                "B#4"
+              ],
+              [
+                "D4",
+                "C##5"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "B4",
+              "C5",
+              "C#5",
+              "C##5"
+            ]
+          }
+        ],
+        "_sourcePage": "atlas-intervalos-5",
+        "sourcePageId": "flow-cont-45"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "Cb5",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "D4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "C5",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "D4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 4
+        },
+        {
+          "pitch": "C#5",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 5
+        },
+        {
+          "pitch": "D4",
+          "start": 4.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 6
+        },
+        {
+          "pitch": "C##5",
+          "start": 5.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 7
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 385.309377,
+      "end": 401.93789799999996,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-5",
+      "soundEvents": []
+    },
+    {
+      "start": 401.93789799999996,
+      "end": 423.83369,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-6",
+      "soundEvents": []
+    },
+    {
+      "start": 423.83369,
+      "end": 435.83369,
+      "kind": "notation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-6",
+      "diagram": {
+        "type": "diagram",
+        "kind": "interval-atlas-paths",
+        "height": 330,
+        "cards": [
+          {
+            "number": 8,
+            "quality": "disminuida",
+            "semitones": 11,
+            "distance": "5 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "Cb5"
+              ],
+              [
+                "D4",
+                "Db5"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "B4",
+              "C5",
+              "Db5"
+            ]
+          },
+          {
+            "number": 8,
+            "quality": "justa",
+            "semitones": 12,
+            "distance": "6 T",
+            "examples": [
+              [
+                "C4",
+                "C5"
+              ],
+              [
+                "D4",
+                "D5"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "B4",
+              "C5",
+              "C#5",
+              "D5"
+            ]
+          },
+          {
+            "number": 8,
+            "quality": "aumentada",
+            "semitones": 13,
+            "distance": "6 T + 1 S",
+            "examples": [
+              [
+                "C4",
+                "C#5"
+              ],
+              [
+                "D4",
+                "D#5"
+              ]
+            ],
+            "path": [
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "B4",
+              "C5",
+              "C#5",
+              "D5",
+              "D#5"
+            ]
+          }
+        ],
+        "_sourcePage": "atlas-intervalos-6",
+        "sourcePageId": "flow-cont-46"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "Db5",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "D4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "D5",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "D4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 4
+        },
+        {
+          "pitch": "D#5",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 5
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 435.83369,
+      "end": 452.46221099999997,
+      "kind": "explanation",
+      "title": "Número y especie de los intervalos",
+      "sourceTopic": "atlas-intervalos-6",
+      "soundEvents": []
+    },
+    {
+      "start": 452.46221099999997,
+      "end": 458.46221099999997,
+      "kind": "completion",
+      "title": "¡Sigues progresando!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

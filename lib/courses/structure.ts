@@ -3,6 +3,8 @@
 // No React or Supabase imports so everything here is unit-testable.
 
 export interface LessonSidebarClass {
+  /** Explicit route for local previews; defaults to the student lesson route. */
+  href?: string
   id: string
   title: string
   totalItems: number
@@ -11,6 +13,7 @@ export interface LessonSidebarClass {
 }
 
 export interface LessonSidebarSection {
+  href?: string
   id: string
   title: string
   description?: string | null

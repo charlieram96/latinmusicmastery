@@ -6,6 +6,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 // The player owns the box the "your turn" overlay must cover (its full-bleed
 // workspace), so the stub renders whatever overlay it is handed inside a
 // marked box and lets the test end the demo.
+const learning = vi.hoisted(() => ({ mode: 'classic' }))
+vi.mock('@/components/learning-mode/store', () => ({ useLearningMode: () => learning.mode }))
 const restartVideo = vi.fn()
 vi.mock('@/components/playsense-studio/player/playsense-studio-player', () => ({
   PlaysenseStudioPlayer: (props: { overlay?: React.ReactNode | ((ctx: { restart: () => void }) => React.ReactNode); onEnded?: () => void }) => (
@@ -15,7 +17,8 @@ vi.mock('@/components/playsense-studio/player/playsense-studio-player', () => ({
     </div>
   ),
 }))
-vi.mock('../score-exercise-game', () => ({ ScoreExerciseGame: () => <div data-testid="game" /> }))
+vi.mock('../lesson-video-player', () => ({LessonVideoPlayer: () => <div data-testid="watch-video-only" />}))
+vi.mock('../score-exercise-game', () => ({ ScoreExerciseGame: ({score}: {score: unknown}) => <div data-testid="game" data-score={JSON.stringify(score)} /> }))
 vi.mock('@/components/language-provider', () => ({ useTranslation: () => ({ t: (k: string) => k }) }))
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -38,6 +41,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount())
   host.remove()
+  learning.mode = 'classic'
 })
 
 const score = { schemaVersion: 1, title: 'T', sourceFormat: 'native', initialTempo: 120,
@@ -49,7 +53,7 @@ const endDemo = () => act(() => { host.querySelector<HTMLButtonElement>('[data-t
 const button = (label: string) => host.querySelector<HTMLButtonElement>(`[data-testid="turn-cta"] button[aria-label="${label}"], [data-testid="turn-cta"] button[data-action="${label}"]`)!
 
 function mount() {
-  act(() => { root.render(<ExerciseView classItemId="c" videoUrl="v.mp4" score={score} tracks={[]} activeTimeMap={null} exercise={exercise} playerLayout="split" />) })
+  act(() => { root.render(<ExerciseView classItemId="c" videoUrl="v.mp4" score={score} tracks={[]} activeTimeMap={null} exercise={exercise} playerLayout="split" sections={[{score,tracks:[],activeTimeMap:null}] as never} />) })
 }
 
 it('shows the your-turn call to action inside the player box once the demo ends', () => {
@@ -91,7 +95,7 @@ it('in a lesson, puts the Watch message and Your turn in the action bar', async 
     const claims = useActionClaims()
     const [bar, setBar] = React.useState<HTMLElement | null>(null)
     return <LessonFrameProvider value={{ actionHost: bar, topClaim: claims.top, claim: claims.claim, advance: () => {}, teacherName: 'Livan' }}>
-      <ExerciseView classItemId="c" videoUrl="v.mp4" score={score} tracks={[]} activeTimeMap={null} exercise={exercise} playerLayout="split" teacherName="Livan" />
+      <ExerciseView classItemId="c" videoUrl="v.mp4" score={score} tracks={[]} activeTimeMap={null} exercise={exercise} playerLayout="split" sections={[{score,tracks:[],activeTimeMap:null}] as never} teacherName="Livan" />
       <footer data-bar ref={setBar} />
     </LessonFrameProvider>
   }
@@ -109,4 +113,42 @@ it('outside a lesson, shows the Watch message and Your turn under the player', (
   expect(inline.textContent).toContain('dashboard.classViewer.lessonMode.watch.titleNoTeacher')
   act(() => { inline.querySelector<HTMLButtonElement>('[data-action="your-turn-bar"]')!.click() })
   expect(host.querySelector('[data-testid="game"]')).not.toBeNull()
+})
+
+it('does not borrow the exercise video for Watch', () => {
+  act(() => root.render(<ExerciseView classItemId="c" videoUrl={null} score={score} tracks={[]} activeTimeMap={null} exercise={exercise}
+    exerciseVideo={{ url: '/practice.mp4', startSeconds: 3, trimOutSeconds: null, timeMap: null }} />))
+  expect(host.querySelector('[data-testid="player"]')).toBeNull()
+  expect(host.querySelector('[data-testid="game"]')).not.toBeNull()
+})
+
+it('does not borrow the exercise score or BPM when Watch has no score', () => {
+  act(() => root.render(<ExerciseView classItemId="c" videoUrl="/watch.mp4" score={score} tracks={[]} activeTimeMap={null} exercise={exercise} />))
+  expect(host.querySelector('[data-testid="watch-video-only"]')).not.toBeNull()
+  expect(host.querySelector('[data-testid="player"]')).toBeNull()
+  expect(host.querySelector('[data-testid="game"]')).toBeNull()
+})
+
+it('opens the edited exercise score directly instead of the separate Watch score', () => {
+  const edited = { ...score as object, title: 'Edited exercise', tracks: [{instrument:'perc-timbal', measures:[{number:1, voices:[{number:1, events:[
+    {kind:'rest',durationQN:1},{kind:'rest',durationQN:1},{kind:'rest',durationQN:1},
+    {kind:'note',durationQN:1,midi:61,percussion:{strokeId:'rim',staffLine:'a/4',notehead:'x'}},
+  ]}]}]}] } as never
+  act(() => root.render(<ExerciseView classItemId="c" initialPart="exercise" videoUrl="v.mp4" score={edited} tracks={[]} activeTimeMap={null} exercise={exercise} sections={[{score:{...score as object,title:'Separate Watch score'}}] as never} />))
+  expect(host.querySelector('[data-testid="player"]')).toBeNull()
+  expect(JSON.parse(host.querySelector('[data-testid="game"]')!.getAttribute('data-score')!)).toEqual(edited)
+})
+
+it('puts both real demo actions in Timbalito’s card in kids mode', () => {
+ learning.mode = 'kids'
+ mount()
+ endDemo()
+ expect(cta()?.hasAttribute('data-timbalito-completion')).toBe(true)
+ expect(cta()?.querySelector('[aria-label="Timbalito"]')).not.toBeNull()
+ act(() => { button('watch-again').click() })
+ expect(restartVideo).toHaveBeenCalled()
+ expect(cta()).toBeNull()
+ endDemo()
+ act(() => { button('your-turn').click() })
+ expect(host.querySelector('[data-testid="game"]')).not.toBeNull()
 })

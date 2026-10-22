@@ -1,4 +1,7 @@
 'use client';
+import { ContinuousScoreGaps } from './continuous-score-gaps';
+import { SiblingSectionScores } from './sibling-section-scores';
+import type { LaneSection } from '../sync/sections-lane';
 import { installSymbolEditing } from '@/lib/playsense-studio/notation/symbol-editing';
 import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
 
@@ -55,6 +58,7 @@ import {
 } from './editable-measure-strip';
 import { RepeatPopover } from './measure/repeat-popover';
 import { GapMenu } from './measure/gap-menu';
+import { EmptyMeasureText } from './measure/empty-measure-text';
 import { BarPopover } from './measure/bar-popover';
 import { QuantizePopover } from './measure/quantize-popover';
 import { MeasureBar } from './measure/measure-bar';
@@ -91,6 +95,7 @@ export interface IntegratedEditorMeasureTiming {
 }
 
 export interface IntegratedEditorProps {
+  sectionsContext?: { sections: LaneSection[]; activeSectionId: string; onSelectSection: (id: string) => void };
   exerciseTempo?: boolean;
   pageWorkspace?: boolean;
   score: ScoreDocument;
@@ -157,10 +162,11 @@ export interface IntegratedEditorProps {
 
 /** A repeat's closing bar (with dots) replaces any final bar on that measure. */
 function isRepeatEnd(measure: Measure): boolean {
-  return !!measure.repeat && measure.repeat.offset === measure.repeat.length - 1;
+  return !!measure.repeat && measure.repeat.offset === measure.repeat.length - 1 && !(measure.endBarline==='final'&&measure.repeat.pass===measure.repeat.count-1);
 }
 
 export const IntegratedEditor = memo(function IntegratedEditor({
+  sectionsContext,
   exerciseTempo = false,
   pageWorkspace,
   score,
@@ -225,6 +231,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   useEffect(() => { try { const saved = localStorage.getItem('lmm-note-edit-view'); if(saved === 'normal' || saved === 'expanded') setEditView(saved); } catch {} }, []);
   const changeEditView = (view: 'normal' | 'expanded') => { setEditView(view); setZoomClosing(false); setMorePop(null); try {localStorage.setItem('lmm-note-edit-view', view);} catch {} };
   const [zoom, setZoom] = useState<ZoomState | null>(null);
+  const [textMeasure,setTextMeasure]=useState<number|null>(null);
   const [zoomOrigin, setZoomOrigin] = useState<{ left: number; width: number } | null>(null);
   const [zoomClosing, setZoomClosing] = useState(false);
   // The zoomed bar's note layout (hits, beat span, line math) — a stash for
@@ -245,7 +252,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // and the effect that consumes this. Any selection the user makes by other
   // means drops the plan.
   const pendingBars = useRef<{
-    from: ScoreDocument; expectCount: number; sel: MeasureSelection; flash: boolean;
+    from: ScoreDocument; expectCount: number; sel: MeasureSelection; flash: boolean; editEmpty: boolean;
   } | null>(null);
   const selectionChanged = useCallback(() => {
     pendingBars.current = null;
@@ -377,7 +384,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // moving sync markers doesn't recompute it.
   const measureFills: MeasureFill[] = useMemo(
     () => (activeTrack
-      ? activeTrack.measures.map((m, i) => measureFill(m.voices[0]?.events ?? [], m.voices[1]?.events, tracked[i].timeSignature))
+      ? activeTrack.measures.map((m, i) => measureFill(m.voices[0]?.events ?? [], m.voices[1]?.events, tracked[i].timeSignature, m))
       : []),
     [activeTrack, tracked]
   );
@@ -392,13 +399,15 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         measureIndex: i,
         measureNumber: tracked[i].measure.number,
         repeatPass: tracked[i].measure.repeat,
-        finalBarline: isRepeatEnd(tracked[i].measure) ? false : hasFinalBarline(activeTrack.measures, i),
+        continuousBarlines: sectionsContext?.sections.some(s=>s.continuousProject),
+        repeatStart:tracked[i].measure.repeatStart, repeatEnd:tracked[i].measure.repeatEnd, volta:tracked[i].measure.volta, endBarline: tracked[i].measure.endBarline, emptyText: tracked[i].measure.emptyText,
+        finalBarline: (!isRepeatEnd(tracked[i].measure) || i === activeTrack.measures.length - 1) && hasFinalBarline(activeTrack.measures, i),
         startVideoTimeSeconds: measureTimings[i].startVideoTimeSeconds,
         endVideoTimeSeconds: measureTimings[i].endVideoTimeSeconds,
         events: tracked[i].events,
         voice2Events: tracked[i].voice2Events,
         timeSignature: tracked[i].timeSignature,
-        isFirst: i === 0,
+        isFirst: i === 0 && (!sectionsContext?.sections.some(s=>s.continuousProject) || sectionsContext.sections[0]?.sectionId === sectionsContext.activeSectionId),
         clef: tracked[i].clef,
         keyFifths: tracked[i].keyFifths,
         previousKeyFifths: tracked[i].previousKeyFifths,
@@ -409,7 +418,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       });
     }
     return out;
-  }, [activeTrack, tracked, measureTimings, measureFills]);
+  }, [activeTrack, tracked, measureTimings, measureFills, sectionsContext]);
 
   // Every staff uses the same media-time coordinates as the waveform.
   const timelineStaves = useMemo(() => instrumentStaves.map(trackIndex => {
@@ -418,16 +427,18 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     const extracted = extractTrackEvents(track, score.initialTimeSignature, score.initialKeyFifths);
     const items: MeasureStripItem[] = extracted.slice(0, measureTimings.length).map((t, i) => ({
       measureIndex: i, repeatPass: t.measure.repeat,
-      finalBarline: !isRepeatEnd(t.measure) && hasFinalBarline(track.measures, i),
+      continuousBarlines: sectionsContext?.sections.some(s=>s.continuousProject),
+      repeatStart:t.measure.repeatStart, repeatEnd:t.measure.repeatEnd, volta:t.measure.volta, endBarline: t.measure.endBarline, emptyText: t.measure.emptyText,
+      finalBarline: (!isRepeatEnd(t.measure) || i === track.measures.length - 1) && hasFinalBarline(track.measures, i),
       ...measureTimings[i], events: t.events, voice2Events: t.voice2Events,
-      timeSignature: t.timeSignature, isFirst: i === 0, clef: t.clef,
+      timeSignature: t.timeSignature, isFirst: i === 0 && (!sectionsContext?.sections.some(s=>s.continuousProject) || sectionsContext.sections[0]?.sectionId === sectionsContext.activeSectionId), clef: t.clef,
       keyFifths: t.keyFifths, previousKeyFifths: t.previousKeyFifths,
       keyChanged: t.keyChanged, clefChanged: t.clefChanged,
-      fill: measureFill(t.measure.voices[0]?.events ?? [], t.measure.voices[1]?.events, t.timeSignature),
+      fill: measureFill(t.measure.voices[0]?.events ?? [], t.measure.voices[1]?.events, t.timeSignature, t.measure),
       flag: measureTimings[i].flag ?? null,
     }));
     return { trackIndex, items };
-  }), [score, activeTrackIndex, stripItems, measureTimings, instrumentStaves.join(',')]);
+  }), [score, activeTrackIndex, stripItems, measureTimings, sectionsContext, instrumentStaves.join(',')]);
 
   // The MIDI record target measure: the selected event's measure, else the last.
   const measureCount = activeTrack?.measures.length ?? 0;
@@ -442,8 +453,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // plan still parked when the timeout fires belongs to an edit that never
   // landed: drop it, or a later undo/redo/append that happens to reach the same
   // bar count would select (and flash) these bars out of the blue.
-  const expectNewBars = useCallback((added: number, sel: MeasureSelection, flash = false) => {
-    const plan = { from: score, expectCount: measureCount + added, sel, flash };
+  const expectNewBars = useCallback((added: number, sel: MeasureSelection, flash = false, editEmpty = false) => {
+    const plan = { from: score, expectCount: measureCount + added, sel, flash, editEmpty };
     pendingBars.current = plan;
     setTimeout(() => {
       if (pendingBars.current === plan) pendingBars.current = null;
@@ -459,6 +470,12 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         selectBars(pending.sel);
         const [a, b] = selectionBounds(pending.sel)!;
         if (pending.flash) flashNewBars(a, b);
+        if (pending.editEmpty) {
+          setSelectedHeads([]);
+          setZoomOrigin(null);
+          setZoomClosing(false);
+          setZoom({ measureIndex: a, cursor: { measureIndex: a, voice: 0, index: 'end', anchor: null }, value: 'q', dots: 0, pencil: true });
+        }
         return;
       }
     }
@@ -473,9 +490,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   );
   const pasteProblem = useMemo(() => {
     if (!clipboard) return 'Copy some measures first.';
-    const index = rangeEnd !== null ? rangeEnd + 1 : measureCount;
-    return structuralEditProblem(score, { type: 'paste-measures', trackIndex: activeTrackIndex, index, clip: clipboard });
-  }, [clipboard, rangeEnd, measureCount, score, activeTrackIndex]);
+    if (rangeStart === null) return 'Select a measure first.';
+    const index = rangeStart;
+    return structuralEditProblem(score, { type: 'paste-measures', trackIndex: activeTrackIndex, index, clip: clipboard, mode: 'replace' });
+  }, [clipboard, rangeStart, score, activeTrackIndex]);
   const deleteProblem = useMemo(
     () => (rangeStart === null
       ? 'Select a measure first.'
@@ -499,20 +517,20 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   }, [score, activeTrack, activeTrackIndex, rangeStart, rangeEnd]);
 
   const insertMeasureAt = useCallback((index: number, flash = false) => {
-    expectNewBars(1, { anchor: index, focus: index }, flash);
+    expectNewBars(1, { anchor: index, focus: index }, flash, true);
     dispatch({ type: 'insert-measure', trackIndex: activeTrackIndex, index });
   }, [dispatch, activeTrackIndex, expectNewBars]);
   const copyRange = useCallback(() => {
     if (rangeStart === null) return;
     dispatch({ type: 'copy-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
   }, [dispatch, activeTrackIndex, rangeStart, rangeCount]);
-  const pasteAfterRange = useCallback(() => {
-    if (!clipboard || pasteProblem) return;
-    const index = rangeEnd !== null ? rangeEnd + 1 : measureCount;
+  const pasteAtSelection = useCallback(() => {
+    if (!clipboard || pasteProblem || rangeStart === null) return;
+    const index = rangeStart;
     const count = clipboard.measures.length;
-    expectNewBars(count, { anchor: index, focus: index + count - 1 });
-    dispatch({ type: 'paste-measures', trackIndex: activeTrackIndex, index, clip: clipboard });
-  }, [dispatch, activeTrackIndex, clipboard, pasteProblem, rangeEnd, measureCount, expectNewBars]);
+    selectBars({ anchor: index, focus: index + count - 1 });
+    dispatch({ type: 'paste-measures', trackIndex: activeTrackIndex, index, clip: clipboard, mode: 'replace' });
+  }, [dispatch, activeTrackIndex, clipboard, pasteProblem, rangeStart, selectBars]);
   const deleteRange = useCallback(() => {
     if (rangeStart === null || deleteProblem) return;
     dispatch({ type: 'delete-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
@@ -573,7 +591,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       // Aim for ~140 px per measure so notes are comfortably clickable.
       const targetPps = 140 / spanSec;
       const centerSec = (item.startVideoTimeSeconds + item.endVideoTimeSeconds) / 2;
-      const nextScroll = Math.max(0, centerSec * targetPps - viewportWidth / 2);
+      const nextScroll = Math.max(-128, centerSec * targetPps - viewportWidth / 2);
       onRequestZoom(targetPps, nextScroll);
     },
     [stripItems, viewportWidth, onRequestZoom]
@@ -585,7 +603,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     if (!t || viewportWidth <= 0) return false;
     const span = Math.max(0.05, t.endVideoTimeSeconds - t.startVideoTimeSeconds);
     const pps = Math.min(600, Math.max(8, (viewportWidth * 0.56) / span));
-    const scroll = Math.max(0, t.startVideoTimeSeconds * pps - (viewportWidth - span * pps) / 2);
+    const scroll = Math.max(-128, t.startVideoTimeSeconds * pps - (viewportWidth - span * pps) / 2);
     onRequestZoom(pps, scroll);
     return true;
   }, [measureTimings, viewportWidth, onRequestZoom]);
@@ -616,7 +634,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       cursor: { measureIndex: index, voice: 0, index: eventIndex ?? (zoomEvents(index, 0).length ? 0 : 'end'), anchor: null },
       value: 'q',
       dots: 0,
-      pencil: false,
+      pencil: zoomEvents(index, 0).length === 0,
     });
   }, [barRect, measureTimings, selectBars, zoomEvents]);
 
@@ -764,7 +782,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // Duration/dots shown reflect the selected note when there is one, else the
   // pending value/dots the zoom will write next (ZoomState.value/dots).
   const zoomValue: NoteValue = zoomCurrentEvent ? writtenValue(zoomCurrentEvent) ?? zoom?.value ?? 'q' : zoom?.value ?? 'q';
-  const zoomDots: 0 | 1 | 2 = zoomCurrentEvent ? eventDots(zoomCurrentEvent) : zoom?.dots ?? 0;
+  const zoomDots: 0 | 1 | 2 | 3 = zoomCurrentEvent ? eventDots(zoomCurrentEvent) : zoom?.dots ?? 0;
   const zoomTupletHere = zoomCurrentEvent ? eventTuplet(zoomCurrentEvent) : null;
 
   const zoomToolbarPercussion: NoteToolbarPercussion | null = useMemo(() => {
@@ -815,7 +833,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       const left = t.startVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
       const right = t.endVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
       if (left < 0 || right > viewportWidth) {
-        onRequestZoom(pixelsPerSecond, Math.max(0, t.startVideoTimeSeconds * pixelsPerSecond - viewportWidth / 2 + (right - left) / 2));
+        onRequestZoom(pixelsPerSecond, Math.max(-128, t.startVideoTimeSeconds * pixelsPerSecond - viewportWidth / 2 + (right - left) / 2));
       }
     }
   };
@@ -829,7 +847,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     onSelection: selectBars,
     onOpen: openMeasure,
     onCopy: copyWithNotice,
-    onPaste: pasteAfterRange,
+    onPaste: pasteAtSelection,
     onDuplicate: duplicateRange,
     onDelete: deleteRange,
     onLoop: onLoopMeasures,
@@ -963,28 +981,37 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       {editorTab === 'staff' && (
         <>
           <div ref={staffWrapRef} className="relative min-h-0 flex-1" style={useDesk ? { minHeight: 420, scrollMarginTop: 80 } : undefined} data-testid="staff-wrap">
-            {pageWorkspace === false && !zoom && <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2" data-testid="sync-measure-controls">
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2" data-testid="sync-measure-controls" data-score-preserve-selection>
               <span className="text-xs font-medium">{st("Measures")}</span>
               <button type="button" className="rounded border px-2 py-1 text-xs hover:bg-muted" disabled={!measureCount}
-                onClick={() => { const first = selectedHeads[0]?.measure ?? 0; setSelectedHeads([]); selectBars({anchor:first,focus:first}); }}>
+                onClick={() => { const first = zoom?.measureIndex ?? selectedHeads[0]?.measure ?? 0; setZoom(null); setSelectedHeads([]); selectBars({anchor:first,focus:first}); }}>
                 {st("Select measures")}
               </button>
               {bounds && <>
                 <label className="text-xs">{st("From measure")} <select aria-label={st("From measure")} value={bounds[0]} className="rounded border bg-background p-1"
-                  onChange={e => { const n = Number(e.target.value); selectBars({anchor:n,focus:Math.max(n,bounds[1])}); }}>
+                  onChange={e => { const n = Number(e.target.value); setZoom(null); selectBars({anchor:n,focus:Math.max(n,bounds[1])}); }}>
                   {Array.from({length:measureCount},(_,i)=><option key={i} value={i}>{i+1}</option>)}
                 </select></label>
                 <label className="text-xs">{st("To measure")} <select aria-label={st("To measure")} value={bounds[1]} className="rounded border bg-background p-1"
-                  onChange={e => { const n = Number(e.target.value); selectBars({anchor:Math.min(n,bounds[0]),focus:n}); }}>
+                  onChange={e => { const n = Number(e.target.value); setZoom(null); selectBars({anchor:Math.min(n,bounds[0]),focus:n}); }}>
                   {Array.from({length:measureCount},(_,i)=><option key={i} value={i}>{i+1}</option>)}
                 </select></label>
               </>}
               {[
-                {label:"Add measure before",index:bounds?.[0] ?? 0},
-                {label:"Add measure after",index:bounds ? bounds[1]+1 : measureCount},
+                {label:"Add measure before",index:zoom?.measureIndex ?? bounds?.[0] ?? 0},
+                {label:"Add measure after",index:zoom ? zoom.measureIndex + 1 : bounds ? bounds[1]+1 : measureCount},
               ].map(({label,index}) => <button key={label} type="button" className="rounded border px-2 py-1 text-xs hover:bg-muted disabled:opacity-40"
                 disabled={!!gapProblems[index]} title={st(gapProblems[index] ?? label)} onClick={() => insertMeasureAt(index,true)}>{st(label)}</button>)}
-            </div>}
+              <button type="button" className="rounded border px-2 py-1 text-xs hover:bg-muted disabled:opacity-40"
+                disabled={zoom===null && !bounds && !selectedHeads.length}
+                onClick={()=>setTextMeasure(zoom?.measureIndex ?? bounds?.[0] ?? selectedHeads[0]?.measure ?? 0)}>{st('Measure text')}</button>
+            </div>
+            {textMeasure!==null && activeTrack?.measures[textMeasure] && (
+              activeTrack.measures[textMeasure].voices.some(v=>v.events.length>0)
+                ? <div data-score-preserve-selection className="p-2 text-xs">{st('Text replaces the automatic rest in an empty measure.')} <button onClick={()=>setTextMeasure(null)}>{st('Close')}</button></div>
+                : <EmptyMeasureText key={`${activeTrackIndex}:${textMeasure}`} current={activeTrack.measures[textMeasure].emptyText}
+                    onClose={()=>setTextMeasure(null)} onSave={emptyText=>dispatch({type:'set-measure-props',trackIndex:activeTrackIndex,measureIndex:textMeasure,props:{emptyText}})}/>
+            )}
             {!zoom && (pageWorkspace === false || (barPos && bounds)) && (
               <MeasureBar
                 ref={measureBarRef}
@@ -999,6 +1026,12 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 flag={measureTimings.slice(actionBounds[0], actionBounds[1] + 1).find((t) => t.flag)?.flag ?? null}
                 flexInfo={flexInfo?.(actionBounds[0], actionBounds[1]) ?? null}
                 repeatCount={repeatGroupAtRange?.count ?? null}
+                onUnlinkRepeat={() => {
+                  if (repeatGroupAtRange) dispatch({type:'unlink-repeat',trackIndex:activeTrackIndex,id:repeatGroupAtRange.id});
+                }}
+                onRemoveRepeat={() => {
+                  if (repeatGroupAtRange) dispatch({type:'set-repeat-count',trackIndex:activeTrackIndex,id:repeatGroupAtRange.id,count:1});
+                }}
                 looping={barLooping}
                 canLoop={!!onLoopMeasures}
                 problems={{ dup: dupProblem, paste: pasteProblem, clear: null, del: deleteProblem }}
@@ -1007,7 +1040,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onRepeat={(anchor) => setRepeatPop({ anchor })}
                 onDup={duplicateRange}
                 onCopy={copyWithNotice}
-                onPaste={pasteAfterRange}
+                onPaste={pasteAtSelection}
                 onBar={(anchor) => setBarPop({ anchor })}
                 onClear={clearRange}
                 onDelete={deleteRange}
@@ -1016,7 +1049,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               />
             )}
             <div className={useDesk ? "h-full min-h-96" : ""} style={{ visibility: zoom && editView === 'expanded' ? 'hidden' : undefined }}>
-              <ScoreDesk exerciseTempo={exerciseTempo} onTempoOverride={bpm=>dispatch({type:'set-playback-tempo',bpm})} onUseScoreTempo={()=>dispatch({type:'set-score-meta',initialTempo:score.initialTempo})} linear={!useDesk} onPan={onScrollByPx} hasMeasureSelection={selectedBars.length>0 || measureRange !== null} tools={<>{viewControl}{utilities}{stripCorner}</>} editingTools={zoom && editView === 'normal' ? <div data-score-preserve-selection className="flex flex-wrap items-center gap-2 border-b border-border bg-card p-2" data-testid="normal-note-editor">{noteTools}<button type="button" className="st-chip" onClick={()=>setZoom({...zoom,pencil:!zoom.pencil})} aria-pressed={zoom.pencil}>{st("Pencil")}</button><button type="button" className="st-chip" onClick={finishZoomClose}>{st("Done")}</button><span className="text-xs text-muted-foreground">{st("Measure")} {zoom.measureIndex+1}</span></div> : undefined} onNoteInput={normalInput} hasSelection={selectedHeads.length > 0} onDelete={deleteSelectedHeads}
+              <ScoreDesk exerciseTempo={exerciseTempo} onTempoOverride={bpm=>dispatch({type:'set-playback-tempo',bpm})} onUseScoreTempo={()=>dispatch({type:'set-score-meta',initialTempo:score.initialTempo})} linear={!useDesk} onPan={onScrollByPx} hasMeasureSelection={selectedBars.length>0 || measureRange !== null || zoom !== null} tools={<>{viewControl}{utilities}{stripCorner}</>} editingTools={zoom && editView === 'normal' ? <div data-score-preserve-selection className="flex flex-wrap items-center gap-2 border-b border-border bg-card p-2" data-testid="normal-note-editor">{noteTools}<button type="button" className="st-chip" onClick={()=>setZoom({...zoom,pencil:!zoom.pencil})} aria-pressed={zoom.pencil}>{st("Pencil")}</button><button type="button" className="st-chip" onClick={finishZoomClose}>{st("Done")}</button><span className="text-xs text-muted-foreground">{st("Measure")} {zoom.measureIndex+1}</span></div> : undefined} onNoteInput={normalInput} onOpenHit={hit => {
+                  setActiveTrackIndex(hit.track);
+                  setZoomClosing(false);
+                  setZoom({ measureIndex: hit.measure, cursor: { measureIndex: hit.measure, voice: (hit.voice ?? 0) as 0 | 1, index: hit.event ?? 'end', anchor: null }, value: 'q', dots: 0, pencil: hit.kind === 'measure' });
+                }} hasSelection={selectedHeads.length > 0} onDelete={deleteSelectedHeads}
                 onWrite={symbol => {
                   const command = PALETTE_COMMANDS[symbol];
                   if (command?.kind !== 'rhythm') return;
@@ -1035,7 +1072,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 }}
                 onApply={symbol => {
                   const refs = selectedHeads.map(h => ({trackIndex:h.track,measureIndex:h.measure,voice:(h.voice ?? 0) as 0 | 1,eventIndex:h.event ?? 0}));
-                  const bars = selectedBars.length ? selectedBars.map(h=>({trackIndex:h.track,measureIndex:h.measure})) : measureRange ? Array.from({length: Math.abs(measureRange.focus-measureRange.anchor)+1}, (_,i)=>({trackIndex:activeTrackIndex,measureIndex:Math.min(measureRange.focus,measureRange.anchor)+i})) : [];
+                  const bars = selectedBars.length ? selectedBars.map(h=>({trackIndex:h.track,measureIndex:h.measure})) : measureRange ? Array.from({length: Math.abs(measureRange.focus-measureRange.anchor)+1}, (_,i)=>({trackIndex:activeTrackIndex,measureIndex:Math.min(measureRange.focus,measureRange.anchor)+i})) : zoom ? [{trackIndex:activeTrackIndex,measureIndex:zoom.measureIndex}] : [];
                   const plan = paletteActions(symbol,score,refs,bars);
                   if (plan.error) return plan.error;
                   const action: EditorAction = {type:'apply-palette-actions',actions:plan.actions};
@@ -1056,7 +1093,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 }} >
             <div className="flex flex-col" data-testid="linear-score">
             {timelineStaves.map(({ trackIndex, items }) => <div key={trackIndex}
-              data-timeline-staff={trackIndex}
+              className="relative" data-timeline-staff={trackIndex}
               onPointerDownCapture={() => setActiveTrackIndex(trackIndex)}>
             {timelineStaves.length > 1 && <div className="px-3 text-xs text-muted-foreground">{score.tracks[trackIndex].displayName} · {score.tracks[trackIndex].staffNumber ?? trackIndex + 1}</div>}
             <EditableMeasureStrip onNoteInput={normalInput}
@@ -1088,15 +1125,27 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onOpenNote={openMeasure}
               onRequestZoomTo={handleRequestZoomTo}
               onWheelZoom={(factor, anchorPx) => {
+                if (!Number.isFinite(factor) || factor <= 0) return;
                 const nextPps = Math.max(8, Math.min(600, pixelsPerSecond * factor));
+                if (nextPps === pixelsPerSecond) return;
                 const anchorSeconds = (scrollLeftPx + anchorPx) / pixelsPerSecond;
-                onRequestZoom(nextPps, Math.max(0, anchorSeconds * nextPps - anchorPx));
+                onRequestZoom(nextPps, Math.max(-128, anchorSeconds * nextPps - anchorPx));
               }}
               onScrollByPx={onScrollByPx}
               onResizeMeasures={onResizeMeasures}
               height={staffHeight}
             />
+            {sectionsContext && <ContinuousScoreGaps sections={sectionsContext.sections} trackIndex={trackIndex}
+              height={staffHeight} pixelsPerSecond={pixelsPerSecond} scrollLeftPx={scrollLeftPx} viewportWidth={viewportWidth}/>}
+            {sectionsContext && <SiblingSectionScores {...sectionsContext} trackIndex={trackIndex}
+              height={staffHeight} pixelsPerSecond={pixelsPerSecond} scrollLeftPx={scrollLeftPx} />}
             </div>)}
+            {sectionsContext && Array.from({ length: Math.max(0, ...sectionsContext.sections.map(s => s.score?.tracks.length ?? 0)) }, (_, i) => i)
+              .filter(i => !instrumentStaves.includes(i)).map(trackIndex => <div key={`other-${trackIndex}`} className="relative" style={{height:staffHeight}}>
+                <ContinuousScoreGaps sections={sectionsContext.sections} trackIndex={trackIndex} height={staffHeight} pixelsPerSecond={pixelsPerSecond} scrollLeftPx={scrollLeftPx} viewportWidth={viewportWidth}/>
+                <SiblingSectionScores {...sectionsContext} trackIndex={trackIndex} height={staffHeight}
+                  pixelsPerSecond={pixelsPerSecond} scrollLeftPx={scrollLeftPx}/>
+              </div>)}
             </div>
               </ScoreDesk>
             </div>
@@ -1182,6 +1231,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                   setRepeatPop(null);
                 }}
                 onRemove={() => {
+                  if (repeatGroupAtRange) dispatch({ type: 'set-repeat-count', trackIndex: activeTrackIndex, id: repeatGroupAtRange.id, count: 1 });
+                  setRepeatPop(null);
+                }}
+                onUnlink={() => {
                   if (repeatGroupAtRange) dispatch({ type: 'unlink-repeat', trackIndex: activeTrackIndex, id: repeatGroupAtRange.id });
                   setRepeatPop(null);
                 }}
@@ -1244,7 +1297,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 plan={(strength, stepQN) => onQuantizePlan(rangeStart, rangeEnd, strength, stepQN)}
                 onApply={(strength, stepQN) => {
                   onQuantizeApply?.(rangeStart, rangeEnd, strength, stepQN);
-                  setQuantizePop(null);
                 }}
                 onReset={() => onResetFlex?.(rangeStart, rangeEnd)}
                 onClose={() => setQuantizePop(null)}

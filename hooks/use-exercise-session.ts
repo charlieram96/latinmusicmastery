@@ -148,6 +148,9 @@ export interface UseExerciseSessionOptions {
   /** Initial click state when entering a new exercise. */
   defaultAudioMetronome?: boolean
   metronomeVolume?: number
+  metronomeClickStopSeconds?: number[]
+  metronomeClickAnchors?: import('@/lib/playsense-studio/click-anchors').ClickAnchor[]
+  metronomeOffsetSeconds?: number
   playbackRate?: number
   /**
    * Explicit backing-track URLs (course exercises: the student's selected
@@ -259,7 +262,11 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const countInBeats = exercise?.timeSignature?.[0] || 4
   const countInBars = options.countInBars ?? 1
   const metronome = useMetronome({
+    durationSeconds: exercise ? getExerciseDuration(exercise) : undefined,
     volume: options.metronomeVolume,
+    offsetSeconds: options.metronomeOffsetSeconds,
+    clickAnchors: options.metronomeClickAnchors,
+    clickStopSeconds: options.metronomeClickStopSeconds,
     bpm: exercise?.bpm || 100,
     timeSignature: exercise?.timeSignature || [4, 4],
     countInBeats,

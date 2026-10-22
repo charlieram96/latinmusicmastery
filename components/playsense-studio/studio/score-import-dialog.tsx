@@ -12,6 +12,7 @@ import { useStudioText } from '@/components/playsense-studio/studio/use-studio-t
 //
 // A selected instrument may contain several staves, kept together.
 
+import {prepareImportedInstrument} from '@/lib/playsense-studio/import-staves';
 import { selectInstrument, staffGroupIndices } from '@/lib/playsense-studio/staff-groups';
 import { FileMusic, Loader2, ScanLine, Upload } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -75,8 +76,8 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
   const [parsed, setParsed] = useState<ScoreDocument | null>(null);
   const [filename, setFilename] = useState<string>('');
   const [selectedTrack, setSelectedTrack] = useState(0);
-  const [instrumentOverride,setInstrumentOverride] = useState<Instrument|''>('');
-  const importScore = useMemo(()=>parsed && instrumentOverride ? applyInstrumentLegend(parsed,selectedTrack,instrumentOverride) : parsed,[parsed,selectedTrack,instrumentOverride]);
+  const [instrumentOverride,setInstrumentOverride] = useState<Instrument|'harp'|''>('');
+  const importScore = useMemo(()=>parsed && instrumentOverride ? prepareImportedInstrument(parsed,selectedTrack,instrumentOverride) : parsed,[parsed,selectedTrack,instrumentOverride]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [pages, setPages] = useState('1');
@@ -269,6 +270,13 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
           </DialogDescription>
         </DialogHeader>
 
+        {step === 'choose' && <label className="text-sm">{st('Instrument and notation legend')}
+          <select aria-label={st('Instrument and notation legend')} value={instrumentOverride} onChange={e=>setInstrumentOverride(e.target.value as Instrument|'harp'|'')} className="ml-2 rounded border border-border bg-background p-2">
+            <option value="">{st('Use detected instrument')}</option>
+            {IMPORT_INSTRUMENTS.map(([id,label])=><option key={id} value={id}>{st(label)}</option>)}
+            <option value="harp">{st('Harp')}</option>
+          </select>
+        </label>}
         {step === 'choose' && (
           <label
             onDragOver={(e) => {
@@ -386,9 +394,10 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
 
             <label className="block space-y-2 rounded-xl border border-border bg-primary/5 p-3 text-sm">
               <span className="font-medium">{st('Instrument and notation legend')}</span>
-              <select aria-label={st('Instrument and notation legend')} disabled={busy} value={instrumentOverride} onChange={e=>{setInstrumentOverride(e.target.value as Instrument|'');setReviewed(false);}} className="block w-full rounded-lg border border-border bg-background px-3 py-2">
+              <select aria-label={st('Instrument and notation legend')} disabled={busy} value={instrumentOverride} onChange={e=>{setInstrumentOverride(e.target.value as Instrument|'harp'|'');setReviewed(false);}} className="block w-full rounded-lg border border-border bg-background px-3 py-2">
                 <option value="">{st('Use detected instrument')} · {parsed.tracks[selectedTrack]?.instrument}</option>
                 {IMPORT_INSTRUMENTS.map(([id,label])=><option key={id} value={id}>{st(label)}</option>)}
+                <option value="harp">{st('Harp')}</option>
               </select>
               <span className="block text-xs text-muted-foreground">{st('Loads the instrument legend for new notes. Explicit imported noteheads are preserved.')}</span>
             </label>

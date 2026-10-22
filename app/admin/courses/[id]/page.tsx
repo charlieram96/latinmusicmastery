@@ -1,3 +1,4 @@
+import { localSolfeoThumbnail, usesLocalSolfeo, readLocalSolfeo } from '@/lib/courses/local-solfeo-draft'
 import { getCourseInstrumentOptions } from '@/lib/courses/instrument-options'
 import { getServerLocale } from '@/lib/i18n/server'
 import { localizeRow } from '@/lib/i18n/localize'
@@ -39,6 +40,7 @@ export default async function CourseEditPage({ params, searchParams }: CourseEdi
   if (!course) notFound()
   if (structure.error) throw new Error(structure.error)
   const sections = structure.data
+  const localDraft = await usesLocalSolfeo(id) ? await readLocalSolfeo() : null
 
   for (const style of musicalStyles ?? []) {
     localizeRow(style, locale, ['name'])
@@ -53,12 +55,13 @@ export default async function CourseEditPage({ params, searchParams }: CourseEdi
         title: course.title,
         title_es: course.title_es,
         slug: course.slug,
-        description: course.description,
-        description_es: course.description_es,
+        description: localDraft?.description ?? course.description,
+        description_es: localDraft?.description_es ?? course.description_es,
         musical_style_id: course.musical_style_id,
         teacher_id: course.teacher_id,
         is_published: course.is_published ?? false,
-        thumbnail_url: course.thumbnail_url,
+        thumbnail_url: await localSolfeoThumbnail(id, course.thumbnail_url),
+        is_local_draft: await usesLocalSolfeo(id),
         instrument: course.instrument,
         is_fundamentals: course.is_fundamentals ?? false,
         difficulty: course.difficulty,

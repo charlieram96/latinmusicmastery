@@ -31,7 +31,7 @@ export interface NoteToolbarProps {
   /** A note's name, a chord's names joined by spaces, 'rest', or 'add' at 'end'. */
   info: string;
   value: NoteValue;
-  dots: 0 | 1 | 2;
+  dots: 0 | 1 | 2 | 3;
   isRest: boolean;
   entryRest?: boolean;
   tie: boolean;

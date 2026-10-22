@@ -52,3 +52,42 @@
 @keyframes ps-judge { 0% { opacity: 0; margin-top: 8px } 20%,65% { opacity: 1; margin-top: 0 } 100% { opacity: 0; margin-top: -12px } }
 @media (max-width: 700px) { .ps-theme-picker { left: 16px; right: auto; top: 14px; } }
 @media (prefers-reduced-motion: reduce) { .ps-highway *, .ps-highway *::before, .ps-highway *::after { animation: none !important; transition: none !important; } .ps-judgment { display: none; } }
+
+.ps-instrument-layout { position:absolute; z-index:30; top:12px; right:12px; max-width:calc(100% - 24px); font-size:12px; }
+.ps-instrument-layout button { border:1px solid #f59428; border-radius:6px; padding:7px 10px; color:#ffc078; background:#21170ef2; }
+.ps-instrument-layout button:focus-visible { outline:2px solid #ffb75d; outline-offset:2px; }
+.ps-instrument-layout button:disabled { opacity:.4; }
+.ps-instrument-layout section { margin-top:6px; padding:12px; width:330px; max-width:100%; max-height: min(360px,60vh); overflow:auto; background:#171310f5; border:1px solid #f59428; border-radius:8px; color:#f5eee7; }
+.ps-instrument-layout p { margin:0 0 8px; }
+.ps-instrument-layout ol { list-style:none; padding:0; margin:0; }
+.ps-instrument-layout li { display:flex; align-items:center; gap:6px; padding:5px 0; }
+.ps-instrument-layout li span { flex:1; }
+.ps-layout-actions { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+
+@font-face { font-family:LMMStageNotation; src:url('/fonts/notation/bravura.woff2') format('woff2'); font-display:block; }
+.ps-city-picker { position:absolute; bottom:10px; right:10px; z-index:29; display:flex; align-items:center; gap:6px; font-size:12px; color:#ffc078; background:#21170eed; padding:4px 8px; border:1px solid #f59428; border-radius:6px; }
+.ps-city-picker select { background:#21170e; color:#fff2de; max-width:140px; padding:4px; border-radius:4px; }
+.ps-city-picker select:disabled { opacity:.6; }
+
+.ps-city-picker { top:12px; bottom:auto; right:174px; }
+@media(max-width:600px) { .ps-city-picker { top:52px; right:12px; } }
+
+/* A brief decorative sky celebration; never blocks notes, controls or assistive tech. */
+.ps-city-sky-sign { position:absolute; pointer-events:none; left:50%; top:5%; width:42%; transform:translateX(-50%); text-align:center; color:#fff0c5; opacity:0; animation:ps-sky-message 42s 8s infinite; z-index:2; }
+.ps-city-sky-sign strong { display:block; font-size:clamp(22px,3vw,44px); line-height:1.1; letter-spacing:.26em; text-shadow:0 0 4px #fff,0 0 14px #ffb24a,0 0 30px #f77c20; }
+.ps-city-sky-sign span { display:block; margin-top:6px; font-size:clamp(10px,1.1vw,17px); font-weight:600; text-shadow:0 0 8px #ffb24a,0 2px 5px #000; }
+.ps-sky-burst { position:absolute; top:5px; width:65px; height:65px; border-radius:50%; background:repeating-conic-gradient(from 5deg,transparent 0deg 24deg,#ffd280 25deg 27deg,transparent 28deg 30deg); mask-image:radial-gradient(transparent 20%,#000 35%,transparent 70%); animation:ps-sky-burst 42s 8s infinite; filter:drop-shadow(0 0 5px #ffa526); }
+.ps-sky-burst-left { left:-8%; }.ps-sky-burst-right { right:-8%; animation-delay:9s; }
+@keyframes ps-sky-message { 0%,2% { opacity:0; } 4%,15% { opacity:1; } 20%,100% { opacity:0; } }
+@keyframes ps-sky-burst { 0%,2% { opacity:0; transform:scale(.1); } 5% { opacity:1; } 12% { opacity:0; transform:scale(1.8); } 100% { opacity:0; } }
+@media(prefers-reduced-motion:reduce) { .ps-city-sky-sign { display:none; } }
+@media(max-width:600px) { .ps-city-sky-sign { top:26%; width:55%; }.ps-city-sky-sign strong {font-size:20px;} }
+
+/* Daylight needs a dark face; sunset uses warm gold with a plum contour. */
+.ps-city-sky-sign-new-york { color:#102b51; }
+.ps-city-sky-sign-new-york strong { letter-spacing:.12em; text-shadow:0 1px 1px #fff,0 0 8px #e5f6ff,0 0 20px #a8dcff; }
+.ps-city-sky-sign-new-york span { color:#102b51; text-shadow:0 1px 2px #fff,0 0 6px #fff; }
+.ps-city-sky-sign-new-york .ps-sky-burst { background:repeating-conic-gradient(from 15deg,transparent 0deg 40deg,#1473bb 41deg 44deg,transparent 45deg 60deg); filter:drop-shadow(0 0 3px #fff); }
+.ps-city-sky-sign-los-angeles strong { letter-spacing:.12em; color:#fff4d2; text-shadow:0 2px 3px #482137,0 0 12px #ffb75a,0 0 25px #f67e52; }
+.ps-city-sky-sign-los-angeles span { text-shadow:0 2px 3px #482137,0 0 7px #482137; }
+.ps-city-sky-sign-los-angeles .ps-sky-burst { background:repeating-conic-gradient(from 0deg,transparent 0deg 67deg,#fff0b8 68deg 72deg,transparent 73deg 90deg); filter:drop-shadow(0 0 7px #ffaf5b); }

@@ -4,6 +4,8 @@
 // owns the pps/scrollLeft state and calls these.
 
 export interface TimelineBounds {
+  /** Visual space before media time zero; never changes media timing. */
+  leadingPaddingPx?: number;
   minPps: number;
   maxPps: number;
   /** The whole timeline's length in seconds. */
@@ -12,8 +14,8 @@ export interface TimelineBounds {
 
 const clampNum = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-export function clampScrollLeft(scrollLeft: number, pps: number, viewportWidth: number, contentSeconds: number): number {
-  return clampNum(scrollLeft, 0, Math.max(0, contentSeconds * pps - viewportWidth));
+export function clampScrollLeft(scrollLeft: number, pps: number, viewportWidth: number, contentSeconds: number, leadingPaddingPx = 0): number {
+  return clampNum(scrollLeft, leadingPaddingPx ? -leadingPaddingPx : 0, Math.max(0, contentSeconds * pps - viewportWidth));
 }
 
 /** pps and scrollLeft that show [start, end] with `padFrac` of its span either side. */
@@ -27,8 +29,9 @@ export function fitRangeView(
   if (!(viewportWidth > 0) || !(endSeconds > startSeconds)) return null;
   const span = endSeconds - startSeconds;
   const pad = span * padFrac;
-  const pps = clampNum(viewportWidth / (span + 2 * pad), b.minPps, b.maxPps);
-  return { pps, scrollLeft: clampScrollLeft((startSeconds - pad) * pps, pps, viewportWidth, b.contentSeconds) };
+  const usableWidth = Math.max(1, viewportWidth - (b.leadingPaddingPx ?? 0));
+  const pps = clampNum(Math.min(viewportWidth / (span + 2 * pad), usableWidth / (span + pad)), b.minPps, b.maxPps);
+  return { pps, scrollLeft: clampScrollLeft(Math.min((startSeconds - pad) * pps, startSeconds * pps - (b.leadingPaddingPx ?? 0)), pps, viewportWidth, b.contentSeconds, b.leadingPaddingPx) };
 }
 
 /**
@@ -48,7 +51,7 @@ export function followScroll(
   const land = opts.land ?? 0.25;
   const x = tSeconds * pps - scrollLeft;
   if (x >= viewportWidth * edge && x <= viewportWidth * (1 - edge)) return null;
-  const next = clampScrollLeft(tSeconds * pps - viewportWidth * land, pps, viewportWidth, b.contentSeconds);
+  const next = clampScrollLeft(tSeconds * pps - viewportWidth * land, pps, viewportWidth, b.contentSeconds, b.leadingPaddingPx);
   return Math.abs(next - scrollLeft) < 0.5 ? null : next;
 }
 

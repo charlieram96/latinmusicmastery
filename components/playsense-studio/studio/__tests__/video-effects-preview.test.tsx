@@ -26,7 +26,8 @@ it('shows the title before countdown, warns on the actual last round, then compl
     const click = async (text: string) => { const button = [...host.querySelectorAll('button')].find(b => b.textContent?.includes(text))!; await act(async () => button.click()) }
     await click('Probar efectos')
     expect(host.textContent).toContain('Cáscara con Sobao Simple')
-    await click('Comenzar')
+    expect(host.querySelector<HTMLButtonElement>('button[aria-label="Reproducir"]')!.disabled).toBe(false)
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Reproducir"]')!.click())
     expect(host.textContent).toContain('PREPÁRATE')
     for (let i = 0; i < 3; i++) await act(async () => { vi.advanceTimersByTime(1000) })
     expect(host.textContent).toContain('VUELTA 1 / 5')
@@ -39,6 +40,21 @@ it('shows the title before countdown, warns on the actual last round, then compl
     await act(async () => { video.dispatchEvent(new Event('ended')) })
     expect(host.textContent).toContain('¡Bien hecho!')
     expect(host.textContent).toContain('Sin evaluación del desempeño')
+    await click('Repetir ejercicio')
+    await act(async () => video.dispatchEvent(new Event('seeked')))
+    expect(video.currentTime).toBe(0)
+    expect(host.textContent).toContain('Cáscara con Sobao Simple')
+    expect(host.textContent).not.toContain('PREPÁRATE')
+    await click('Comenzar')
+    for (let i = 0; i < 3; i++) await act(async () => { vi.advanceTimersByTime(1000) })
+    await act(async () => { video.currentTime = 8; video.dispatchEvent(new Event('timeupdate')) })
+    await act(async () => (host.querySelector('button[aria-label="Pausar"]') as HTMLButtonElement).click())
+    expect(video.currentTime).toBe(8)
+    expect(host.textContent).not.toContain('Cáscara con Sobao Simple')
+    await act(async () => (host.querySelector('button[aria-label="Reproducir"]') as HTMLButtonElement).click())
+    expect(video.currentTime).toBe(8)
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Reiniciar"]')!.click())
+    expect(host.textContent).toContain('Cáscara con Sobao Simple')
   } finally { await act(async () => root.unmount()); host.remove() }
 })
 
@@ -58,15 +74,15 @@ it('uses the editor video ref for duration and waveform seeking inline', async (
     Object.defineProperty(video, 'duration', { value: 22 })
     await act(async () => video.dispatchEvent(new Event('loadedmetadata')))
     expect(onDuration).toHaveBeenCalledWith(22)
-    const seek = host.querySelector('input[aria-label="Posición del video"]') as HTMLInputElement
-    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
-    await act(async () => { setValue.call(seek, '19'); seek.dispatchEvent(new Event('input', { bubbles: true })) })
+    const seek = host.querySelector('[role="slider"]')!
+    const move = async (key: string, times: number) => { for (let i = 0; i < times; i++) await act(async () => { seek.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true })) }) }
+    await move('ArrowRight', 19)
     expect(video.currentTime).toBe(19)
     expect(host.textContent).toContain('Mano izquierda · Sobao')
     expect(host.textContent).toContain('Mano derecha · Cáscara')
     expect(host.textContent).toContain('VUELTA 5 / 5')
-    expect(host.querySelector('output')?.textContent).toBe('0:19 / 0:22')
-    await act(async () => { setValue.call(seek, '8'); seek.dispatchEvent(new Event('input', { bubbles: true })) })
+    expect(seek.getAttribute('aria-valuenow')).toBe('19')
+    await move('ArrowLeft', 11)
     expect(video.currentTime).toBe(8)
     expect(host.textContent).toContain('VUELTA 3 / 5')
     expect(host.textContent).not.toContain('Mano izquierda · Sobao')

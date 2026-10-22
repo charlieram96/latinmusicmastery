@@ -10,11 +10,11 @@ export const VALUE_QN: Record<NoteValue, number> = { w: 4, h: 2, q: 1, '8': 0.5,
 export const KEY_VALUE: Record<string, NoteValue> = { '1': '64', '2': '32', '3': '16', '4': '8', '5': 'q', '6': 'h', '7': 'w' };
 export const VALUE_NAME: Record<NoteValue, string> = { w: 'Whole', h: 'Half', q: 'Quarter', '8': '8th', '16': '16th', '32': '32nd', '64': '64th' };
 
-export function dotFactor(dots: 0 | 1 | 2): number {
-  return dots === 2 ? 1.75 : dots === 1 ? 1.5 : 1;
+export function dotFactor(dots: 0 | 1 | 2 | 3): number {
+  return 2 - 2 ** -dots;
 }
 
-export function soundingQN(value: NoteValue, dots: 0 | 1 | 2, tuplet?: { n: number; m: number } | null): number {
+export function soundingQN(value: NoteValue, dots: 0 | 1 | 2 | 3, tuplet?: { n: number; m: number } | null): number {
   return VALUE_QN[value] * dotFactor(dots) * (tuplet ? tuplet.m / tuplet.n : 1);
 }
 

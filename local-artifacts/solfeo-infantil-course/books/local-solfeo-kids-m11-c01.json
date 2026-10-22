@@ -1,0 +1,142 @@
+{
+  "id": "local-solfeo-kids-m11-c01",
+  "module": 11,
+  "number": 1,
+  "title": "Repertorio progresivo de solfeo y entonación",
+  "sourceTopics": [
+    "repertorio-intro"
+  ],
+  "pages": [
+    {
+      "title": "Repertorio progresivo de solfeo y entonación",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Cuarenta lecciones originales de 32 compases, distribuidas en seis pentagramas de cinco o seis compases. La separación se ajusta a la notación y las páginas se aprovechan sin suprimir contenido. Alternan 2/4, 3/4, 4/4 y 6/8, tonalidades mayores y menores; las últimas cinco integran los recursos avanzados.",
+          "pdfPage": 220,
+          "sourceBlock": 0
+        },
+        {
+          "type": "p",
+          "text": "El ámbito escrito de cada lección se indica junto a su objetivo. <b>No existe una tesitura cómoda idéntica para todas las voces.</b> Acuerda una octava o transposición apropiada antes de cantar; conserva las relaciones interválicas y no fuerces los extremos.",
+          "pdfPage": 220,
+          "sourceBlock": 1
+        },
+        {
+          "type": "h",
+          "text": "Preparación de cada lección",
+          "pdfPage": 220,
+          "sourceBlock": 2
+        },
+        {
+          "type": "p",
+          "text": "1. Reconoce clave, armadura, compás y recorrido.<br/>2. Localiza la nota más grave y la más aguda.<br/>3. Percute el ritmo y resuelve las dificultades por frases.<br/>4. Escucha la tónica y entona la lección completa.<br/>5. Repite aplicando los signos de expresión.",
+          "pdfPage": 220,
+          "sourceBlock": 3
+        },
+        {
+          "type": "p",
+          "text": "Las lecciones se cantan con nombres de notas o con una sílaba acordada. El trabajo combina preparación interválica, células rítmicas y frases completas. La ejecución no exige una rapidez ajena al contenido estudiado.",
+          "pdfPage": 220,
+          "sourceBlock": 4
+        }
+      ]
+    }
+  ],
+  "practice": [
+    {
+      "title": "Repertorio progresivo de solfeo y entonación",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Practica los ejemplos de esta lección: escucha, identifica sus elementos y repítelos respetando las indicaciones del manual.",
+          "authoredPractice": true
+        },
+        {
+          "type": "p",
+          "text": "Cuarenta lecciones originales de 32 compases, distribuidas en seis pentagramas de cinco o seis compases. La separación se ajusta a la notación y las páginas se aprovechan sin suprimir contenido. Alternan 2/4, 3/4, 4/4 y 6/8, tonalidades mayores y menores; las últimas cinco integran los recursos avanzados.",
+          "pdfPage": 220,
+          "sourceBlock": 0
+        },
+        {
+          "type": "p",
+          "text": "El ámbito escrito de cada lección se indica junto a su objetivo. <b>No existe una tesitura cómoda idéntica para todas las voces.</b> Acuerda una octava o transposición apropiada antes de cantar; conserva las relaciones interválicas y no fuerces los extremos.",
+          "pdfPage": 220,
+          "sourceBlock": 1
+        },
+        {
+          "type": "h",
+          "text": "Preparación de cada lección",
+          "pdfPage": 220,
+          "sourceBlock": 2
+        },
+        {
+          "type": "p",
+          "text": "1. Reconoce clave, armadura, compás y recorrido.<br/>2. Localiza la nota más grave y la más aguda.<br/>3. Percute el ritmo y resuelve las dificultades por frases.<br/>4. Escucha la tónica y entona la lección completa.<br/>5. Repite aplicando los signos de expresión.",
+          "pdfPage": 220,
+          "sourceBlock": 3
+        },
+        {
+          "type": "p",
+          "text": "Las lecciones se cantan con nombres de notas o con una sílaba acordada. El trabajo combina preparación interválica, células rítmicas y frases completas. La ejecución no exige una rapidez ajena al contenido estudiado.",
+          "pdfPage": 220,
+          "sourceBlock": 4
+        }
+      ]
+    }
+  ],
+  "vectors": {},
+  "sourcePages": [
+    220
+  ],
+  "nextHref": "/dashboard/course/solfeo-infantil-aplicado?class=local-solfeo-kids-m11-c02",
+  "sourceHash": "0a2a4a49e01b6e95eeff729dd46830905e52c665380696eacb59c54636380199",
+  "questions": [
+    {
+      "question_es": "Antes de cantar una lección del repertorio, ¿cómo eliges el registro?",
+      "question_en": "How should you choose a register before singing a repertoire lesson?",
+      "choices": [
+        {
+          "es": "Fuerzas los extremos tal como están escritos",
+          "en": "Force the extremes exactly as written"
+        },
+        {
+          "es": "Cambias cada intervalo a voluntad",
+          "en": "Change each interval freely"
+        },
+        {
+          "es": "Acuerdas una octava o transposición cómoda sin alterar los intervalos",
+          "en": "Choose a comfortable octave or transposition while preserving intervals"
+        }
+      ],
+      "correct": 2,
+      "explanation_es": "No existe una tesitura cómoda idéntica para todas las voces.",
+      "explanation_en": "There is no single comfortable range for every voice.",
+      "sourcePage": 220,
+      "evidence": "No existe una tesitura cómoda idéntica para todas las voces."
+    },
+    {
+      "question_es": "¿Qué revisas primero al preparar una lección?",
+      "question_en": "What do you check first when preparing a lesson?",
+      "choices": [
+        {
+          "es": "Solo la nota final",
+          "en": "Only the final note"
+        },
+        {
+          "es": "Clave, armadura, compás y recorrido",
+          "en": "Clef, key signature, meter and route"
+        },
+        {
+          "es": "Solo la velocidad máxima",
+          "en": "Only the maximum speed"
+        }
+      ],
+      "correct": 1,
+      "explanation_es": "El primer paso es reconocer clave, armadura, compás y recorrido.",
+      "explanation_en": "The first step is to identify clef, key signature, meter and route.",
+      "sourcePage": 220,
+      "evidence": "El primer paso es reconocer clave, armadura, compás y recorrido."
+    }
+  ]
+}

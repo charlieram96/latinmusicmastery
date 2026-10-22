@@ -170,7 +170,7 @@ function StudioWorkspaceBody({
     []
   );
 
-  const { state, dispatch, undo, redo, canUndo, canRedo, markClean, replaceScore } = useEditor(seed.score);
+  const { state, dispatch: dispatchScore, markClean, replaceScore } = useEditor(seed.score);
   const draft = useStudioDraft({
     owner: draftOwner,
     label: isExercise ? 'Exercise' : title,
@@ -181,6 +181,11 @@ function StudioWorkspaceBody({
     initialTiming: seed.timing,
     onDraftContent,
   });
+  const {undo,redo,canUndo,canRedo}=draft;
+  const dispatch = useCallback((action: Parameters<typeof dispatchScore>[0]) => {
+    draft.checkpoint();
+    dispatchScore(action);
+  },[draft.checkpoint,dispatchScore]);
 
   // How long the graded score runs at its own tempo — the exercise video's crop
   // window size. Tracks live edits (add/remove measures, tempo changes).
@@ -289,9 +294,10 @@ function StudioWorkspaceBody({
             startSeconds: exerciseTrim.trimInSeconds,
             trimOutSeconds: exerciseTrim.trimOutSeconds,
             timeMap: null,
+            metronomeAnchorSeconds: draft.timing.anchor?.seconds ?? null,
           }
         : null,
-    [exerciseVideoUrl, exerciseTrim]
+    [exerciseVideoUrl, exerciseTrim, draft.timing.anchor]
   );
 
   // --- Copy notes from a Watch section (Studio rework P5, Task 7) ---
@@ -368,10 +374,9 @@ function StudioWorkspaceBody({
   // Cmd/Ctrl+Z = undo, +Shift = redo (or Ctrl+Y), Cmd/Ctrl+S = save now.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof Element && e.target.closest('[role="dialog"]')) return;
       const meta = e.metaKey || e.ctrlKey;
       if (!meta) return;
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target instanceof HTMLElement && e.target.isContentEditable)) return;
       if (e.key === 'z' || e.key === 'Z') {
         e.preventDefault();
         if (e.shiftKey) redo();
@@ -392,14 +397,14 @@ function StudioWorkspaceBody({
     <div data-studio-commands className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground md:h-[100dvh]">
       {/* ---- App bar ---- */}
       <header className="st-appbar">
-        <Link
+        <a
           href={backHref}
           aria-label={st(owner.kind === 'classItem' ? 'Admin' : 'Songs')}
           className="lmm-studio-return inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition"
         >
           <ArrowLeft className="h-[18px] w-[18px]" />
           <span className="hidden sm:inline">{st(owner.kind === 'classItem' ? 'Admin' : 'Songs')}</span>
-        </Link>
+        </a>
         <span className="hidden text-muted-foreground/40 sm:inline">/</span>
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate text-[15px] font-semibold tracking-tight">{title}</span>
@@ -531,7 +536,7 @@ function StudioWorkspaceBody({
               onChange={event => dispatch({ type: 'set-score-meta', videoCoaching: event.target.checked ? 'cascara-v1' : null })} />
             {st('Publish video effects')}
           </label>}
-          <PublishControl studentHref={studentHrefFromAdmin(backHref)} />
+          <PublishControl studentHref={studentHrefFromAdmin(backHref, isExercise ? 'exercise' : undefined)} />
 
           <HistoryPanel owner={draftOwner} iconOnly />
 
@@ -592,9 +597,10 @@ function StudioWorkspaceBody({
 
           {showExerciseSync ? (
             // Place the play-along video under the graded score: bar 1 on the
-            // tempo grid (timing.play), never a drag map. Legacy waypoints or an
-            // anchor on an old exercise draft are ignored here.
+            // tempo grid (timing.play), never a drag map. The click anchor is
+            // independent of bar 1 and shared with student playback.
             <SyncPanel
+        editHistory={{undo,redo,canUndo,canRedo}}
               key={draft.timingEpoch}
               classItemId={mediaOwnerId}
               mode="graded"
@@ -611,7 +617,7 @@ function StudioWorkspaceBody({
               videoDurationSeconds={null}
               trim={exerciseTrim}
               onTrimDrag={handleExerciseTrimDrag}
-              initialMetronomeAnchorSeconds={null}
+              initialMetronomeAnchorSeconds={draft.timing.anchor?.seconds ?? null}
               play={exercisePlay}
               onPlayChange={handlePlayChange}
               gradedOnsets={gradedOnsets}
@@ -638,6 +644,7 @@ function StudioWorkspaceBody({
           ) : (
             <>
               <SyncPanel
+        editHistory={{undo,redo,canUndo,canRedo}}
                 key={draft.timingEpoch}
                 classItemId={mediaOwnerId}
                 mode={mode}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { measureVideoLocalBounds } from '@/lib/playsense-studio/video-local-bounds';
 
 /** Visible picture bounds, excluding the black bars around a contained video. */
 export function videoPictureBounds(width: number, height: number, sourceWidth: number, sourceHeight: number, fit = 'contain') {
@@ -12,7 +13,7 @@ export function videoPictureBounds(width: number, height: number, sourceWidth: n
 }
 
 /** Shared branding follows the actual picture, rather than its letterboxed player. */
-export function VideoWatermark({ nativeControls = false, controlsClearance = 0, sizeScale = 1 }: { nativeControls?: boolean; controlsClearance?: number; sizeScale?: number }) {
+export function VideoWatermark({ nativeControls = false, controlsClearance = 0, sizeScale = 1, staticStage = false }: { staticStage?: boolean; nativeControls?: boolean; controlsClearance?: number; sizeScale?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const mark = ref.current;
@@ -20,12 +21,18 @@ export function VideoWatermark({ nativeControls = false, controlsClearance = 0, 
     if (!mark || !parent) return;
     let video: HTMLVideoElement | null = null;
     const update = () => {
+      if (!video && staticStage) {
+        mark.style.width = `${Math.min(parent.clientWidth * .18, 180) * sizeScale}px`;
+        mark.style.right = '2.2%';
+        mark.style.bottom = '3%';
+        mark.style.visibility = 'visible';
+        return;
+      }
       if (!video || !video.videoWidth || !video.videoHeight) {
         mark.style.visibility = 'hidden';
         return;
       }
-      const box = video.getBoundingClientRect();
-      const container = parent.getBoundingClientRect();
+      const box = measureVideoLocalBounds(video, parent);
       const picture = videoPictureBounds(box.width, box.height, video.videoWidth, video.videoHeight, getComputedStyle(video).objectFit);
       const width = Math.min(picture.width * .18, 180) * sizeScale;
       const logoHeight = width * 489 / 2904;
@@ -35,8 +42,8 @@ export function VideoWatermark({ nativeControls = false, controlsClearance = 0, 
       const inset = Math.min(Math.max(picture.height * .03, controlsInset), Math.max(0, picture.height - logoHeight));
       mark.style.right = 'auto';
       mark.style.bottom = 'auto';
-      mark.style.left = `${box.left - container.left - parent.clientLeft + parent.scrollLeft + picture.x + picture.width * .978 - width}px`;
-      mark.style.top = `${box.top - container.top - parent.clientTop + parent.scrollTop + picture.y + picture.height - inset - logoHeight}px`;
+      mark.style.left = `${box.left + picture.x + picture.width * .978 - width}px`;
+      mark.style.top = `${box.top + picture.y + picture.height - inset - logoHeight}px`;
       mark.style.width = `${width}px`;
       mark.style.visibility = picture.width > 0 && picture.height > 0 ? 'visible' : 'hidden';
     };
@@ -44,7 +51,7 @@ export function VideoWatermark({ nativeControls = false, controlsClearance = 0, 
     resize?.observe(parent);
     const bindVideo = () => {
       const next = parent.querySelector('video');
-      if (next === video) return;
+      if (next === video) { update(); return; }
       if (video) {
         resize?.unobserve(video);
         video.removeEventListener('loadedmetadata', update);
@@ -73,7 +80,7 @@ export function VideoWatermark({ nativeControls = false, controlsClearance = 0, 
       video?.removeEventListener('resize', update);
       video?.removeEventListener('emptied', update);
     };
-  }, [nativeControls, controlsClearance, sizeScale]);
+  }, [nativeControls, controlsClearance, sizeScale, staticStage]);
   return <span ref={ref} className="lmm-video-watermark" style={{ visibility: 'hidden' }} data-native-controls={nativeControls || undefined} aria-hidden="true">
     <img src="/lmm-video-watermark.png" alt="" draggable={false} />
   </span>;

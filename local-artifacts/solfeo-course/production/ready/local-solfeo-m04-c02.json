@@ -1,0 +1,149 @@
+{
+  "classId": "local-solfeo-m04-c02",
+  "title": {
+    "es": "4.2 · Fusas, semifusas y valores menores",
+    "en": "4.2 · Thirty-second notes and shorter values"
+  },
+  "videoUrl": "/local-course-assets/solfeo/films/local-solfeo-m04-c02-sync-v3.mp4",
+  "posterUrl": "/local-course-assets/solfeo/films/local-solfeo-m04-c02.png",
+  "duration": 69.188,
+  "sections": [],
+  "questions": [
+    {
+      "id": "local-solfeo-m04-c02-exercise-q1",
+      "class_item_id": "local-solfeo-m04-c02-exercise",
+      "order_index": 0,
+      "question": "Si la negra vale un tiempo, ¿cuánto dura una fusa?",
+      "question_es": "Si la negra vale un tiempo, ¿cuánto dura una fusa?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "1/8 de tiempo"
+          },
+          {
+            "id": "choice-1",
+            "text": "1/4 de tiempo"
+          },
+          {
+            "id": "choice-2",
+            "text": "1/16 de tiempo"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-0",
+      "explanation": "La respuesta es 1/8 de tiempo.",
+      "explanation_es": "La respuesta es 1/8 de tiempo.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m04-c02-exercise-q2",
+      "class_item_id": "local-solfeo-m04-c02-exercise",
+      "order_index": 1,
+      "question": "¿Cuántos corchetes tiene una semifusa aislada?",
+      "question_es": "¿Cuántos corchetes tiene una semifusa aislada?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "3"
+          },
+          {
+            "id": "choice-1",
+            "text": "2"
+          },
+          {
+            "id": "choice-2",
+            "text": "4"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-2",
+      "explanation": "La respuesta es 4.",
+      "explanation_es": "La respuesta es 4.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m04-c02-exercise-q3",
+      "class_item_id": "local-solfeo-m04-c02-exercise",
+      "order_index": 2,
+      "question": "¿Cuántas fusas equivalen a una negra?",
+      "question_es": "¿Cuántas fusas equivalen a una negra?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "16"
+          },
+          {
+            "id": "choice-1",
+            "text": "8"
+          },
+          {
+            "id": "choice-2",
+            "text": "4"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-1",
+      "explanation": "La respuesta es 8.",
+      "explanation_es": "La respuesta es 8.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    },
+    {
+      "id": "local-solfeo-m04-c02-exercise-q4",
+      "class_item_id": "local-solfeo-m04-c02-exercise",
+      "order_index": 3,
+      "question": "¿Cuántas semifusas equivalen a una corchea?",
+      "question_es": "¿Cuántas semifusas equivalen a una corchea?",
+      "question_type": "multiple_choice",
+      "options": {
+        "choices": [
+          {
+            "id": "choice-0",
+            "text": "8"
+          },
+          {
+            "id": "choice-1",
+            "text": "4"
+          },
+          {
+            "id": "choice-2",
+            "text": "16"
+          }
+        ]
+      },
+      "options_es": null,
+      "correct_answer": "choice-0",
+      "explanation": "La respuesta es 8.",
+      "explanation_es": "La respuesta es 8.",
+      "audio_url": null,
+      "image_url": null,
+      "created_at": null,
+      "updated_at": null
+    }
+  ],
+  "nextHref": "/solfeo-preview?class=local-solfeo-m04-c03",
+  "metronome": {
+    "trimInSeconds": 0,
+    "trimOutSeconds": null,
+    "bpm": 100,
+    "anchorSeconds": null,
+    "segments": []
+  }
+}

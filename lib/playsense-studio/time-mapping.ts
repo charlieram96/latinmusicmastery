@@ -21,7 +21,9 @@ import type {
 } from '@/components/playsense-studio/shared/score-model/types';
 
 /** Quarter notes per measure for a given time signature. */
-export function measureLengthInQN(timeSignature: [number, number]): number {
+export function measureLengthInQN(timeSignature: [number, number], measure?: Measure): number {
+  if (measure?.senzaMisura) return Math.max(0, ...measure.voices.map(v => occupiedQN(v.events)));
+  if (measure?.durationQN !== undefined) return measure.durationQN;
   const [numerator, denominator] = timeSignature;
   return (numerator * 4) / denominator;
 }
@@ -112,7 +114,7 @@ export function* walkMeasures(track: Track, score: ScoreDocument): Generator<{
       state: { cumulativeQN, cumulativeMs, timeSignature, tempo },
     };
 
-    const measureQN = measureLengthInQN(timeSignature);
+    const measureQN = measureLengthInQN(timeSignature, measure);
     cumulativeQN += measureQN;
     cumulativeMs += qnToMs(measureQN, tempo);
   }
@@ -124,9 +126,9 @@ export function* walkMeasures(track: Track, score: ScoreDocument): Generator<{
  */
 export function trackDurationMs(track: Track, score: ScoreDocument): number {
   let cumulativeMs = 0;
-  for (const { state, measure: _measure } of walkMeasures(track, score)) {
+  for (const { state, measure } of walkMeasures(track, score)) {
     const { tempo, timeSignature } = state;
-    cumulativeMs = state.cumulativeMs + qnToMs(measureLengthInQN(timeSignature), tempo);
+    cumulativeMs = state.cumulativeMs + qnToMs(measureLengthInQN(timeSignature, measure), tempo);
   }
   return cumulativeMs;
 }
@@ -134,8 +136,8 @@ export function trackDurationMs(track: Track, score: ScoreDocument): number {
 /** Total duration of a track in quarter notes. */
 export function trackDurationQN(track: Track, score: ScoreDocument): number {
   let cumulativeQN = 0;
-  for (const { state } of walkMeasures(track, score)) {
-    cumulativeQN = state.cumulativeQN + measureLengthInQN(state.timeSignature);
+  for (const { state, measure } of walkMeasures(track, score)) {
+    cumulativeQN = state.cumulativeQN + measureLengthInQN(state.timeSignature, measure);
   }
   return cumulativeQN;
 }
@@ -197,9 +199,9 @@ export function qnToTrackMs(track: Track, score: ScoreDocument, qn: number): num
   let lastCumulativeQN = 0;
   let lastCumulativeMs = 0;
 
-  for (const { state } of walkMeasures(track, score)) {
+  for (const { state, measure } of walkMeasures(track, score)) {
     const { cumulativeQN, cumulativeMs, timeSignature, tempo } = state;
-    const measureQN = measureLengthInQN(timeSignature);
+    const measureQN = measureLengthInQN(timeSignature, measure);
     const measureEndQN = cumulativeQN + measureQN;
 
     if (qn <= measureEndQN) {

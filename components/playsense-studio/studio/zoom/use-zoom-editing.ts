@@ -58,7 +58,7 @@ export interface ZoomEditing {
   /** Percussion entry: the stroke's midi. */
   enterStroke(midi: number, append?: boolean, notation?: PercussionNotation): void;
   setValue(value: NoteValue): void;
-  cycleDots(to?: 0 | 1 | 2): void;
+  cycleDots(to?: 0 | 1 | 2 | 3): void;
   tuplet(n: number, m: number): void;
   toggleTie(): void;
   slur(type: 'slur' | 'cresc' | 'dim'): void;
@@ -428,7 +428,7 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         const o = get();
         const z = o.zoom;
         if (!z) return;
-        const next = (d: 0 | 1 | 2): 0 | 1 | 2 => (to !== undefined ? (d === to ? 0 : to) : (((d + 1) % 3) as 0 | 1 | 2));
+        const next = (d: 0 | 1 | 2 | 3): 0 | 1 | 2 | 3 => (to !== undefined ? (d === to ? 0 : to) : (((d + 1) % 3) as 0 | 1 | 2));
         const refs = selectedRefsOf(o);
         if (!refs.length) {
           o.setZoom({ ...z, dots: next(z.dots) });

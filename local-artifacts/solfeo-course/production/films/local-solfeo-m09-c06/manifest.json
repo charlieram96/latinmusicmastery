@@ -1,0 +1,1123 @@
+{
+  "classId": "local-solfeo-m09-c06",
+  "duration": 220.221626,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Lectura del recorrido completo",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 19.063541999999998,
+      "kind": "explanation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "taller-9-a",
+      "soundEvents": []
+    },
+    {
+      "start": 19.063541999999998,
+      "end": 31.063541999999998,
+      "kind": "notation",
+      "title": "A · Células rítmicas · compases 1-2",
+      "sourceTopic": "taller-9-a",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "A · Células rítmicas · compases 1-2",
+            "meter": "4/4",
+            "key": 1,
+            "bars": [
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 8
+                },
+                {
+                  "pitch": "B3",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "B3",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 102,
+        "_sourcePage": "taller-9-a",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-159"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 4.4375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 31.063541999999998,
+      "end": 43.063542,
+      "kind": "notation",
+      "title": "A · Células rítmicas · compases 3-4",
+      "sourceTopic": "taller-9-a",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "A · Células rítmicas · compases 3-4",
+            "meter": "4/4",
+            "key": 1,
+            "bars": [
+              [
+                {
+                  "pitch": "B3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F#4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 1
+                }
+              ]
+            ],
+            "beams": [
+              [
+                1,
+                2
+              ]
+            ],
+            "barStyles": {
+              "1": "repeat"
+            },
+            "endings": [
+              {
+                "number": "1",
+                "from": 1,
+                "to": 1
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 102,
+        "_sourcePage": "taller-9-a",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-159"
+      },
+      "soundEvents": [
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 3.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 43.063542,
+      "end": 55.063542,
+      "kind": "notation",
+      "title": "A · Células rítmicas · compases 5-6",
+      "sourceTopic": "taller-9-a",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "A · Células rítmicas · compases 5-6",
+            "meter": "4/4",
+            "key": 1,
+            "bars": [
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 8
+                },
+                {
+                  "pitch": "B3",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "B3",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "beams": [
+              [
+                0,
+                1
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "endings": [
+              {
+                "number": "2",
+                "from": 0,
+                "to": 0
+              }
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 102,
+        "_sourcePage": "taller-9-a",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-159"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 1.3125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 1.625,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 3.5,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.125,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 4.4375,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 55.063542,
+      "end": 67.063542,
+      "kind": "notation",
+      "title": "A · Células rítmicas · compases 7-8",
+      "sourceTopic": "taller-9-a",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "A · Células rítmicas · compases 7-8",
+            "meter": "4/4",
+            "key": 1,
+            "bars": [
+              [
+                {
+                  "pitch": "B3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F#4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 1
+                }
+              ]
+            ],
+            "beams": [
+              [
+                1,
+                2
+              ]
+            ],
+            "barStyles": {
+              "1": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 102,
+        "_sourcePage": "taller-9-a",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-159"
+      },
+      "soundEvents": [
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.25,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 2.5625,
+          "duration": 0.28750000000000003,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 2.875,
+          "duration": 0.5750000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 3.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 67.063542,
+      "end": 75.063542,
+      "kind": "explanation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "taller-9-a",
+      "soundEvents": []
+    },
+    {
+      "start": 75.063542,
+      "end": 88.67465299999999,
+      "kind": "explanation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "taller-9-b",
+      "soundEvents": []
+    },
+    {
+      "start": 88.67465299999999,
+      "end": 100.67465299999999,
+      "kind": "notation",
+      "title": "B · Preparación de 2 posiciones y salto directo",
+      "sourceTopic": "taller-9-b",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "B · Preparación de 2 posiciones y salto directo",
+            "key": 1,
+            "bars": [
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 1
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "2": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "taller-9-b",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-160"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 6,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 100.67465299999999,
+      "end": 112.67465299999999,
+      "kind": "notation",
+      "title": "B · Preparación de 3 posiciones y salto directo",
+      "sourceTopic": "taller-9-b",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "B · Preparación de 3 posiciones y salto directo",
+            "key": 1,
+            "bars": [
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "B3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "B3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G3",
+                  "dur": 2
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "2": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "taller-9-b",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-160"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 6,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 7.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 112.67465299999999,
+      "end": 125.67465299999999,
+      "kind": "notation",
+      "title": "B · Preparación de 4 posiciones y salto directo",
+      "sourceTopic": "taller-9-b",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 93,
+        "rows": [
+          {
+            "title": "B · Preparación de 4 posiciones y salto directo",
+            "key": 1,
+            "bars": [
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "A3",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "B3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 2
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G3",
+                  "dur": 1
+                }
+              ]
+            ],
+            "meter": "4/4",
+            "barStyles": {
+              "3": "final"
+            },
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "taller-9-b",
+        "rowHeights": [
+          93
+        ],
+        "sourcePageId": "flow-cont-160"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 1,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "A3",
+          "soundPitch": "A3",
+          "start": 2.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "B3",
+          "soundPitch": "B3",
+          "start": 3.5,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4.75,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 6,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 7.25,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "G3",
+          "soundPitch": "G3",
+          "start": 8.5,
+          "duration": 2.3000000000000003,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 3
+        }
+      ],
+      "performedBpm": 96
+    },
+    {
+      "start": 125.67465299999999,
+      "end": 139.42019499999998,
+      "kind": "explanation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "taller-9-b",
+      "soundEvents": []
+    },
+    {
+      "start": 139.42019499999998,
+      "end": 149.42019499999998,
+      "kind": "explanation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "saltos-2",
+      "soundEvents": []
+    },
+    {
+      "start": 149.42019499999998,
+      "end": 161.42019499999998,
+      "kind": "notation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "saltos-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "navigation",
+        "height": 150,
+        "mode": "DCFine",
+        "_sourcePage": "saltos-2",
+        "sourcePageId": "flow-cont-157"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "E4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "C4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        },
+        {
+          "pitch": "C4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 161.42019499999998,
+      "end": 174.58686199999997,
+      "kind": "explanation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "saltos-2",
+      "soundEvents": []
+    },
+    {
+      "start": 174.58686199999997,
+      "end": 186.58686199999997,
+      "kind": "notation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "saltos-2",
+      "diagram": {
+        "type": "diagram",
+        "kind": "navigation",
+        "height": 150,
+        "mode": "DSCoda",
+        "_sourcePage": "saltos-2",
+        "sourcePageId": "flow-cont-157"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "start": 1,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 1.6,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "E4",
+          "start": 2.2,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 2
+        },
+        {
+          "pitch": "C4",
+          "start": 2.8,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 0
+        },
+        {
+          "pitch": "D4",
+          "start": 3.4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 1
+        },
+        {
+          "pitch": "C4",
+          "start": 4,
+          "duration": 0.552,
+          "gain": 0.17,
+          "visualIndex": 3
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 186.58686199999997,
+      "end": 203.20027899999997,
+      "kind": "explanation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "saltos-2",
+      "soundEvents": []
+    },
+    {
+      "start": 203.20027899999997,
+      "end": 214.20027899999997,
+      "kind": "explanation",
+      "title": "Lectura del recorrido completo",
+      "sourceTopic": "saltos-2",
+      "soundEvents": []
+    },
+    {
+      "start": 214.20027899999997,
+      "end": 220.20027899999997,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

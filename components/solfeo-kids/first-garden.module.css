@@ -1,0 +1,230 @@
+.scene{position:relative;isolation:isolate;overflow:hidden;min-height:450px;border-radius:28px;padding:34px 24px 58px;background:linear-gradient(180deg,var(--garden-sky,#eaf8ff),var(--garden-ground,#f1f9e8));color:var(--garden-ink,#253653);border:2px solid var(--garden-line,#fff);container-type:inline-size}.sceneContent{position:relative;z-index:1;max-width:1000px;margin:auto;text-align:center}.scene h2{font-size:clamp(25px,3vw,38px);font-weight:850;line-height:1.2;margin:10px 0 14px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--garden-accent,#8760b9)}.instruction{font-size:18px;line-height:1.6;max-width:670px;margin:0 auto 25px}.landscape{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}.landscape span{position:absolute}.rainbow{font-size:94px;left:-20px;top:15px;opacity:.18;transform:rotate(-15deg)}.cloud{font-size:100px;right:5%;top:5px;opacity:.17;animation:drift 10s ease-in-out infinite}.butterfly{right:20px;top:40%;font-size:28px;animation:flutter 6s ease-in-out infinite}.flowers{left:20px;bottom:10px;font-size:25px;letter-spacing:10px;animation:sway 5s ease-in-out infinite}.rabbit{right:24px;bottom:5px;font-size:35px;animation:hop 6s ease-in-out infinite}.friends{display:flex;align-items:end;justify-content:center;gap:10px;flex-wrap:wrap;padding:32px 8px 20px;margin:10px auto 20px;background:linear-gradient(transparent 76%,var(--garden-grass,#ddefd1) 76%);border-radius:24px}.friend{position:relative;min-width:64px;width:9%;min-height:126px;border:3px solid #ffffffa6;border-radius:30px 30px 23px 23px;padding:15px 4px;box-shadow:0 7px 0 #26365418;color:#253653;transition:transform .2s}.friend span{display:block;letter-spacing:8px;margin-left:8px}.friend strong{display:block;font-size:24px;margin:8px 0}.friend small{font-size:13px}.friend:hover,.friend[aria-pressed=true]{transform:translateY(-12px) rotate(-3deg)}.compact .friend{min-height:112px}.trail{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}.trail span{background:var(--garden-card,#fffdf7);padding:10px 16px;border-radius:18px;font-weight:700}.feedback{background:var(--garden-card,#fffdf7);padding:14px;border-radius:18px;margin:20px auto 0;font-size:16px;min-height:52px;line-height:1.6;color:var(--garden-ink,#253653)}.seeds{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;padding:12px}.seeds button{border:2px solid var(--garden-line,#dbe9e4);background:var(--garden-card,#fffdf7);border-radius:24px;min-width:150px;padding:18px;box-shadow:0 5px 0 #26365412}.seeds button[aria-pressed=true]{border-color:#fa9a27;transform:translateY(-5px)}.seeds span{display:block;font-size:58px;animation:sway 4s ease-in-out infinite}.seeds small{display:block;color:var(--garden-accent,#8760b9)}.seeds strong{display:block;margin-top:7px}.story{font-size:19px;line-height:1.7;max-width:700px;margin:22px auto;background:var(--garden-card,#fffdf7);padding:18px;border-radius:22px}.flowerBed{display:flex;justify-content:center;flex-wrap:wrap;gap:15px;padding:20px 0}.flowerBed button{background:var(--garden-card,#fffdf7);border-radius:22px;padding:12px;min-width:88px;box-shadow:0 4px 0 #26365415}.flower{display:grid;place-items:center;width:65px;height:65px;border-radius:40% 60% 45% 55%;font-size:35px;color:#253653;animation:sway 4s ease-in-out infinite}.flowerBed strong,.flowerBed small{display:block;margin-top:8px}.flowerBed button[aria-pressed=true]{outline:3px solid #f99b29}.soundChoices{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}.soundChoices button{background:var(--garden-card,#fffdf7);border:2px solid var(--garden-line,#dbe9e4);padding:14px;border-radius:20px;min-width:110px}.soundChoices span{display:block;font-size:40px;margin-bottom:8px}.soundChoices button[aria-pressed=true]{border-color:#f99b29}.soundWave{display:flex;gap:7px;align-items:center;justify-content:center;height:60px;margin:15px}.soundWave i{height:8px;width:12px;border-radius:8px}.motion{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11px;padding:8px 12px;background:var(--garden-card,#fffdf7);border-radius:12px;z-index:2}.planted{display:flex;justify-content:center;flex-wrap:wrap;gap:12px}.planted span{display:grid;min-width:42px;color:var(--garden-ink,#253653)}.planted b{font-size:30px}.planted [data-grown=true] b{animation:bloom .5s ease-out}.primary,.secondary{padding:13px 20px;border-radius:16px;margin:15px 6px 0;font-weight:800;min-height:48px}.primary{background:#ff991f;color:#302215;box-shadow:0 4px 0 #d47a1b}.primary:disabled{opacity:.45;box-shadow:none}.secondary{background:var(--garden-card,#fffdf7);border:1px solid var(--garden-line,#dbe9e4)}.quiz{text-align:left;position:relative}.quiz :global([data-quiz-root]){padding-top:8px}.quiz :global(button){border-radius:18px}.mascot{display:flex;align-items:center;gap:12px;max-width:650px;margin:20px auto 0;text-align:left}.mascot button{width:88px;flex-shrink:0;background:none;animation:peek 6s ease-in-out infinite}.mascot svg{width:88px;height:102px;overflow:visible}.mascot p{border:2px solid var(--garden-line,#e7dbff);border-radius:22px 22px 22px 4px;background:var(--garden-card,#fffdf7);padding:12px 16px;font-size:15px;line-height:1.5}.mascot strong{display:block;color:var(--garden-accent,#8760b9);font-size:13px;margin-bottom:4px}.scene[data-paused=true] *{animation-play-state:paused!important}.scene button:focus-visible{outline:3px solid #a570df;outline-offset:4px}@keyframes drift{50%{transform:translateX(-30px)}}@keyframes flutter{50%{transform:translate(-20px,-18px) rotate(12deg)}}@keyframes sway{50%{transform:rotate(5deg)}}@keyframes hop{85%,100%{transform:translateY(0)}92%{transform:translateY(-12px)}}@keyframes wave{to{height:48px}}@keyframes bloom{from{transform:scale(.4)}to{transform:scale(1)}}@keyframes peek{0%,80%,100%{transform:rotate(0)}90%{transform:rotate(-8deg) translateY(-5px)}}@media(max-width:600px){.scene{padding:26px 12px 60px}.instruction{font-size:16px}.friends{gap:9px;padding-top:16px}.friend{width:20%;min-width:52px;min-height:110px;margin-bottom:0!important}.friend strong{font-size:22px}.seeds{gap:10px}.seeds button{min-width:110px;padding:12px;flex:1}.seeds span{font-size:38px}.story{font-size:17px}.flowerBed{gap:8px}.flowerBed button{min-width:75px;padding:8px}.flower{width:55px;height:55px}.flowers{font-size:16px;letter-spacing:3px}.rabbit{font-size:25px}.motion{font-size:10px}.mascot{gap:4px}.mascot button{width:65px}.mascot svg{width:65px;height:85px}}
+@media(prefers-reduced-motion:reduce){.scene *{animation:none!important;transition:none!important}}
+.friend>span{white-space:nowrap}
+/* Repeatable history dreams; the reading copy beside Corcheita never fades. */
+.dreamStage{position:relative;min-height:330px;display:grid;align-items:center;text-align:left;margin:14px 0}.dreamSequence{position:relative;width:88%;margin-right:auto;animation:dreamFade 26s both}.dreamCloud{position:relative;border:2px solid var(--garden-line,#fff);background:color-mix(in srgb,var(--garden-card,#fffdf7) 88%,transparent);box-shadow:0 12px 35px #7251b115;border-radius:65px 90px 60px 80px;padding:28px 38px;backdrop-filter:blur(8px);animation:dreamRise .75s ease-out both}.dreamCloud small{color:var(--garden-accent,#8760b9);font-weight:800;letter-spacing:1px}.dreamCloud h3{font-size:24px;font-weight:800;margin:8px 0}.dreamCloud p{font-size:18px;line-height:1.75;margin:0}.dreamTail{position:absolute;right:24%;bottom:-48px;font-size:28px;line-height:.9;color:var(--garden-accent,#8760b9)}.dreamSequence[data-shape="1"] .dreamCloud{border-radius:70px 30px 80px 35px}.dreamSequence[data-shape="2"] .dreamCloud{border-radius:30px 85px 35px 75px}.dreamCaption{font-size:13px;margin:35px auto 5px;color:var(--garden-accent,#8760b9)}.dreamPrompt{font-size:20px;color:var(--garden-accent,#8760b9);text-align:center}.sparkles{position:absolute;inset:45% 50%;pointer-events:none;z-index:3}.sparkles i{position:absolute;color:var(--spark);font-size:24px;font-style:normal;animation:seedBurst 1.2s ease-out both;transform:rotate(var(--angle))}.surprised button{animation:lookUp 26s both}.surprised .eye{animation:eyesUp 26s both}.surprised .smile{visibility:hidden}.surprised .gasp{animation:gasp 26s both}@keyframes seedBurst{0%{opacity:0;transform:rotate(var(--angle)) translateX(0) scale(.2)}20%{opacity:1}100%{opacity:0;transform:rotate(var(--angle)) translateX(170px) scale(.7)}}@keyframes dreamRise{from{opacity:0;transform:translate(20px,35px) scale(.8)}to{opacity:1;transform:none}}@keyframes dreamFade{0%,90%{opacity:1}100%{opacity:0;visibility:hidden}}@keyframes lookUp{0%,90%{transform:rotate(-10deg) translateY(-5px)}100%{transform:none}}@keyframes eyesUp{0%,90%{transform:translate(-1px,-4px)}100%{transform:none}}@keyframes gasp{0%,90%{transform:scale(1)}100%{transform:scale(.8)}}
+@media(max-width:600px){.dreamStage{min-height:370px}.dreamSequence{width:100%}.dreamCloud{padding:24px 22px;border-radius:35px 50px 35px 45px}.dreamCloud p{font-size:16px;line-height:1.65}.dreamCloud h3{font-size:21px}.dreamCaption{margin-top:40px}}
+@media(prefers-reduced-motion:reduce){.sparkles{display:none}.dreamSequence{opacity:1;visibility:visible}.surprised .eye{transform:translateY(-3px)}}
+
+.flowerHat{position:absolute;width:27px;height:18px;left:0;top:-11px;transform:rotate(-12deg)}@media(max-width:600px){.flowerHat{width:20px;height:14px;top:-9px}}
+
+/* The seeds stay centered; the thought cloud floats separately to their left. */
+.historyLayout .seeds{justify-content:center;gap:20px}.historyLayout .seeds button{min-width:160px;padding:20px}.historyLayout .seeds span{font-size:62px}
+.historyLayout .dreamStage{min-height:350px;margin:25px 0 0}.historyLayout .dreamSequence{width:min(740px,92%);margin:0 auto 0 0}
+.historyLayout .dreamCloud{border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;padding:55px 65px 60px;text-align:center;isolation:isolate}
+.thoughtShape{position:absolute;inset:0;width:100%;height:100%;z-index:-1;overflow:visible;filter:drop-shadow(0 9px 15px #7251b11c)}.thoughtShape path{fill:var(--garden-card,#fffdf7);fill-opacity:.88;stroke:var(--garden-line,#dbe9e4);stroke-width:1.5}
+.historyLayout .dreamTail{display:flex;flex-direction:column;align-items:center;gap:8px;bottom:-53px;right:25%;transform:rotate(-25deg);font-size:0}.dreamTail i{display:block;border-radius:50%;background:var(--garden-card,#fffdf7);opacity:.85;border:1px solid var(--garden-line,#dbe9e4);width:25px;height:20px}.dreamTail i:nth-child(2){width:16px;height:13px}.dreamTail i:nth-child(3){width:9px;height:8px}
+.historyLayout .dreamPrompt{min-height:280px;display:grid;place-items:center}.dreamCaption{margin-top:65px}
+@media(max-width:600px){.historyLayout .seeds{gap:8px;padding:4px}.historyLayout .seeds button{min-width:0;flex:1;padding:12px 5px}.historyLayout .seeds span{font-size:40px}.historyLayout .seeds strong{font-size:13px}.historyLayout .dreamSequence{width:100%}.historyLayout .dreamCloud{padding:55px 30px 60px}.historyLayout .dreamStage{min-height:370px}.dreamCloud p{font-size:15px}.dreamCloud h3{font-size:20px}}
+.dreamTail i{animation:thoughtBubble .7s ease-out both;animation-delay:.36s}.dreamTail i:nth-child(2){animation-delay:.18s}.dreamTail i:nth-child(3){animation-delay:0s}.historyLayout .dreamCloud{animation-delay:.55s}.historyLayout .dreamTail{animation:tailAppear .01s both;animation-delay:0s}
+@keyframes thoughtBubble{from{opacity:0;transform:translateY(22px) scale(.2)}to{opacity:.85;transform:none}}@keyframes tailAppear{from{opacity:1}to{opacity:1}}
+.historyLayout .dreamTail{left:22%;right:auto;transform:rotate(18deg)}
+@media(max-width:600px){.historyLayout .dreamTail{left:12%}}
+
+/* One compact stage: centered seeds, lateral dream, and a nearby companion.
+   The fading dream occupies the same row as the reading copy, never a spacer. */
+.historyScene{height:clamp(380px,calc(100dvh - 260px),620px);min-height:0;padding:16px 20px 44px}
+.historyScene .sceneContent{height:100%;max-width:1200px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto auto minmax(0,1fr);column-gap:18px}
+.historyScene .eyebrow,.historyScene h2,.historyScene .instruction,.historyScene .seeds{grid-column:1/-1}
+.historyScene h2{font-size:clamp(23px,2.5vw,32px);margin:4px 0 6px}
+.historyScene .instruction{font-size:15px;line-height:1.4;margin-bottom:6px}
+.historyScene .historyLayout{display:contents}
+.historyScene .seeds{gap:16px;padding:6px;flex-wrap:nowrap}
+.historyScene .seeds button{min-width:140px;padding:8px 16px;border-radius:18px}
+.historyScene .seeds span{font-size:36px;line-height:1.2}
+.historyScene .seeds strong{font-size:14px;margin-top:3px}
+.historyScene .dreamStage{grid-column:1;grid-row:5;min-height:0;margin:8px 0 18px;display:flex;align-items:stretch}
+.historyScene .dreamSequence{width:100%;min-height:0;margin:0;display:flex;align-items:stretch}
+.historyScene .dreamCloud{width:100%;min-height:0;padding:28px 38px 32px;display:flex;flex-direction:column;justify-content:center}
+.historyScene .dreamCloud small{font-size:11px;letter-spacing:.3px}
+.historyScene .dreamCloud h3{font-size:19px;margin:3px 0}
+.historyScene .dreamCloud p{font-size:14px;line-height:1.45;overflow:auto;min-height:0;scrollbar-width:thin}
+.historyScene .dreamTail{left:auto;right:-8px;bottom:-12px;gap:4px;transform:rotate(-48deg)}
+.historyScene .dreamPrompt{min-height:0;width:100%;font-size:15px;align-self:center}
+.historyScene .mascot{grid-column:2;grid-row:5;min-height:0;margin:12px 0 18px;align-self:center;max-height:100%;gap:4px}
+.historyScene .mascot button{width:68px}.historyScene .mascot svg{width:68px;height:90px}
+.historyScene .mascot p{min-height:0;max-height:100%;overflow:auto;scrollbar-width:thin;padding:10px 12px;font-size:14px;line-height:1.45}
+.historyScene .dreamCaption{position:absolute;bottom:-15px;left:0;right:0;margin:0;font-size:11px;pointer-events:none}
+@container(max-width:620px){
+ .historyScene .sceneContent{column-gap:6px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+ .historyScene .seeds{gap:8px}.historyScene .seeds button{min-width:0;flex:1;padding:7px 4px}
+ .historyScene .seeds strong{font-size:12px}.historyScene .seeds span{font-size:30px}
+ .historyScene .dreamCloud{padding:22px 18px}.historyScene .dreamCloud h3{font-size:16px}
+ .historyScene .mascot{flex-direction:column;align-self:stretch;gap:0;margin:0 0 18px}
+ .historyScene .mascot button{height:54px}.historyScene .mascot svg{height:58px}
+ .historyScene .mascot p{flex:1;font-size:13px;padding:8px}
+ .historyScene .dreamTail{right:-6px;bottom:18%;transform:rotate(-70deg)}
+}
+@media(max-width:600px){.historyScene{height:clamp(390px,calc(100dvh - 260px),560px);padding:12px 8px 44px}.historyScene .instruction{font-size:13px}.historyScene .eyebrow{font-size:9px}.historyScene .dreamCaption{font-size:10px}}
+.historyScene{height:clamp(350px,calc(100dvh - 330px),620px)}
+.historyScene .mascot{align-self:stretch;overflow:hidden;align-items:center}
+.historyScene .mascot p{max-height:100%;margin:0}
+.historyScene .dreamCloud{padding:20px 30px 24px}
+.historyScene .dreamCloud p{overflow:visible;font-size:14px;line-height:1.35}
+.historyScene .dreamCaption{bottom:-9px}
+.historyScene .motion{bottom:5px;padding:5px 10px}
+@media(max-width:600px){.historyScene{height:clamp(390px,calc(100dvh - 330px),560px)}.historyScene .dreamCloud{padding:20px 16px}.historyScene .dreamCloud p{font-size:12px}.historyScene .dreamCloud h3{font-size:15px}.historyScene .dreamCloud small{font-size:10px}}
+.historyScene{height:clamp(420px,calc(100dvh - 300px),620px)}
+.historyScene .dreamCloud{padding:16px 30px 20px}
+.historyScene .dreamCloud p{font-size:13px}
+@media(max-width:600px){.historyScene{height:clamp(430px,calc(100dvh - 300px),560px)}.historyScene .dreamCloud{padding:16px}.historyScene .dreamCloud p{font-size:12px}}
+@media(min-width:601px) and (max-height:800px){
+ .historyScene{height:390px;padding-top:12px}
+ .historyScene h2{font-size:28px}
+ .historyScene .seeds button{padding:5px 16px}
+ .historyScene .seeds span{font-size:28px}
+ .historyScene .instruction{font-size:14px}
+}
+@media(max-width:600px){
+ .historyScene{height:410px}
+ .historyScene h2{font-size:21px}
+ .historyScene .instruction{font-size:12px}
+ .historyScene .seeds button{padding:5px 4px}
+ .historyScene .seeds span{font-size:24px}
+ .historyScene .dreamCloud small{letter-spacing:0}
+}
+/* Corcheita keeps the center; only the dream and reading copy exchange sides. */
+.historyScene .sceneContent{grid-template-columns:minmax(0,1fr) 68px minmax(0,1fr);column-gap:8px}
+.historyScene .mascot{display:contents}
+.historyScene .mascot button{grid-column:2;grid-row:5;align-self:center;justify-self:center;width:68px}
+.historyScene .mascot p{grid-column:3;grid-row:5;align-self:stretch;max-height:none;margin:10px 0 18px;overflow:auto}
+.historyScene:has(.dreamSequence[data-shape="2"]) .dreamStage{grid-column:3}
+.historyScene:has(.dreamSequence[data-shape="2"]) .mascot p{grid-column:1}
+.historyScene:has(.dreamSequence[data-shape="2"]) .dreamTail{right:auto;left:-8px;transform:rotate(48deg)}
+@container(max-width:620px){
+ .historyScene .sceneContent{grid-template-columns:minmax(0,1fr) 42px minmax(0,1fr);column-gap:3px}
+ .historyScene .mascot button{width:42px;height:65px}
+ .historyScene .mascot svg{width:48px;height:65px}
+ .historyScene .dreamCloud{padding:18px 10px}
+ .historyScene .mascot p{font-size:12px;padding:8px;margin-top:8px}
+ .historyScene .dreamTail{right:-10px;bottom:25%;transform:rotate(-65deg)}
+ .historyScene:has(.dreamSequence[data-shape="2"]) .dreamTail{left:-10px;transform:rotate(65deg)}
+}
+.scene .rabbit{bottom:52px}
+.historyScene .mascot p{align-self:center;max-height:calc(100% - 28px);margin:0}
+/* History is an explicit on/off disclosure; both panels remain until dismissed. */
+.historyScene .dreamSequence{animation:none}
+
+/* Every correct pitch reveals one new piece of the same sunflower. */
+.growthGarden{position:relative;isolation:isolate;border-radius:26px;background:linear-gradient(transparent 78%,var(--garden-grass,#ddefd1) 78%);padding:0 12px 14px;overflow:hidden}
+.heroFlower{width:155px;height:178px;margin:auto;transform-origin:bottom center;animation:sway 5s ease-in-out infinite}
+.growingFlower{display:block;width:100%;height:100%;overflow:visible}
+.growPart{animation:plantReveal .6s ease-out both;transform-origin:80px 150px}
+.growStem{stroke-dasharray:110;stroke-dashoffset:0;animation:stemReveal .8s ease-out both}
+.growPetal{animation:petalReveal .45s ease-out both}
+.growthTrail{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;max-width:720px;margin:-12px auto 0}
+.growthTrail>div{text-align:center;border-bottom:3px solid var(--garden-line,#dce8e7);border-radius:12px;padding-bottom:6px}
+.growthTrail>div[data-grown=true]{border-color:#83bc60;background:color-mix(in srgb,var(--garden-card,#fffdf7) 65%,transparent)}
+.miniFlower{height:65px;margin:auto}.growthTrail strong{font-size:14px}
+.growthStatus{margin:12px auto 0;text-align:center;min-height:26px;font-weight:700;color:var(--garden-accent,#7850a7)}
+.growthStatus span{display:inline-block;margin-left:10px;font-size:13px}
+.gardenCelebration{position:absolute;inset:0;pointer-events:none;z-index:2}
+.flowerShower{position:absolute;inset:0}.flowerShower span{position:absolute;bottom:0;font-size:clamp(20px,3vw,38px);filter:drop-shadow(0 3px 2px #26365418);animation:gardenBloom 1.5s cubic-bezier(.2,.8,.2,1) both}
+.firework{position:absolute}.firework i{position:absolute;color:var(--spark);font-size:23px;font-style:normal;animation:seedBurst 1.5s ease-out both}
+.growthGarden[data-complete=true] .heroFlower{animation:flowerCelebrate 1s ease-out both}
+@keyframes plantReveal{from{opacity:0;transform:scale(.25)}to{opacity:1;transform:scale(1)}}
+@keyframes stemReveal{from{stroke-dashoffset:110}to{stroke-dashoffset:0}}
+@keyframes petalReveal{from{opacity:0}to{opacity:1}}
+@keyframes gardenBloom{0%{opacity:0;transform:translateY(55px) scale(.1)}65%{opacity:1;transform:translateY(-30px) scale(1.15)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes flowerCelebrate{40%{transform:translateY(-16px) rotate(7deg)}70%{transform:rotate(-5deg)}100%{transform:none}}
+@media(max-width:600px){.heroFlower{height:145px;width:125px}.growthTrail{gap:3px}.miniFlower{height:48px}.growthTrail strong{font-size:12px}.growthGarden{padding-inline:4px}.growthStatus{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.firework{display:none}.flowerShower span{opacity:1;transform:none}}
+.sunflowerBackdrop{position:absolute;right:-25px;bottom:-80px;width:340px;height:400px;opacity:.2;z-index:-1;transform:rotate(14deg);animation:backdropBloom 1.2s ease-out both;pointer-events:none}
+@keyframes backdropBloom{from{opacity:0;transform:translateY(60px) rotate(14deg) scale(.5)}to{opacity:.2;transform:rotate(14deg)}}
+@media(max-width:600px){.sunflowerBackdrop{width:240px;height:280px;right:-65px;bottom:-45px}}
+.scene:has(.growthGarden){padding:16px 20px 42px}
+.scene:has(.growthGarden) h2{font-size:28px;margin:5px 0}
+.scene:has(.growthGarden) .instruction{font-size:15px;margin-bottom:8px}
+.scene:has(.growthGarden) .heroFlower{height:125px;width:110px}
+.scene:has(.growthGarden) .miniFlower{height:46px}
+.scene:has(.growthGarden) .friends{padding:10px 4px;margin:6px auto;gap:8px}
+.scene:has(.growthGarden) .friend{min-height:88px;padding:6px 4px;border-radius:22px}
+.scene:has(.growthGarden) .friend strong{font-size:21px;margin:3px 0}
+.scene:has(.growthGarden) .mascot{margin-top:4px}
+.scene:has(.growthGarden) .mascot svg{height:65px;width:60px}
+.scene:has(.growthGarden) .mascot button{width:60px}
+.scene:has(.growthGarden) .mascot p{padding:7px 12px;font-size:14px}
+@media(max-width:600px){.scene:has(.growthGarden){padding:12px 8px 42px}.scene:has(.growthGarden) .friend{width:20%;min-height:70px}.scene:has(.growthGarden) .heroFlower{height:100px;width:90px}.scene:has(.growthGarden) h2{font-size:24px}}
+.growthGarden[data-complete=true]{padding-bottom:44px}
+.sunflowerBackdrop{width:260px;height:280px;bottom:-45px;right:12px}
+@media(max-width:600px){.sunflowerBackdrop{width:190px;height:210px;bottom:-30px;right:-35px}}
+/* The rainbow shares the flower's eight earned growth stages. */
+.growingRainbow{position:absolute;left:50%;top:16px;width:var(--rainbow-width);height:clamp(150px,28vw,340px);transform:translateX(-50%);opacity:var(--rainbow-opacity);transition:width .9s cubic-bezier(.2,.8,.2,1),opacity .9s;pointer-events:none}
+.growingRainbow svg{display:block;width:100%;height:100%;overflow:visible;transform-origin:50% 100%;animation:rainbowSway 7s ease-in-out infinite}
+.growingRainbow[data-complete=true]{top:10px}
+.growingRainbow[data-complete=true] svg{animation:rainbowSway 6s ease-in-out infinite}
+@keyframes rainbowSway{0%,100%{transform:rotate(-1.2deg) scale(.98)}50%{transform:rotate(1.2deg) scale(1.02)}}
+@media(max-width:600px){.growingRainbow{top:35px;height:240px}.growingRainbow[data-complete=true]{top:20px}}
+/* A smiling half-sun peeks through the left edge of the garden. */
+.cornerSun{position:absolute;left:-76px;top:12px;width:160px;height:160px;pointer-events:none;opacity:.9}
+.cornerSun svg{width:100%;height:100%;overflow:visible;animation:sunBreathe 4s ease-in-out infinite;transform-origin:center}
+.sunRay{transform-origin:90px 90px;animation:sunRayStretch 2.8s ease-in-out infinite}
+.sunRays{transform-origin:90px 90px;animation:sunTurn 12s ease-in-out infinite}
+.cornerSun[data-complete=true] .sunFace{transform-origin:90px 90px;animation:sunCelebrate 1.5s ease-in-out}
+@keyframes sunBreathe{0%,100%{transform:scale(.91)}50%{transform:scale(1.07)}}
+@keyframes sunRayStretch{0%,100%{transform:scaleY(.87)}50%{transform:scaleY(1.1)}}
+@keyframes sunTurn{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(8deg)}}
+@keyframes sunCelebrate{25%{transform:rotate(-12deg) scale(1.15)}60%{transform:rotate(10deg) scale(.95)}100%{transform:none}}
+@media(max-width:600px){.cornerSun{width:110px;height:110px;left:-56px;top:3px;opacity:.65}}
+.cornerSun{left:-68px;top:-68px;width:190px;height:190px}
+@media(max-width:600px){.cornerSun{left:-48px;top:-48px;width:135px;height:135px}}
+/* Completion makes the sun radiate with visibly longer rays. */
+.cornerSun[data-complete=true] svg{animation:sunRadiate 1.4s ease-out,sunBreathe 4s ease-in-out 1.4s infinite;filter:drop-shadow(0 0 10px #ffd35c88)}
+.cornerSun[data-complete=true] .sunRay{animation:sunLongRays 2.6s ease-in-out infinite}
+@keyframes sunLongRays{0%,100%{transform:scaleY(1.18)}50%{transform:scaleY(1.42)}}
+@keyframes sunRadiate{0%{transform:scale(.95);filter:drop-shadow(0 0 0 #ffc94300)}40%{transform:scale(1.17);filter:drop-shadow(0 0 22px #ffc943cc)}100%{transform:scale(1);filter:drop-shadow(0 0 10px #ffd35c88)}}
+
+/* The complete quiz garden sits beneath the shared sticky class header. */
+.scene[data-quiz-garden]{scroll-margin-top:calc(var(--garden-header-height,100px) + 8px)}
+@media(min-width:801px){
+ .scene[data-quiz-garden]{padding:12px 20px 42px;min-height:0}
+ .scene[data-quiz-garden] .sceneContent{max-width:1240px}
+ .scene[data-quiz-garden] h2{font-size:27px;margin:4px 0}
+ .scene[data-quiz-garden] .instruction{font-size:15px;line-height:1.35;margin-bottom:5px;max-width:850px}
+ .scene[data-quiz-garden] .eyebrow{font-size:9px}
+ .scene[data-quiz-garden] .quiz :global([data-quiz-root]){padding:0;margin:0}
+}
+@media(min-width:801px){
+ .scene[data-quiz-garden]{padding-top:8px;padding-bottom:36px}
+ .scene[data-quiz-garden] .instruction{line-height:1.3!important;margin:0 auto 3px!important;padding:0!important}
+ .scene[data-quiz-garden] h2{line-height:1.15;margin:3px 0!important}
+ .scene[data-quiz-garden] .eyebrow{line-height:1.2}
+}
+.scene[data-kids-reaction=correct] .sunFace{animation:sunRadiate 1.1s ease-out 2}
+.scene[data-kids-reaction=correct] .sunRay{animation:sunLongRays .7s ease-in-out 3}
+.scene[data-kids-reaction=correct] .flowers{animation:flowerCelebrate .8s ease-out 2}
+.scene[data-kids-reaction=correct] .rabbit{animation:flowerCelebrate .7s ease-out 2}
+@media(prefers-reduced-motion:reduce){.scene[data-kids-reaction=correct] *{animation:none!important}}
+.environment{position:absolute;inset:0;pointer-events:none;opacity:.15}.environment span{position:absolute;font-size:36px;animation:habitatFloat 9s ease-in-out infinite;animation-delay:var(--delay)}
+.environment[data-environment=ocean] span,.environment[data-environment=detective] span{animation:underwaterRise 12s linear infinite;animation-delay:var(--delay)}
+.environment[data-environment=space] span{animation:starTwinkle 5s ease-in-out infinite;animation-delay:var(--delay)}
+.scene[data-environment=ocean]{background:linear-gradient(180deg,#e2faff,#b4e5ed 75%,#99cbd5)}
+.scene[data-environment=space]{background:radial-gradient(ellipse at 80% 20%,#f0dfff,transparent 50%),linear-gradient(#e3e9ff,#cbd1ed)}
+.scene[data-environment=prehistoric]{background:linear-gradient(#f2f8de,#d7e6bb)}
+.scene[data-kids-reaction=wrong] .environment{filter:saturate(.45);opacity:.22}.scene[data-kids-reaction=wrong] .flowers{transform:rotate(7deg);filter:saturate(.6)}
+@keyframes habitatFloat{50%{transform:translate(12px,-10px) rotate(7deg)}}
+@keyframes underwaterRise{0%{transform:translateY(130px);opacity:0}20%,70%{opacity:1}100%{transform:translate(18px,-200px);opacity:0}}
+@keyframes starTwinkle{0%,100%{opacity:.4;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+@media(prefers-reduced-motion:reduce){.environment span{animation:none!important}}
+.reactionWeather{display:none;position:absolute;right:4%;top:12%;font-size:58px;opacity:.22;pointer-events:none}.reactionWeather span{display:block;font-size:17px;animation:gentleRain 1.3s linear 2}.scene[data-kids-reaction=wrong] .reactionWeather{display:block}@keyframes gentleRain{from{transform:translateY(-8px);opacity:.3}to{transform:translateY(18px);opacity:0}}
+.scene[data-quiz-garden] :global([data-quiz-root]){padding:0;margin:0}
+.habitatDrawing{position:absolute;inset:0;width:100%;height:100%;opacity:.35;pointer-events:none}
+/* Shared night landscape follows the platform theme, not the lesson/module. */
+.nightMoon{display:none}.nightMoon svg{filter:drop-shadow(0 0 12px #c6d8ff66)}.moonStars{animation:starTwinkle 3s ease-in-out infinite}.moonFace{transform-origin:center}
+:global(.dark) .daySun{display:none}:global(.dark) .nightMoon{display:block}
+:global(.dark) .scene{--garden-card:#2c3551;--garden-line:#526384;--garden-ink:#e9eefb;--garden-accent:#d6b3ff;--garden-grass:#2e5147;background:radial-gradient(circle at 8% 4%,#6678a633,transparent 35%),linear-gradient(180deg,#1b2545,#203c3b);color:#e9eefb}
+:global(.dark) .scene[data-environment=ocean],:global(.dark) .scene[data-environment=detective]{background:linear-gradient(#152941,#124451 75%,#173b47)}
+:global(.dark) .scene[data-environment=space]{background:radial-gradient(ellipse at 80% 20%,#50396a,transparent 55%),linear-gradient(#10182f,#272643)}
+:global(.dark) .scene[data-environment=prehistoric],:global(.dark) .scene[data-environment=forest]{background:linear-gradient(#1c2c3f,#263e32)}
+:global(.dark) .cloud{color:#b8c7e5;opacity:.3}
+:global(.dark) .scene[data-kids-reaction=correct] .moonFace,:global(.dark) .nightMoon[data-complete=true] .moonFace{animation:sunRadiate 1.1s ease-out 2}
+:global(.dark) .scene[data-kids-reaction=correct] .moonStars{animation:starTwinkle .5s ease-in-out 4}
+@media(prefers-reduced-motion:reduce){.nightMoon svg,.moonStars,.moonFace{animation:none!important}}
+.nightStars{display:none;position:absolute;left:0;top:0;bottom:0;width:110px;pointer-events:none}.nightStars span{color:#e4ebff;animation:nightShimmer 3.8s ease-in-out infinite;text-shadow:0 0 4px #ccd9ff88}:global(.dark) .nightStars{display:block}@keyframes nightShimmer{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:.95;transform:scale(1.12)}}@media(max-width:600px){.nightStars{width:55px}}@media(prefers-reduced-motion:reduce){.nightStars span{animation:none;opacity:.65}}
+
+.moonHappy{display:none}.scene[data-kids-reaction=correct] .moonRest,.nightMoon[data-complete=true] .moonRest{display:none}.scene[data-kids-reaction=correct] .moonHappy,.nightMoon[data-complete=true] .moonHappy{display:block}
+.mysteryHint{display:block;margin-top:9px;font-size:13px;line-height:1.5;color:var(--garden-ink,#253653)}.mysteryFriend strong{font-size:42px;line-height:1.15}.mysteryFriend[aria-pressed=true]{box-shadow:0 0 0 4px #fff2b1,0 0 28px #ffbe4dcc;filter:brightness(1.12);transform:translateY(-12px) scale(1.05)}.mysteryFriend[aria-pressed=true] strong{animation:mysteryPop .45s ease-out;color:#75451d}@keyframes mysteryPop{50%{transform:scale(1.35) rotate(10deg)}}@media(prefers-reduced-motion:reduce){.mysteryFriend[aria-pressed=true]{transform:none}.mysteryFriend[aria-pressed=true] strong{animation:none}}
+
+.soundWave{height:100px;gap:7px}.soundWave>span{display:grid;place-items:center;width:12px;flex-shrink:0;opacity:1;filter:blur(0);transform:translateY(0);transition:transform .45s ease,opacity .55s ease,filter .55s ease}.soundWave i{display:block;transition:height .15s ease}.soundWave[data-sound=low]>span{transform:translateY(var(--arc))}.soundWave[data-sound=high]>span{transform:translateY(calc(-1 * var(--arc)))}.soundWave[data-playing=true][data-sound=low] i,.soundWave[data-playing=true][data-sound=high] i{animation:pitchDot .35s ease-in-out infinite alternate;animation-delay:var(--delay)}.soundWave[data-playing=true][data-sound=short]>span:nth-child(-n+5) i,.soundWave[data-playing=true][data-sound=long] i{animation:durationDot .25s ease-in-out infinite alternate;animation-delay:var(--delay)}.soundWave[data-sound=rest]>span{opacity:0;filter:blur(5px);transform:scale(.4);transition-delay:var(--delay)}@keyframes pitchDot{to{transform:scale(1.35);filter:brightness(1.15)}}@keyframes durationDot{to{height:40px;filter:brightness(1.15)}}@media(prefers-reduced-motion:reduce){.soundWave>span,.soundWave i{transition:none!important;animation:none!important}.soundWave[data-playing=true][data-sound=short]>span:nth-child(-n+5) i,.soundWave[data-playing=true][data-sound=long] i{height:28px}}
+/* Keep the entire sun/moon attached inside the scene, including its rays. */
+.scene .cornerSun{left:4px;top:4px;width:105px;height:105px}.scene .landscape{border-radius:inherit}.scene{width:100%;box-sizing:border-box}@media(max-width:600px){.scene .cornerSun{left:3px;top:3px;width:62px;height:62px}}

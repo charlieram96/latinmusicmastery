@@ -125,6 +125,7 @@ function DurationsTab({ editing }: { editing: ZoomEditing }) {
       <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.setValue('32')}>{st("32nd")}</button>
       <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.setValue('64')}>{st("64th")}</button>
       <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.cycleDots(2)}>{st("Double dot")}</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.cycleDots(3)}>{st("Triple dot")}</button>
       <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.accidental(-2)}>{st("Double flat")}</button>
       <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.accidental(2)}>{st("Double sharp")}</button>
     </div>

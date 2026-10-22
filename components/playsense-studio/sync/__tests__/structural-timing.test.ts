@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { clipFromMeasures, prepareStructuralEdit } from '../structural-timing';
-import { nudgeDelta, seedMarkerState, setMarkerTime, setNoteTime, type MarkerState } from '../marker-model';
+import { noteTime, copyMeasureSpans, nudgeDelta, seedMarkerState, setMarkerTime, setNoteTime, type MarkerState } from '../marker-model';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
+import { readMeasureClipboard, writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 import { walkMeasures } from '@/lib/playsense-studio/time-mapping';
 import type { Measure, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
@@ -91,6 +92,28 @@ describe('prepareStructuralEdit', () => {
     expect(nudgeDelta(r.markers, r.markers.measures[5].downbeatQN + 1)).toBeCloseTo(0.05, 9);
   });
 
+  it('copy/paste preserves both synced bars including the final off-beat note', () => {
+    const s = score(2);
+    s.tracks[0].measures[1].voices[0].events = [1,1,1,.5,.5].map(durationQN => ({kind:'note' as const,midi:60,durationQN}));
+    let markers = seedMarkerState(s.tracks[0], s, buildWaypoints(s,120,3));
+    markers = setMarkerTime(markers,{measureNumber:2,beatInMeasure:2},5.65);
+    markers = setNoteTime(markers,7.5,6.88);
+    const originalTime = noteTime(markers,7.5);
+    const originalSpans = copyMeasureSpans(markers,0,2);
+    writeMeasureClipboard(clipFromMeasures(markers,s,0,0,2));
+    const clip=readMeasureClipboard()!;
+    // Subsequent edits must not change the copied synchronization snapshot.
+    const changed = setNoteTime(markers,7.5,6.8);
+    expect(noteTime(changed,7.5)).not.toBe(originalTime);
+    const result = ok(prepareStructuralEdit(markers,s,{type:'paste-measures',trackIndex:0,index:2,clip}));
+    const destinationStart=starts(result.markers)[2];
+    expect(noteTime(result.markers,15.5)-destinationStart).toBeCloseTo(originalTime-3,9);
+    expect(copyMeasureSpans(result.markers,2,2)).toEqual(originalSpans);
+    expect(noteTime(result.markers,7.5)).toBe(originalTime);
+    const again=ok(prepareStructuralEdit(result.markers,result.score,{type:'paste-measures',trackIndex:0,index:4,clip}));
+    expect(noteTime(again.markers,23.5)-starts(again.markers)[4]).toBeCloseTo(originalTime-3,9);
+  });
+
   it('clipFromMeasures carries only the slurs whose two ends are in the copied bars', () => {
     const { score: s, markers } = synced();
     s.tracks[0].measures.forEach((m, i) => m.voices[0].events.forEach((e, j) => { e.id = `m${i}n${j}`; }));
@@ -127,4 +150,18 @@ describe('prepareStructuralEdit', () => {
     expect(starts(r.markers)).toEqual([0, 2, 4, 6, 8].map((t) => expect.closeTo(t, 9)));
     expect(r.markers.tailVideoTimeSeconds).toBeCloseTo(10, 9);
   });
+});
+
+it('replacing bar 8 from bar 6 preserves every marker and the section end',()=>{
+ const s=score(8);
+ s.tracks[0].measures[7]={number:8,endBarline:'final',voices:[{number:1,events:[]}]};
+ const markers=seedMarkerState(s.tracks[0],s,buildWaypoints(s,120,0));
+ const clip=clipFromMeasures(markers,s,0,5,1);
+ // A source may have different video pacing; replacing notes keeps the destination clock.
+ clip.timing![0].durationSeconds=8;
+ const result=ok(prepareStructuralEdit(markers,s,{type:'paste-measures',trackIndex:0,index:7,clip,mode:'replace'}));
+ expect(result.markers).toBe(markers);
+ expect(result.score.tracks[0].measures).toHaveLength(8);
+ expect(result.score.tracks[0].measures[7].voices[0].events).toHaveLength(4);
+ agree(result);
 });

@@ -1,0 +1,52 @@
+/* Every page uses the same stage; dense content never moves its navigation. */
+.page {
+  position: relative;
+  height: clamp(580px, 72dvh, 680px);
+  min-height: 0;
+  background: hsl(var(--background));
+  padding-bottom: 78px;
+}
+.content {
+  height: 100%;
+  overflow: auto;
+  /* Let wheel/touch scrolling reach the outer page at either boundary. */
+  overscroll-behavior-y: auto;
+  scrollbar-gutter: stable both-edges;
+}
+.cover { height: 100%; }
+.cover > div { height: 100%; min-height: 100%; }
+.content :global(.solfeo-step) {
+  max-width: 1120px;
+  min-height: 0;
+  margin-inline: auto;
+  padding: 24px;
+}
+.content :global(.solfeo-step) > * + * { margin-top: 12px; }
+.content :global(.solfeo-step) > p { font-size: 15px; line-height: 1.5; }
+.content :global(.solfeo-step) > p:nth-child(2) { font-size: 12px; }
+.content svg[role='img'] {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  max-height: 150px;
+  margin-inline: auto;
+}
+.content button[aria-label^='Escuchar'],
+.content button[aria-label^='Play'] { padding: 8px; }
+.navigation { display: flex; align-items: center; gap: 12px; }
+.navigation > button { min-width: 130px; width: auto; flex-shrink: 0; }
+.navigation > span { min-width: 72px; width: auto; text-align: center; }
+@media (max-width: 639px) {
+  .content :global(.solfeo-step) { padding: 16px; }
+  .navigation { gap: 6px; }
+  .navigation > button { min-width: 0; width: 132px; }
+  .navigation > button:first-child { min-width: 0; width: 40px; }
+  .navigation > span { width: 64px; }
+}
+
+.greenPage{background:#265b4d;padding-bottom:0}.greenPage .content{scrollbar-gutter:auto}.greenPage .content>div{height:100%}
+
+/* Longer book pages grow naturally instead of hiding their listening controls. */
+.page[data-flow-page=true]{height:auto;min-height:clamp(580px,72dvh,680px)}
+.page[data-flow-page=true]>.content{height:auto;overflow:visible;padding-bottom:12px}
+.navigation>a{min-width:130px;flex-shrink:0}@media(max-width:639px){.navigation>a{min-width:40px}}

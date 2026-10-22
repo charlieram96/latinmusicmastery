@@ -138,6 +138,24 @@ describe('WaveformCanvas trim drag', () => {
     container.remove();
   });
 
+  it('drags the final off-beat note directly without selecting the staff first', () => {
+    const calls: Array<[number, number | undefined]> = [];
+    act(() => root.render(<WaveformCanvas
+      peaks={null} durationSeconds={10} handles={[]} noteTicks={[{qn:7.5,videoTimeSeconds:7.5,nudged:false}]}
+      showNotes selectedNote={null} onNoteDrag={(t,qn)=>calls.push([t,qn])}
+      tailVideoTimeSeconds={10} pixelsPerSecond={10} scrollLeftPx={0}
+      dragAll={false} selected={null} getCurrentSeconds={()=>0} onSeek={()=>{}}
+      onSelect={()=>{}} onMarkerDrag={()=>{}} onTailDrag={()=>{}} onDragEnd={()=>{}}
+      onScrollByPx={()=>{}} onViewportWidth={()=>{}}
+    />));
+    const overlay=container.querySelectorAll('canvas')[1];
+    act(()=>overlay.dispatchEvent(pointer('pointerdown',75,36)));
+    act(()=>overlay.dispatchEvent(pointer('pointermove',85,36)));
+    act(()=>overlay.dispatchEvent(pointer('pointermove',90,36)));
+    act(()=>overlay.dispatchEvent(pointer('pointerup',90,36)));
+    expect(calls).toEqual([[8.5,7.5],[9,7.5]]);
+  });
+
   it('keeps reporting drag positions across every pointermove', () => {
     const calls: Array<[string, number]> = [];
     act(() => {

@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import { SKY } from './glsl'
 import { SEA_Y, type SkyUniforms } from './sky'
 import { billboards } from './glow'
+import type { StageCity } from '../cities'
+import { cityLandmarks } from './city-landmarks'
 import { createBridge } from './landmarks'
 
 const rand = (seed: number) => { const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x) }
@@ -48,7 +50,7 @@ function towerMaterial(uniforms: SkyUniforms, round: boolean, mirror = false) {
       vec3 psLed(float index) {
         vec3 palette[4];
         palette[0] = vec3(${LED[0].join(',')}); palette[1] = vec3(${LED[1].join(',')}); palette[2] = vec3(${LED[2].join(',')}); palette[3] = vec3(${LED[3].join(',')});
-        float drift = psTime * .05 * psCloudMotion + vStyle.x * 4.;
+        float drift = vStyle.x * 4.;
         int a = int(mod(index + floor(drift), 4.)), b = int(mod(index + floor(drift) + 1., 4.));
         return mix(palette[a], palette[b], smoothstep(.75, 1., fract(drift)));
       }
@@ -65,18 +67,26 @@ function towerMaterial(uniforms: SkyUniforms, round: boolean, mirror = false) {
         // Curtain wall: dark blue-violet glass mirroring the sky; backlit edges catch the afterglow.
         float facing = max(dot(-view, n), 0.);
         float fresnel = .04 + .96 * pow(max(0., 1. - facing), 5.);
-        vec3 color = vGlass * .12 + psSkyClear(reflect(view, n)) * (fresnel * .55 + .07);
+        vec3 color = vGlass * .5 + psSkyClear(reflect(view, n)) * (fresnel * .55 + .07);
         color *= .65 + .35 * top;
         float rimLight = pow(max(dot(n, normalize(vec3(psSunDir.x, 0., psSunDir.z))), 0.), 2.) * (1. - side);
         color += vec3(1., .42, .3) * rimLight * .22;
-        vec2 cell = vec2(u / 1.35, h / 1.55);
+        vec2 cell = vec2(u / 2.2, h / 3.1);
         vec2 id = floor(cell), f = fract(cell);
         // Scattered offices and apartments: lit in loose clusters, warm and cool.
         float cluster = psNoise(vec2(u * .08, h * .12) + vStyle.x * 40.);
-        float lit = step(1. - vStyle.y * .38 * smoothstep(.35, .75, cluster), psHash(id + vStyle.x * 17.)) * (1. - side);
+        float lit = step(1. - vStyle.y * 1.45 * mix(.45, 1., smoothstep(.2, .8, cluster)), psHash(id + vStyle.x * 17.)) * (1. - side);
         vec3 lamp = mix(vec3(1.3, .85, .5), vec3(.85, .95, 1.25), step(.55, psHash(id * .37 + vStyle.x))) * (.35 + .65 * psHash(id + 3.));
-        color = mix(color, lamp, lit * step(.12, f.x) * step(f.y, .78));
-        color *= 1. - (1. - side) * (.25 * step(.92, f.y));
+        vec2 windowAA=max(fwidth(cell),vec2(.01));
+        float windowMask=smoothstep(.12-windowAA.x,.12+windowAA.x,f.x) * (1.-smoothstep(.86-windowAA.x,.86+windowAA.x,f.x))
+          * smoothstep(.12-windowAA.y,.12+windowAA.y,f.y) * (1.-smoothstep(.76-windowAA.y,.76+windowAA.y,f.y));
+        color = mix(color, lamp * .8, lit * windowMask);
+        // Anti-aliased curtain-wall frames and recessed balcony slabs.
+        vec2 aa = max(fwidth(cell), vec2(.015));
+        float pane = smoothstep(.04-aa.x,.04+aa.x,f.x) * (1.-smoothstep(.92-aa.x,.92+aa.x,f.x));
+        float slab = smoothstep(.88-aa.y,.88+aa.y,f.y);
+        color *= mix(.55, 1., pane) * (1. - (1. - side) * .36 * slab);
+        color += vec3(.045,.07,.085) * slab * (1.-side);
         // LED signature: 1 = vertical corners, 2 = crown band, 3 = crown + floor stripes.
         vec3 led = psLed(vStyle.w);
         float mode = vStyle.z;
@@ -90,10 +100,11 @@ function towerMaterial(uniforms: SkyUniforms, round: boolean, mirror = false) {
         // Bay haze: only the bases melt into the waterline glow; distance adds a light veil.
         vec3 haze = mix(psSkyClear(normalize(vec3(view.x, .02, view.z))), vec3(.2, .09, .26), .55) * .75;
         float low = 1. - smoothstep(0., 18., vWorld.y - ${WATERLINE.toFixed(2)});
-        color = mix(color, haze, clamp(1. - exp(-dist * .00028) + low * .45, 0., .8));
+        color = mix(color, haze, clamp(1. - exp(-dist * .00028) + low * .22, 0., .8));
         ${mirror ? `float depth = ${SEA_Y.toFixed(2)} - vWorld.y;
-        float fade = exp(-depth * .035) * (.9 + .1 * sin(vWorld.y * 3.1 + psTime * .6));
-        gl_FragColor = vec4(color * .8, .5 * fade);` : 'gl_FragColor = vec4(color, 1.);'}
+        float bands = .4 + .6 * smoothstep(-.5,.8,sin(vWorld.y * 4.7 + psTime * 1.5 + sin(vWorld.x * .31)));
+        float fade = exp(-depth * .027) * bands;
+        gl_FragColor = vec4(color * .95, .6 * fade);` : 'gl_FragColor = vec4(color, 1.);'}
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,
@@ -111,13 +122,13 @@ function slantedBox() {
   return geometry
 }
 
-export function createSkyline(uniforms: SkyUniforms, motion: boolean) {
+export function createSkyline(uniforms: SkyUniforms, motion: boolean, city: StageCity = 'miami') {
   const group = new THREE.Group()
   const time = { value: 0 }
   const towers: Tower[] = []
-  const glassTints = [0x1a2f52, 0x22335a, 0x2b2c55, 0x1c3a4e, 0x302a4c].map(c => new THREE.Color(c))
+  const glassTints = [0x245a65, 0x264b61, 0x344653, 0x195653, 0x3b4d5f].map(c => new THREE.Color(c))
   // Downtown and Brickell rise in the middle of the view; the shore steps down to either side.
-  let seed = 1
+  let seed = 1 + (city === 'miami' ? 0 : city.length * 117)
   for (let angle = -44; angle < 44;) {
     const s = seed++
     const centrality = Math.exp(-Math.pow((angle + 3) / 17, 2))
@@ -145,6 +156,7 @@ export function createSkyline(uniforms: SkyUniforms, motion: boolean) {
     })
   }
   // Landmarks: a Miami Tower-style stack of lit half-drums and a sawtooth-stepped office tower.
+  if (city === 'miami') {
   const landmark = shore(-7, 600)
   towers.push({ position: landmark.clone(), size: new THREE.Vector3(20, 46, 16), turn: .1, kind: 0, seed: .31, density: .35, led: 0, palette: 0, glass: glassTints[1] })
   ;[[19, 11], [16, 11], [12.5, 11]].forEach(([width, height], i) => towers.push({
@@ -154,6 +166,26 @@ export function createSkyline(uniforms: SkyUniforms, motion: boolean) {
   for (let i = 0; i < 5; i++) towers.push({
     position: saw.clone().add(new THREE.Vector3(i * 5.2 - 10, 0, i * 1.5)), size: new THREE.Vector3(5.4, 52 + i * 9, 14), turn: -.2,
     kind: 0, seed: .7 + i * .03, density: .3, led: i === 4 ? 2 : 0, palette: 3, glass: glassTints[2] })
+
+  } else {
+    for (const tower of towers) { tower.size.y *= city === 'los-angeles' ? .45 : .9; tower.led = 0; tower.palette = 3 }
+    group.add(cityLandmarks(city))
+  }
+
+  // Low waterfront blocks anchor the towers to a continuous inhabited shoreline.
+  if (city === 'miami') {
+    for (let i=0;i<46;i++) {
+      const a=-39+i*1.7, d=535+rand(i+1700)*45
+      towers.push({position:shore(a,d),size:new THREE.Vector3(13+rand(i+1701)*12,5+rand(i+1702)*10,14),turn:0,kind:0,seed:rand(i+1703),density:.65,led:2,palette:3,glass:glassTints[i%glassTints.length]})
+    }
+    // Setback penthouses and rooftop mechanical screens break up box silhouettes.
+    for (const t of towers.slice()) if(t.size.y>65 && t.kind===0) {
+      towers.push({...t,position:t.position.clone().add(new THREE.Vector3(0,t.size.y,0)),size:new THREE.Vector3(t.size.x*.7,3.5+rand(t.seed*100)*5,t.size.z*.72),led:2,density:.25,palette:1})
+    }
+    const shoreLights=Array.from({length:110},(_,i)=>shore(-43+i*.8,527).setY(WATERLINE+2.2))
+    group.add(billboards(shoreLights,new THREE.Color(1.5,1.1,.65),.85,1,time,'blink'))
+
+  }
 
   const halfDrum = new THREE.CylinderGeometry(.5, .5, 1, 24, 1, false, -Math.PI / 2, Math.PI).translate(0, .5, 0)
   const geometries = [new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0), new THREE.CylinderGeometry(.5, .5, 1, 24, 1).translate(0, .5, 0), slantedBox(), halfDrum]

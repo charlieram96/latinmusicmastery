@@ -127,12 +127,12 @@ export function useFlexPlayback(
   // Track the underlying element in state so the wiring effect re-runs when
   // the video mounts LATE — e.g. rendered through a React portal a render
   // after this hook's owner mounted (SyncPanel's floating PiP does exactly
-  // this). A no-dep effect polls the ref each commit; the updater bails when
-  // the element is unchanged, so no extra renders once it's bound. Mirrors
+  // this). Check the ref each commit, but do not enqueue a state update
+  // unless the underlying element actually changed. Mirrors
   // use-video-transport-clock.ts.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   useEffect(() => {
-    setVideoEl((prev) => (prev === videoRef.current ? prev : videoRef.current));
+    if (videoEl !== videoRef.current) setVideoEl(videoRef.current);
   });
 
   useEffect(() => {

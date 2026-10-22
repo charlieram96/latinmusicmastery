@@ -10,6 +10,8 @@
 // top-left), i.e. VexFlow's unscaled math multiplied by `scale`. lineForY
 // takes those px back to a stave line (0 = top line).
 
+import { applyMeasureSymbols } from '@/lib/playsense-studio/notation/measure-symbols';
+import {drawEmptyMeasure} from '@/lib/playsense-studio/notation/empty-measure';
 import { useEffect, useRef } from 'react';
 import { BarlineType, Renderer, Stave, StaveTie } from 'vexflow';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
@@ -53,6 +55,8 @@ function draw(el: HTMLDivElement, { item, width, height, scale, spans, dimVoice 
   const stave = new Stave(4, 30, Math.max(20, width / scale - 8));
   applyStaveHeader(stave, staveHeader(item, { opening: true, rowStart: false }));
   if (item.finalBarline) stave.setEndBarType(BarlineType.END);
+  else if (item.endBarline === 'double') stave.setEndBarType(BarlineType.DOUBLE);
+  applyMeasureSymbols(stave, item);
   stave.setContext(ctx).draw();
 
   const layout: ZoomLayout = {
@@ -66,6 +70,7 @@ function draw(el: HTMLDivElement, { item, width, height, scale, spans, dimVoice 
   const events = item.events;
   const voice2 = item.voice2Events ?? [];
   const built = buildMeasure([events, voice2], item.timeSignature, item.clef);
+  if (!built) drawEmptyMeasure(ctx,stave,item.timeSignature,item.emptyText);
   if (built) {
     formatMeasure(built, Math.max(20, stave.getNoteEndX() - stave.getNoteStartX() - 8));
     drawMeasure(ctx, stave, built);

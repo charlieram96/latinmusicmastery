@@ -1,5 +1,7 @@
 'use client'
 
+import { LearningIcon } from '@/components/learning-mode/art'
+
 import { Languages } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
 import { Button } from '@/components/ui/button'
@@ -46,7 +48,7 @@ export function LanguageToggle({ variant = 'labeled', className, onOpenChange }:
           className="absolute inset-0 rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         />
         <span className="pointer-events-none relative flex h-5 w-5 shrink-0 items-center justify-center">
-          <Languages className="h-5 w-5" />
+          <LearningIcon name="language" icon={Languages} />
           <span
             aria-hidden
             className={cn(

@@ -57,3 +57,12 @@ describe('anchorPxFor', () => {
     expect(anchorPxFor(60, 100, 1000, 800)).toBe(400);
   });
 });
+
+it('leaves room for the opening clef and rest at media time zero', () => {
+ const bounds={...B,leadingPaddingPx:128};
+ const view=fitRangeView(0,8,1000,bounds)!;
+ expect(view.scrollLeft).toBe(-128);
+ expect(8*view.pps-view.scrollLeft).toBeLessThan(1000);
+ expect(0*view.pps-view.scrollLeft).toBe(128);
+ expect(followScroll(0,view.pps,0,1000,bounds)).toBe(-128);
+});

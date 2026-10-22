@@ -60,7 +60,7 @@ export function StudioAppBar({
       >
         <div className="flex min-w-0 flex-col">
           <span className="text-[10px] font-semibold uppercase leading-3 tracking-[0.16em] text-gold"> <AdminText text={"Course Studio"} /> </span>
-          <h1 className="truncate font-heading text-[15px] font-semibold leading-5 text-foreground">
+          <h1 className="whitespace-normal break-words font-heading text-[15px] font-semibold leading-5 text-foreground">
             {title || 'Untitled course'}
           </h1>
         </div>

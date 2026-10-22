@@ -202,14 +202,16 @@ export function useBackingTrack({
           offset += (audioContext.currentTime - when) * playbackRate
           when = audioContext.currentTime
         }
-        if (offset >= out) continue
+        const sessionEnd = loopLength && loopLength > 0 ? startTime + loopLength * iterations : Infinity
+        const audibleDuration = Math.min(out - offset, (sessionEnd - when) * playbackRate)
+        if (audibleDuration <= 0) continue
 
         const source = audioContext.createBufferSource()
         source.buffer = buffer
         if (source.playbackRate) source.playbackRate.value = playbackRate
         source.connect(trackGain)
         // Duration is measured in source-buffer seconds, even at another rate.
-        source.start(when, offset, out - offset)
+        source.start(when, offset, audibleDuration)
         source.onended = () => {
           sourceNodesRef.current = sourceNodesRef.current.filter((s) => s !== source)
         }

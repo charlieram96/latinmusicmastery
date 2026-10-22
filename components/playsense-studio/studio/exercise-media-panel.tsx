@@ -1,4 +1,5 @@
 'use client';
+import {useAudioSource,useSelectedAudio} from '../shared/use-audio-source';
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
 
@@ -63,6 +64,9 @@ export function ExerciseMediaPanel({
   const videoInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLVideoElement>(null);
+  const audioSource=useAudioSource(classItemId,"exercise",videoUrl);
+  const [audioVolume,setAudioVolume]=useState(1);
+  const audioError=useSelectedAudio(previewRef,audioSource.settings,{volume:audioVolume,muted:false,loaded:audioSource.loaded,enabled:audioSource.settings.selected==='imported'});
 
   const crop = useMemo(
     () => cropWindow(videoDuration, scoreLengthSeconds, startSeconds),
@@ -210,6 +214,8 @@ export function ExerciseMediaPanel({
               className="w-full rounded-md bg-black"
               onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || null)}
             /><VideoWatermark nativeControls /></div>
+            {audioError&&<p role="alert">{audioError}</p>}
+            {audioSource.settings.selected==='imported'&&<label className="flex items-center gap-2 text-xs">{st('Volume')}<input type="range" min="0" max="1" step=".01" value={audioVolume} onChange={e=>setAudioVolume(Number(e.target.value))}/></label>}
             {/* The crop-start slider used to live here. It is superseded by the
                 trim handles on the waveform in "Sync video", which set the same
                 in-point and can also set an out-point — one windowing mechanism

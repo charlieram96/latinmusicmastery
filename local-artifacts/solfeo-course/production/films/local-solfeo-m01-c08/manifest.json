@@ -1,0 +1,276 @@
+{
+  "classId": "local-solfeo-m01-c08",
+  "duration": 80.933813,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Identificación y escritura musical",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 17.388889,
+      "kind": "explanation",
+      "title": "Identificación y escritura musical",
+      "sourceTopic": "taller-1",
+      "soundEvents": []
+    },
+    {
+      "start": 17.388889,
+      "end": 29.388889,
+      "kind": "notation",
+      "title": "A · Figuras sobre Sol4",
+      "sourceTopic": "taller-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "A · Figuras sobre Sol4",
+            "events": [
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 2
+              },
+              {
+                "pitch": "G4",
+                "dur": 4
+              },
+              {
+                "pitch": "G4",
+                "dur": 8
+              },
+              {
+                "pitch": "G4",
+                "dur": 16
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "taller-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-7"
+      },
+      "soundEvents": [
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3.4,
+          "duration": 1.1039999999999999,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 4.6,
+          "duration": 0.5519999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 5.199999999999999,
+          "duration": 0.27599999999999986,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 5.499999999999999,
+          "duration": 0.13800000000000034,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 29.388889,
+      "end": 46.788889,
+      "kind": "notation",
+      "title": "B · Líneas y espacios alternados",
+      "sourceTopic": "taller-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "height": 80,
+        "rows": [
+          {
+            "title": "B · Líneas y espacios alternados",
+            "events": [
+              {
+                "pitch": "E4",
+                "dur": 1
+              },
+              {
+                "pitch": "F4",
+                "dur": 1
+              },
+              {
+                "pitch": "G4",
+                "dur": 1
+              },
+              {
+                "pitch": "A4",
+                "dur": 1
+              },
+              {
+                "pitch": "B4",
+                "dur": 1
+              },
+              {
+                "pitch": "C5",
+                "dur": 1
+              }
+            ],
+            "space": 6.8,
+            "topOffset": 52
+          }
+        ],
+        "rowHeight": 110,
+        "_sourcePage": "taller-1",
+        "rowHeights": [
+          80
+        ],
+        "sourcePageId": "flow-cont-7"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.4,
+          "duration": 2.208,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 5.8,
+          "duration": 2.2079999999999997,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 8.2,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 10.6,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 13,
+          "duration": 2.2080000000000006,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 0
+        }
+      ],
+      "performedBpm": 100
+    },
+    {
+      "start": 46.788889,
+      "end": 62.912472,
+      "kind": "explanation",
+      "title": "Identificación y escritura musical",
+      "sourceTopic": "taller-1",
+      "soundEvents": []
+    },
+    {
+      "start": 62.912472,
+      "end": 74.91247200000001,
+      "kind": "notation",
+      "title": "Identificación y escritura musical",
+      "sourceTopic": "taller-1",
+      "diagram": {
+        "type": "diagram",
+        "kind": "blank",
+        "height": 90,
+        "count": 1,
+        "_sourcePage": "taller-1",
+        "sourcePageId": "flow-cont-7"
+      },
+      "soundEvents": [],
+      "performedBpm": 96
+    },
+    {
+      "start": 74.91247200000001,
+      "end": 80.91247200000001,
+      "kind": "completion",
+      "title": "¡Sigues progresando!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

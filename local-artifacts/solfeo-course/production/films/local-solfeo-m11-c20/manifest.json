@@ -1,0 +1,2436 @@
+{
+  "classId": "local-solfeo-m11-c20",
+  "duration": 183.521333,
+  "chapters": [
+    {
+      "start": 0,
+      "end": 6,
+      "kind": "intro",
+      "title": "Lección 20 · Estudio de integración en Do",
+      "soundEvents": []
+    },
+    {
+      "start": 6,
+      "end": 14,
+      "kind": "explanation",
+      "title": "Lección 20 · Estudio de integración en Do",
+      "sourceTopic": null,
+      "soundEvents": []
+    },
+    {
+      "start": 14,
+      "end": 26,
+      "kind": "photo",
+      "title": "De la lectura al sonido",
+      "soundEvents": []
+    },
+    {
+      "start": 26,
+      "end": 34,
+      "kind": "explanation",
+      "title": "Lección 20 · Estudio de integración en Do",
+      "sourceTopic": null,
+      "soundEvents": []
+    },
+    {
+      "start": 34,
+      "end": 56,
+      "kind": "notation",
+      "title": "1",
+      "sourceTopic": null,
+      "range": [
+        0,
+        4
+      ],
+      "bpm": 60,
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "rows": [
+          {
+            "title": "1",
+            "meter": "4/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 4,
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 1
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2,
+                  "grace": {
+                    "pitch": "F4"
+                  },
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4,
+                  "dynamic": "mf"
+                }
+              ]
+            ],
+            "space": 5.8,
+            "compact": true,
+            "proportionalBars": true,
+            "slurs": [
+              [
+                0,
+                9
+              ]
+            ],
+            "ties": [],
+            "beams": [
+              [
+                1,
+                2
+              ],
+              [
+                6,
+                7
+              ],
+              [
+                11,
+                12
+              ]
+            ],
+            "tupletGroups": [],
+            "spans": [],
+            "nav": [],
+            "barStyles": {},
+            "endings": [],
+            "tempo": "Cantabile · negra = 60",
+            "hairpin": "cresc",
+            "hairpinFrom": 16,
+            "hairpinTo": 18
+          }
+        ],
+        "rowHeights": [
+          104
+        ],
+        "height": 104,
+        "sourcePageId": "repertorio-20"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 0.99,
+          "gain": 0.075,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 2,
+          "duration": 0.495,
+          "gain": 0.075,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2.5,
+          "duration": 0.495,
+          "gain": 0.075,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 3,
+          "duration": 0.99,
+          "gain": 0.075,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 4,
+          "duration": 0.99,
+          "gain": 0.075,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 5,
+          "duration": 0.99,
+          "gain": 0.075,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 6,
+          "duration": 0.495,
+          "gain": 0.075,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 6.5,
+          "duration": 0.495,
+          "gain": 0.075,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 7,
+          "duration": 0.99,
+          "gain": 0.075,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 8,
+          "duration": 0.92,
+          "gain": 0.075,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 9,
+          "duration": 0.92,
+          "gain": 0.075,
+          "visualIndex": 10,
+          "bar": 2
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 10,
+          "duration": 0.46,
+          "gain": 0.075,
+          "visualIndex": 11,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 10.5,
+          "duration": 0.46,
+          "gain": 0.075,
+          "visualIndex": 12,
+          "bar": 2
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 11,
+          "duration": 0.92,
+          "gain": 0.075,
+          "visualIndex": 13,
+          "bar": 2
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 12,
+          "duration": 0.92,
+          "gain": 0.075,
+          "visualIndex": 14,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 13,
+          "duration": 3.68,
+          "gain": 0.075,
+          "visualIndex": 15,
+          "bar": 3
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 17,
+          "duration": 0.96,
+          "gain": 0.07,
+          "visualIndex": 16,
+          "bar": 4
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 18,
+          "duration": 0.96,
+          "gain": 0.07,
+          "visualIndex": 16,
+          "bar": 4
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 19,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 4
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 20,
+          "duration": 0.92,
+          "gain": 0.27,
+          "visualIndex": 18,
+          "bar": 4
+        }
+      ],
+      "performedBpm": 60
+    },
+    {
+      "start": 56,
+      "end": 78,
+      "kind": "notation",
+      "title": "6",
+      "sourceTopic": null,
+      "range": [
+        0,
+        4
+      ],
+      "bpm": 60,
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "rows": [
+          {
+            "title": "6",
+            "meter": "4/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 8,
+                  "dynamic": "p"
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 1,
+                  "dynamic": "mf"
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2,
+                  "mark": "tr"
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "space": 5.8,
+            "compact": true,
+            "proportionalBars": true,
+            "slurs": [
+              [
+                17,
+                24
+              ]
+            ],
+            "ties": [],
+            "beams": [
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                6,
+                7
+              ],
+              [
+                8,
+                9
+              ],
+              [
+                10,
+                11
+              ],
+              [
+                12,
+                13
+              ],
+              [
+                14,
+                15
+              ],
+              [
+                21,
+                22
+              ]
+            ],
+            "tupletGroups": [],
+            "spans": [],
+            "nav": [],
+            "barStyles": {},
+            "endings": [],
+            "hairpin": "cresc",
+            "hairpinFrom": 0,
+            "hairpinTo": 16
+          }
+        ],
+        "rowHeights": [
+          104
+        ],
+        "height": 104,
+        "sourcePageId": "repertorio-20"
+      },
+      "soundEvents": [
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 1,
+          "duration": 0.46,
+          "gain": 0.07,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1.5,
+          "duration": 0.46,
+          "gain": 0.0825,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 2,
+          "duration": 0.46,
+          "gain": 0.095,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 2.5,
+          "duration": 0.46,
+          "gain": 0.10750000000000001,
+          "visualIndex": 3,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3,
+          "duration": 0.46,
+          "gain": 0.12000000000000001,
+          "visualIndex": 4,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 3.5,
+          "duration": 0.46,
+          "gain": 0.1325,
+          "visualIndex": 5,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 4,
+          "duration": 0.46,
+          "gain": 0.14500000000000002,
+          "visualIndex": 6,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 4.5,
+          "duration": 0.46,
+          "gain": 0.15750000000000003,
+          "visualIndex": 7,
+          "bar": 0
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 5,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5.5,
+          "duration": 0.46,
+          "gain": 0.1825,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 6,
+          "duration": 0.46,
+          "gain": 0.195,
+          "visualIndex": 10,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 6.5,
+          "duration": 0.46,
+          "gain": 0.20750000000000002,
+          "visualIndex": 11,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 7,
+          "duration": 0.46,
+          "gain": 0.22000000000000003,
+          "visualIndex": 12,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 7.5,
+          "duration": 0.46,
+          "gain": 0.2325,
+          "visualIndex": 13,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 8,
+          "duration": 0.46,
+          "gain": 0.24500000000000002,
+          "visualIndex": 14,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 8.5,
+          "duration": 0.46,
+          "gain": 0.2575,
+          "visualIndex": 15,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 9,
+          "duration": 3.68,
+          "gain": 0.27,
+          "visualIndex": 16,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 13,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 13.117647058823529,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 13.235294117647058,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 13.352941176470587,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 13.470588235294116,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 13.588235294117645,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 13.705882352941174,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 13.823529411764703,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 13.941176470588232,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 14.058823529411761,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 14.17647058823529,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 14.294117647058819,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 14.411764705882348,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 14.529411764705877,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 14.647058823529406,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 14.764705882352935,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 14.882352941176464,
+          "duration": 0.11294117647058823,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 3
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 15,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 18,
+          "bar": 3
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 16,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 19,
+          "bar": 3
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 17,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 20,
+          "bar": 4
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 18,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 21,
+          "bar": 4
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 18.5,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 22,
+          "bar": 4
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 19,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 23,
+          "bar": 4
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 20,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 24,
+          "bar": 4
+        }
+      ],
+      "performedBpm": 60
+    },
+    {
+      "start": 78,
+      "end": 100,
+      "kind": "notation",
+      "title": "11",
+      "sourceTopic": null,
+      "range": [
+        0,
+        4
+      ],
+      "bpm": 60,
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "rows": [
+          {
+            "title": "11",
+            "meter": "4/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 1
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 2,
+                  "mark": "mordent"
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4,
+                  "mark": "a tempo"
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "space": 5.8,
+            "compact": true,
+            "proportionalBars": true,
+            "slurs": [
+              [
+                4,
+                15
+              ]
+            ],
+            "ties": [],
+            "beams": [
+              [
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13
+              ]
+            ],
+            "tupletGroups": [],
+            "spans": [],
+            "nav": [],
+            "barStyles": {},
+            "endings": []
+          }
+        ],
+        "rowHeights": [
+          88
+        ],
+        "height": 88,
+        "sourcePageId": "repertorio-20"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 2,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3,
+          "duration": 1.84,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5,
+          "duration": 3.68,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 9,
+          "duration": 0.096,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 9.1,
+          "duration": 0.096,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 9.2,
+          "duration": 1.728,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 11,
+          "duration": 1.98,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 13,
+          "duration": 0.12375,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 3
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 13.125,
+          "duration": 0.12375,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 3
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 13.25,
+          "duration": 0.12375,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 13.375,
+          "duration": 0.12375,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 3
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 13.5,
+          "duration": 0.12375,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 13.625,
+          "duration": 0.12375,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 3
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 13.75,
+          "duration": 0.12375,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 13.875,
+          "duration": 0.12375,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 14,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 3
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 15,
+          "duration": 1.84,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 3
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 17,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 16,
+          "bar": 4
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 18,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 4
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 19,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 18,
+          "bar": 4
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 20,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 19,
+          "bar": 4
+        }
+      ],
+      "performedBpm": 60
+    },
+    {
+      "start": 100,
+      "end": 123,
+      "kind": "notation",
+      "title": "16",
+      "sourceTopic": null,
+      "range": [
+        0,
+        4
+      ],
+      "bpm": 60,
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "rows": [
+          {
+            "title": "16",
+            "meter": "4/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 1,
+                  "mark": "fermata"
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C5",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 1
+                }
+              ]
+            ],
+            "space": 5.8,
+            "compact": true,
+            "proportionalBars": true,
+            "slurs": [
+              [
+                1,
+                10
+              ]
+            ],
+            "ties": [],
+            "beams": [
+              [
+                2,
+                3
+              ],
+              [
+                7,
+                8
+              ],
+              [
+                12,
+                13
+              ]
+            ],
+            "tupletGroups": [],
+            "spans": [],
+            "nav": [],
+            "barStyles": {},
+            "endings": []
+          }
+        ],
+        "rowHeights": [
+          88
+        ],
+        "height": 88,
+        "sourcePageId": "repertorio-20"
+      },
+      "soundEvents": [
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 1,
+          "duration": 4.6000000000000005,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 6,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 7,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 7.5,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 8,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 9,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 10,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 2
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 11,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 11.5,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 2
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 12,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 2
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 13,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 2
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 14,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 3
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 15,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 3
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 15.5,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 3
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 16,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 3
+        },
+        {
+          "pitch": "C5",
+          "soundPitch": "C5",
+          "start": 17,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 3
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 18,
+          "duration": 3.68,
+          "gain": 0.17,
+          "visualIndex": 16,
+          "bar": 4
+        }
+      ],
+      "performedBpm": 60
+    },
+    {
+      "start": 123,
+      "end": 149,
+      "kind": "notation",
+      "title": "21",
+      "sourceTopic": null,
+      "range": [
+        0,
+        5
+      ],
+      "bpm": 60,
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "rows": [
+          {
+            "title": "21",
+            "meter": "4/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 8
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 1
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "A4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 8
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 4
+                }
+              ]
+            ],
+            "space": 5.8,
+            "compact": true,
+            "proportionalBars": true,
+            "slurs": [
+              [
+                0,
+                10
+              ],
+              [
+                20,
+                27
+              ]
+            ],
+            "ties": [],
+            "beams": [
+              [
+                3,
+                4
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                7,
+                8
+              ],
+              [
+                9,
+                10
+              ],
+              [
+                11,
+                12
+              ],
+              [
+                13,
+                14
+              ],
+              [
+                15,
+                16
+              ],
+              [
+                17,
+                18
+              ],
+              [
+                24,
+                25
+              ]
+            ],
+            "tupletGroups": [],
+            "spans": [],
+            "nav": [],
+            "barStyles": {},
+            "endings": []
+          }
+        ],
+        "rowHeights": [
+          88
+        ],
+        "height": 88,
+        "sourcePageId": "repertorio-20"
+      },
+      "soundEvents": [
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 1,
+          "duration": 1.98,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 3,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 4,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 5,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5.5,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 6,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 1
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 6.5,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 1
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 7,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 7.5,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 1
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 8,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 1
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 8.5,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 9,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 9.5,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 10,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 10.5,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 2
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 11,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 2
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 11.5,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 16,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 12,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 2
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 12.5,
+          "duration": 0.46,
+          "gain": 0.17,
+          "visualIndex": 18,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 13,
+          "duration": 3.68,
+          "gain": 0.17,
+          "visualIndex": 19,
+          "bar": 3
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 17,
+          "duration": 1.98,
+          "gain": 0.17,
+          "visualIndex": 20,
+          "bar": 4
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 19,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 21,
+          "bar": 4
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 20,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 22,
+          "bar": 4
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 21,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 23,
+          "bar": 5
+        },
+        {
+          "pitch": "A4",
+          "soundPitch": "A4",
+          "start": 22,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 24,
+          "bar": 5
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 22.5,
+          "duration": 0.495,
+          "gain": 0.17,
+          "visualIndex": 25,
+          "bar": 5
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 23,
+          "duration": 0.99,
+          "gain": 0.17,
+          "visualIndex": 26,
+          "bar": 5
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 24,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 27,
+          "bar": 5
+        }
+      ],
+      "performedBpm": 60
+    },
+    {
+      "start": 149,
+      "end": 177.5,
+      "kind": "notation",
+      "title": "27",
+      "sourceTopic": null,
+      "range": [
+        0,
+        5
+      ],
+      "bpm": 60,
+      "diagram": {
+        "type": "diagram",
+        "kind": "score",
+        "rows": [
+          {
+            "title": "27",
+            "meter": "4/4",
+            "key": 0,
+            "bars": [
+              [
+                {
+                  "pitch": "F4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "F#4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 1
+                }
+              ],
+              [
+                {
+                  "pitch": "E4",
+                  "dur": 2
+                },
+                {
+                  "pitch": "G4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "G4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "F4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "E4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 32
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "C4",
+                  "dur": 2
+                }
+              ],
+              [
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "B4",
+                  "dur": 4
+                },
+                {
+                  "pitch": "D4",
+                  "dur": 4
+                }
+              ],
+              [
+                {
+                  "pitch": "C4",
+                  "dur": 1,
+                  "mark": "fermata"
+                }
+              ]
+            ],
+            "space": 5.8,
+            "compact": true,
+            "proportionalBars": true,
+            "slurs": [
+              [
+                4,
+                15
+              ]
+            ],
+            "ties": [],
+            "beams": [
+              [
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13
+              ]
+            ],
+            "tupletGroups": [],
+            "spans": [
+              {
+                "text": "rit.",
+                "from": 4,
+                "to": 19
+              }
+            ],
+            "nav": [],
+            "barStyles": {
+              "5": "final"
+            },
+            "endings": []
+          }
+        ],
+        "rowHeights": [
+          88
+        ],
+        "height": 88,
+        "sourcePageId": "repertorio-20"
+      },
+      "soundEvents": [
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 1,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 0,
+          "bar": 0
+        },
+        {
+          "pitch": "F#4",
+          "soundPitch": "F#4",
+          "start": 2,
+          "duration": 0.92,
+          "gain": 0.17,
+          "visualIndex": 1,
+          "bar": 0
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 3,
+          "duration": 1.84,
+          "gain": 0.17,
+          "visualIndex": 2,
+          "bar": 0
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 5,
+          "duration": 3.68,
+          "gain": 0.17,
+          "visualIndex": 3,
+          "bar": 1
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 9,
+          "duration": 1.98,
+          "gain": 0.17,
+          "visualIndex": 4,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 11,
+          "duration": 2.006756756756756,
+          "gain": 0.17,
+          "visualIndex": 5,
+          "bar": 2
+        },
+        {
+          "pitch": "G4",
+          "soundPitch": "G4",
+          "start": 13.027027027027026,
+          "duration": 0.12714041095890402,
+          "gain": 0.17,
+          "visualIndex": 6,
+          "bar": 3
+        },
+        {
+          "pitch": "F4",
+          "soundPitch": "F4",
+          "start": 13.155451684561273,
+          "duration": 0.12890625000000058,
+          "gain": 0.17,
+          "visualIndex": 7,
+          "bar": 3
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 13.285660017894607,
+          "duration": 0.13072183098591483,
+          "gain": 0.17,
+          "visualIndex": 8,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 13.417702271415733,
+          "duration": 0.13258928571428547,
+          "gain": 0.17,
+          "visualIndex": 9,
+          "bar": 3
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 13.551630842844304,
+          "duration": 0.13451086956521677,
+          "gain": 0.17,
+          "visualIndex": 10,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 13.687500408061695,
+          "duration": 0.13648897058823603,
+          "gain": 0.17,
+          "visualIndex": 11,
+          "bar": 3
+        },
+        {
+          "pitch": "E4",
+          "soundPitch": "E4",
+          "start": 13.825368055120519,
+          "duration": 0.13852611940298534,
+          "gain": 0.17,
+          "visualIndex": 12,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 13.965293428254848,
+          "duration": 0.14062500000000047,
+          "gain": 0.17,
+          "visualIndex": 13,
+          "bar": 3
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 14.107338882800303,
+          "duration": 1.1423076923076918,
+          "gain": 0.17,
+          "visualIndex": 14,
+          "bar": 3
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 15.261185036646456,
+          "duration": 2.15625,
+          "gain": 0.17,
+          "visualIndex": 15,
+          "bar": 3
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 17.604935036646456,
+          "duration": 1.0952380952380947,
+          "gain": 0.17,
+          "visualIndex": 16,
+          "bar": 4
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 18.795411227122646,
+          "duration": 1.1129032258064526,
+          "gain": 0.17,
+          "visualIndex": 17,
+          "bar": 4
+        },
+        {
+          "pitch": "B4",
+          "soundPitch": "B4",
+          "start": 20.005088646477486,
+          "duration": 1.1311475409836071,
+          "gain": 0.17,
+          "visualIndex": 18,
+          "bar": 4
+        },
+        {
+          "pitch": "D4",
+          "soundPitch": "D4",
+          "start": 21.234596843198798,
+          "duration": 1.1500000000000001,
+          "gain": 0.17,
+          "visualIndex": 19,
+          "bar": 4
+        },
+        {
+          "pitch": "C4",
+          "soundPitch": "C4",
+          "start": 22.484596843198798,
+          "duration": 4.6000000000000005,
+          "gain": 0.17,
+          "visualIndex": 20,
+          "bar": 5
+        }
+      ],
+      "performedBpm": 60
+    },
+    {
+      "start": 177.5,
+      "end": 183.5,
+      "kind": "completion",
+      "title": "¡Buen trabajo!",
+      "soundEvents": [
+        {
+          "pitch": "C5",
+          "start": 0.2,
+          "duration": 0.4
+        },
+        {
+          "pitch": "E5",
+          "start": 0.5,
+          "duration": 0.4
+        },
+        {
+          "pitch": "G5",
+          "start": 0.8,
+          "duration": 1
+        }
+      ]
+    }
+  ],
+  "status": "candidate-needs-review",
+  "rendererVersion": 4,
+  "voice": "macOS Paulina (synthetic)",
+  "tempoRevision": 1
+}

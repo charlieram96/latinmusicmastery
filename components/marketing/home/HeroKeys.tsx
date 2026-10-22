@@ -3,16 +3,17 @@
 import Image from 'next/image'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from '@/components/language-provider'
+import { lessonNote } from '@/lib/solfeo/notes'
 import { playPianoNote } from '@/lib/marketing/groove/audio'
 
 const SRC = '/videos/hero-video-final.mp4'
-/** Top to bottom: C, C♯, D, D♯, E. White keys carry a slice of the band video. */
+/** Bottom to top: C4, C♯4, D4, D♯4, E4. White keys carry a slice of the band video. */
 const KEYS = [
-  { midi: 60, cls: 'key k1', label: 'c4', white: true },
-  { midi: 61, cls: 'bkey b1', label: 'cs4', white: false },
-  { midi: 62, cls: 'key k2', label: 'd4', white: true },
-  { midi: 63, cls: 'bkey b2', label: 'ds4', white: false },
-  { midi: 64, cls: 'key k3', label: 'e4', white: true },
+  { midi: lessonNote('E4').midi, cls: 'key k1', label: 'e4', white: true },
+  { midi: lessonNote('D#4').midi, cls: 'bkey b1', label: 'ds4', white: false },
+  { midi: lessonNote('D4').midi, cls: 'key k2', label: 'd4', white: true },
+  { midi: lessonNote('C#4').midi, cls: 'bkey b2', label: 'cs4', white: false },
+  { midi: lessonNote('C4').midi, cls: 'key k3', label: 'c4', white: true },
 ] as const
 
 export type HeroChip = { name: string; imageUrl: string }

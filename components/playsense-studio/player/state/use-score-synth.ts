@@ -51,7 +51,7 @@ export function useScoreSynth(options: {
   // The element mounts late through a portal, so poll the ref each commit.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   useEffect(() => {
-    setVideoEl((prev) => (prev === videoRef.current ? prev : videoRef.current));
+    if (videoEl !== videoRef.current) setVideoEl(videoRef.current);
   });
 
   const notesKey = synthNotesKey(notes);

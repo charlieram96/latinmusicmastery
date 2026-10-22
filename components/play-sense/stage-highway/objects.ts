@@ -62,26 +62,29 @@ export function labelSprite(label: string, color: string): THREE.Sprite {
   const displayNames: Record<string, string> = { cascara: 'Cáscara', jamblock: 'Jam block' }
   const name = displayNames[label] ?? label
   const text = name.charAt(0).toUpperCase() + name.slice(1)
-  ctx.font = '400 38px system-ui, sans-serif'
-  const tracking = .8
-  const textWidth = [...text].reduce((width, letter) => width + ctx.measureText(letter).width, 0) + (text.length - 1) * tracking
-  canvas.width = Math.ceil(textWidth) + 24; canvas.height = 72
-  ctx.font = '400 38px system-ui, sans-serif'
-  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#e2d6bf'
-  ctx.shadowColor = 'rgba(18,25,21,.6)'; ctx.shadowBlur = 3; ctx.shadowOffsetY = 1
-  let x = (canvas.width - textWidth) / 2
-  for (const letter of text) { ctx.fillText(letter, x, 30); x += ctx.measureText(letter).width + tracking }
-  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0
-  const underline = ctx.createLinearGradient(canvas.width * .33, 0, canvas.width * .67, 0)
-  underline.addColorStop(0, 'transparent'); underline.addColorStop(.3, color)
-  underline.addColorStop(.7, color); underline.addColorStop(1, 'transparent')
-  ctx.globalAlpha = .45
-  ctx.fillStyle = underline; ctx.fillRect(canvas.width * .33, 58, canvas.width * .34, 1.5)
+  // Draw at 2× resolution so small names retain crisp edges after projection.
+  const words = text.split(' ')
+  const lines = text.length > 13 && words.length > 1
+    ? [words.slice(0, -1).join(' '), words[words.length - 1]] : [text]
+  ctx.font = '600 38px system-ui, sans-serif'
+  const width = Math.ceil(Math.max(...lines.map(line => ctx.measureText(line).width))) + 32
+  const height = lines.length === 1 ? 60 : 104
+  canvas.width = width * 2; canvas.height = height * 2
+  ctx.scale(2, 2)
+  ctx.fillStyle = 'rgba(13, 12, 11, .82)'
+  ctx.beginPath(); ctx.roundRect(1, 1, width - 2, height - 2, 10); ctx.fill()
+  ctx.strokeStyle = 'rgba(255, 240, 215, .28)'; ctx.lineWidth = 1; ctx.stroke()
+  ctx.font = '600 38px system-ui, sans-serif'
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff4df'
+  lines.forEach((line, i) => ctx.fillText(line, width / 2, 29 + i * 44))
+  ctx.fillStyle = color
+  ctx.fillRect(width * .35, height - 5, width * .3, 2)
   const map = new THREE.CanvasTexture(canvas)
   map.colorSpace = THREE.SRGBColorSpace
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map, transparent: true, opacity: .84, depthTest: false, depthWrite: false, toneMapped: false }))
-  sprite.scale.set(canvas.width / canvas.height * .42, .42, 1)
-  sprite.renderOrder = 10
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map, transparent: true, opacity: 1, depthTest: false, depthWrite: false, toneMapped: false }))
+  sprite.scale.set(width / height * .42, .42, 1)
+  sprite.userData.labelLines = lines.length
+  sprite.renderOrder = 100
   return sprite
 }
 

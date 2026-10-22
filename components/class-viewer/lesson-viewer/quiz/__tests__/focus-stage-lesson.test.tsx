@@ -86,9 +86,33 @@ describe('FocusStage in a lesson', () => {
       act(() => barButton('Check').click())
       act(() => bar().querySelector<HTMLButtonElement>('[data-primary]')!.click())
     }
+    expect(bar().textContent).toContain('Review answers')
+    act(() => barButton('View grade').click())
     expect(bar().textContent).toContain('2 / 2')
     act(() => barButton('Continue').click())
     expect(advance).toHaveBeenCalledOnce()
+  })
+
+  it('offers optional continuous review before showing the grade', () => {
+    act(() => root.render(<Lesson runner />))
+    expect(barButton('Previous')).toBeUndefined()
+    for (const answer of ['False', 'True']) {
+      act(() => tile(answer).click())
+      act(() => barButton('Check').click())
+      act(() => barButton('Continue').click())
+    }
+    expect(host.querySelector('[data-quiz-before-results]')).not.toBeNull()
+    act(() => barButton('Review answers').click())
+    expect(host.querySelector('[data-quiz-question]')?.textContent).toContain('(q1)')
+    act(() => host.querySelector<HTMLButtonElement>('[aria-label="Review question 2"]')!.click())
+    expect(host.querySelector('[data-quiz-question]')?.textContent).toContain('(q2)')
+    act(() => barButton('Previous question').click())
+    expect(host.querySelector('[data-quiz-question]')?.textContent).toContain('(q1)')
+    act(() => barButton('Next question').click())
+    expect(host.querySelector('[data-quiz-question]')?.textContent).toContain('(q2)')
+    act(() => barButton('View grade').click())
+    expect(host.querySelector('[data-question-review-map]')).toBeNull()
+    expect(bar().textContent).toContain('0 / 2')
   })
 
   it('an exercise’s follow-up questions leave the action bar to the game', () => {

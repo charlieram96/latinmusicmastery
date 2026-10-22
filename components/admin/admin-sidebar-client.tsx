@@ -1,4 +1,6 @@
 'use client'
+import { LearningModeToggle } from '@/components/learning-mode-toggle'
+import { LearningIcon } from '@/components/learning-mode/art'
 
 import { useTranslation } from '@/components/language-provider'
 import { adminLabel } from '@/lib/i18n/admin-labels'
@@ -121,7 +123,7 @@ export function AdminSidebarClient() {
           )}
         >
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/10">
-            <LayoutDashboard className="h-5 w-5 text-sidebar-primary" />
+            <LearningIcon name="adminPanel" icon={LayoutDashboard} className="h-5 w-5 text-sidebar-primary" />
           </span>
           {expanded && (
             <div className="flex min-w-0 flex-col">
@@ -167,7 +169,7 @@ export function AdminSidebarClient() {
                       )}
                     >
                       <NavigationPending />
-                      <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+                      <LearningIcon name={item.label.toLowerCase()} icon={Icon} className="h-[18px] w-[18px] flex-shrink-0" />
                       {expanded && <span className="min-w-0 flex-1 truncate">{<AdminText text={item.label} />}</span>}
                       {expanded && isActive && (
                         <span className="h-1 w-1 flex-shrink-0 rounded-full bg-sidebar-primary" />
@@ -195,7 +197,7 @@ export function AdminSidebarClient() {
 
         {/* Footer */}
         <div className="flex-shrink-0 border-t border-sidebar-border p-2">
-          <LanguageToggle variant="icon" onOpenChange={setLanguageMenuOpen} className="mb-2" />
+          <LearningModeToggle variant="icon"/><LanguageToggle variant="icon" onOpenChange={setLanguageMenuOpen} className="mb-2" />
           {!expanded ? (
             <Tooltip>
               <TooltipTrigger asChild>

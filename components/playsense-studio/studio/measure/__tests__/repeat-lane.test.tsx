@@ -93,6 +93,18 @@ describe('RepeatPopover', () => {
     expect(onPick).not.toHaveBeenCalled();
   });
 
+  it('offers independent unlink and remove-repeat actions', () => {
+    const remove = vi.fn(), unlink = vi.fn();
+    act(() => root.render(<RepeatPopover anchor={anchor} range={[0,1]} group={{id:'r',count:4}}
+      problemFor={noProblem} onPick={noop} onRemove={remove} onUnlink={unlink} onSelectPassOne={noop} onClose={noop} />));
+    const button = (text:string) => Array.from(host.querySelectorAll('button')).find(b=>b.textContent===text)!;
+    act(() => button('Unlink repeat').click());
+    expect(unlink).toHaveBeenCalledOnce();
+    expect(remove).not.toHaveBeenCalled();
+    act(() => button('✕ Remove repeat').click());
+    expect(remove).toHaveBeenCalledOnce();
+  });
+
   it('shows the group state, marks the active count and offers remove/select-pass-one', () => {
     act(() => {
       root.render(

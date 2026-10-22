@@ -133,3 +133,9 @@ describe('exercise to notation clock',()=>{
     expect(exerciseScoreTime(1,0,2,8000)).toBe(0)
   })
 })
+
+it('snaps sample-rounded seeks to the next downbeat rather than the preceding barline', () => {
+ const anchors=[{ms:0,x:80,system:0,bar:0,barEndX:300},{ms:2400,x:330,system:0,bar:1,barEndX:550}];
+ expect(scoreCursorAt(2399.96,anchors,4800,[550])).toEqual({x:330,system:0});
+ expect(scoreCursorAt(2390,anchors,4800,[550]).x).toBeLessThan(300);
+});

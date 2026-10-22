@@ -211,14 +211,37 @@ export function BackingLanesPanel({
     []
   );
 
-  const handleClipChange = useCallback((trackId: string, next: Clip) => {
-    setClips((prev) => ({ ...prev, [trackId]: next }));
-  }, []);
+  const changedTracks = useRef(new Set<string>());
+  const handleClipChange = useCallback((trackId: string, next: Clip, part: ClipDragPart = 'body') => {
+    const prev = clipsRef.current;
+    if (!prev[trackId]) return;
+    const ids = part === 'body' && linked.has(trackId)
+      ? Object.keys(prev).filter(id => linked.has(id)) : [trackId];
+    const updated = { ...prev };
+    if (part === 'body') {
+      const requested = next.timelineStartSeconds - prev[trackId].timelineStartSeconds;
+      if (!Number.isFinite(requested)) return;
+      // Clamp the group as a unit, preserving every relative offset at zero.
+      const delta = Math.max(requested, -Math.min(...ids.map(id => prev[id].timelineStartSeconds)));
+      for (const id of ids) {
+        updated[id] = { ...prev[id], timelineStartSeconds: prev[id].timelineStartSeconds + delta };
+        if (delta !== 0) changedTracks.current.add(id);
+      }
+    } else {
+      updated[trackId] = next;
+      changedTracks.current.add(trackId);
+    }
+    clipsRef.current = updated;
+    setClips(updated);
+  }, [linked]);
 
   const handleClipCommit = useCallback(
     (trackId: string, _part: ClipDragPart, moved: boolean) => {
       setDraggingTrackId(null);
-      if (moved) schedulePersist(trackId);
+      if (moved) {
+        for (const id of changedTracks.current.size ? changedTracks.current : [trackId]) schedulePersist(id);
+      }
+      changedTracks.current.clear();
     },
     [schedulePersist]
   );
@@ -325,6 +348,7 @@ export function BackingLanesPanel({
   // sounds like a machine gun. Stop the dragged clip on grab, re-cue on release.
   const handleSelectForDrag = useCallback(
     (trackId: string) => {
+      changedTracks.current.clear();
       setSelectedTrackId(trackId);
       setDraggingTrackId(trackId);
       mixer.stopClip(trackId);

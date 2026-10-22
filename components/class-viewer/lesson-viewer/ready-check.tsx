@@ -23,6 +23,8 @@ import './lesson-mode/lesson-mode.css'
 
 export interface ReadyCheckProps {
   completionLabel?: string
+  startLabel?: string
+  onWatchDemo?: () => void
   onCancelSetup?: () => void
   forceFresh?: boolean
   onProfileRestored?: () => void
@@ -201,10 +203,16 @@ export function ReadyCheck(props: ReadyCheckProps) {
     </div>}
 
     <LessonAction>
+      {props.onWatchDemo && <Button type="button" variant="outline" onClick={props.onWatchDemo} data-ready-watch>
+        {locale === 'es' ? 'Volver a ver la demostración' : 'Watch the demonstration again'}
+      </Button>}
+      {props.onCancelSetup && <Button type="button" variant="outline" onClick={props.onCancelSetup} data-ready-cancel>
+        {locale === 'es' ? 'Volver a mi práctica' : 'Back to my practice'}
+      </Button>}
       <ActionMessage live icon={checks.canStart ? <Check className={cn('h-5 w-5', allSet && 'text-success')} strokeWidth={3} /> : <Headphones className="h-5 w-5" />}
         title={calibrating ? t(`${BASE}.measuringTitle`) : allSet ? t(`${BASE}.allSet`) : checks.canStart ? t(`${BASE}.readyWhenYouAre`) : t(`${BASE}.pickMode`)} detail={summary || undefined} />
-      <Button type="button" variant="chunky-success" data-primary="" data-ready-start disabled={!checks.canStart || !wizard.canStart || (micMode && !!props.micSetup?.muted)} aria-label={props.completionLabel ?? t(`${BASE}.start`)} title={props.completionLabel ?? t(`${BASE}.start`)} onClick={onStart}>
-        {props.completionLabel ? <><Check aria-hidden className="h-5 w-5" />{props.completionLabel}</> : <Play aria-hidden className="h-5 w-5" fill="currentColor" />}
+      <Button type="button" variant="chunky-success" data-primary="" data-ready-start disabled={!checks.canStart || !wizard.canStart || (micMode && !!props.micSetup?.muted)} aria-label={props.completionLabel ?? props.startLabel ?? t(`${BASE}.start`)} title={props.completionLabel ?? props.startLabel ?? t(`${BASE}.start`)} onClick={onStart}>
+        {props.completionLabel ? <><Check aria-hidden className="h-5 w-5" />{props.completionLabel}</> : <><Play aria-hidden className="h-5 w-5" fill="currentColor" />{props.startLabel}</>}
       </Button>
     </LessonAction>
   </div>

@@ -72,6 +72,9 @@ export function prepareStructuralEdit(
 ): StructuralEditResult {
   const edited = applyMeasureEdit(score, action);
   if (!edited.ok) return edited;
+  if (action.type === 'paste-measures' && action.mode === 'replace') {
+    return { ...edited, markers };
+  }
   const trackIndex = action.type === 'append-score' ? 0 : action.trackIndex;
   const nextTrack = edited.score.tracks[trackIndex];
   const rows = [...walkMeasures(nextTrack, edited.score)];

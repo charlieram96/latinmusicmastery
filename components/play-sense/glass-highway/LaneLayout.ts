@@ -7,7 +7,7 @@
 
 import type { ExerciseDefinition, ExerciseEvent } from '@/lib/play-sense/types'
 import { getInstrumentCategory } from '@/lib/play-sense/types'
-import { PLAYSENSE_MAPPINGS } from '@/lib/play-sense/playsense-mappings'
+import { percussionLanes, percussionLaneId } from '@/lib/play-sense/percussion-lanes'
 import {
   LANE_COLORS,
   DEFAULT_LANE_COLOR,
@@ -85,6 +85,10 @@ export class PadLaneLayout implements LaneLayout {
 
   laneForEvent(event: ExerciseEvent | undefined): number {
     if (!event) return 0
+    if (event.strokeId) {
+      const index = this.surfaces.indexOf(percussionLaneId(event))
+      if (index >= 0) return index
+    }
     if (event.surface) {
       const idx = this.surfaces.indexOf(event.surface)
       if (idx >= 0) return idx
@@ -230,27 +234,9 @@ export function createLaneLayout(exercise: ExerciseDefinition): LaneLayout {
   }
 
   // Percussion with PlaySense piezo mapping
-  const mapping = PLAYSENSE_MAPPINGS[exercise.instrument]
-  if (mapping) {
-    const surfaces = Object.values(mapping.piezoMap)
-    return new PadLaneLayout(
-      surfaces,
-      surfaces.map((s) => s.toUpperCase()),
-      surfaces.map((s) => LANE_COLORS[s] ?? DEFAULT_LANE_COLOR),
-    )
-  }
-
-  const category = getInstrumentCategory(exercise.instrument)
-
-  // Percussion without PlaySense mapping — unique surfaces/techniques
-  if (category === 'percussion') {
-    const techniques = [...new Set(exercise.events.map((e) => e.surface || e.technique))]
-    const surfaces = techniques.length > 0 ? techniques : ['open', 'slap', 'mute']
-    return new PadLaneLayout(
-      surfaces,
-      surfaces.map((s) => s.toUpperCase()),
-      surfaces.map((s) => LANE_COLORS[s] ?? DEFAULT_LANE_COLOR),
-    )
+  if (getInstrumentCategory(exercise.instrument) === 'percussion') {
+    const lanes = percussionLanes(exercise)
+    return new PadLaneLayout(lanes.map(l=>l.id), lanes.map(l=>l.label), lanes.map(l=>LANE_COLORS[l.surface] ?? DEFAULT_LANE_COLOR))
   }
 
   // Pitched / melodic (non-piano) — one lane per unique note, capped at 8

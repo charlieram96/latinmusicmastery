@@ -22,6 +22,12 @@ it('engraves all 25 pairs of staves from the supplied piano score', async () => 
     expect(host.querySelectorAll('.vf-stavenote')).toHaveLength(238);
     expect(host.textContent).toContain('25');
     const original = JSON.stringify(score);
+    const seek = vi.fn(), duration = vi.fn();
+    act(() => root.render(<MultiStaffRenderer score={score} trackIndex={0} currentMs={0} onSeek={seek} onDurationKnown={duration} />));
+    const secondBassMeasure = host.querySelector<HTMLElement>('[data-score-selection="m:1:1"]')!;
+    act(() => secondBassMeasure.click());
+    expect(seek).toHaveBeenCalledWith({qn:4, measure:2, beat:1});
+    expect(duration.mock.lastCall?.[0]).toBeGreaterThan(0);
     const selected=vi.fn();
     const pointer=(target:Element,type:string,x:number,y:number)=>{
       const event=new MouseEvent(type,{bubbles:true,button:0,clientX:x,clientY:y});

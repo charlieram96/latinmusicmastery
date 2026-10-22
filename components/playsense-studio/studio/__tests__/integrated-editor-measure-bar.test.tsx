@@ -1,5 +1,7 @@
+import { writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 // @vitest-environment jsdom
 import React, { act } from 'react';
+import { Stave, BarlineType } from 'vexflow';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -72,6 +74,76 @@ const barButton = (name: string) => toolbar()!.querySelector<HTMLButtonElement>(
 const dispatched = (d: ReturnType<typeof vi.fn>, type: string) => d.mock.calls.map((c) => c[0]).filter((a) => a.type === type);
 
 describe('IntegratedEditor measure bar', () => {
+  it('enables insertion before the selected bar inside a repeat after pointerdown', () => {
+    const source=makeScore(4);
+    source.tracks[0].measures.forEach((m,i)=>{m.repeat={id:'r',pass:Math.floor(i/2),count:2,offset:i%2,length:2};});
+    const width=vi.spyOn(HTMLElement.prototype,'clientWidth','get').mockReturnValue(1600);
+    const {dispatch}=render({score:source,measureTimings:timingsFor(4),pageWorkspace:false});
+    const select=host.querySelector<HTMLButtonElement>('[aria-label="Select staff 1, measure 4"]')!;
+    act(()=>{select.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));select.click();});
+    const before=[...host.querySelectorAll('button')].find(b=>b.textContent==='Add measure before')!;
+    expect(before.disabled).toBe(false);
+    act(()=>{before.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));before.click();});
+    expect(dispatched(dispatch,'insert-measure').at(-1)).toMatchObject({index:3});
+    width.mockRestore();
+  });
+
+  it('closes the last expanded repeat pass with a final bar', () => {
+    const width=vi.spyOn(HTMLElement.prototype,'clientWidth','get').mockReturnValue(1600);
+    const endings=vi.spyOn(Stave.prototype,'setEndBarType');
+    const repeated=makeScore(4);
+    repeated.tracks[0].measures.forEach((m,i)=>{m.repeat={id:'r',pass:Math.floor(i/2),count:2,offset:i%2,length:2};});
+    render({score:repeated,measureTimings:timingsFor(4),pageWorkspace:false,noteTimeForQN:qn=>qn/2});
+    act(()=>vi.advanceTimersByTime(20));
+    expect(host.querySelector('svg .vf-sync-final-barline')).not.toBeNull();
+    endings.mockRestore();width.mockRestore();
+  });
+
+  it.each(['keyboard', 'toolbar'])('pastes at the clicked bar instead of the end via %s', (method) => {
+    const source=makeScore(5);
+    const width=vi.spyOn(HTMLElement.prototype,'clientWidth','get').mockReturnValue(1600);
+    const {dispatch}=render({score:source,measureTimings:timingsFor(5),pageWorkspace:false});
+    const select=(number:number)=>{
+      const target=host.querySelector<HTMLButtonElement>(`[aria-label="Select staff 1, measure ${number}"]`)!;
+      expect(target).not.toBeNull();
+      act(()=>{target.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));target.click();});
+    };
+    select(2);
+    key('c',{metaKey:true});
+    expect(dispatched(dispatch,'copy-measures').at(-1)).toMatchObject({start:1,count:1});
+    act(()=>writeMeasureClipboard({measures:[source.tracks[0].measures[1]],context:{bpm:120,timeSignature:[4,4],keyFifths:0},instrument:'staff'}));
+    select(4);
+    if(method==='keyboard') key('v',{metaKey:true});
+    else act(()=>{const paste=barButton('Paste');paste.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));paste.click();});
+    expect(dispatched(dispatch,'paste-measures').at(-1)).toMatchObject({index:3,mode:'replace'});
+    width.mockRestore();
+  });
+
+  it('keeps the opening signature after initial bars are removed from a continuous project', () => {
+    const width = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(800);
+    const signature = vi.spyOn(Stave.prototype, 'addTimeSignature');
+    const clef = vi.spyOn(Stave.prototype, 'addClef');
+    const section = { sectionId: 'first', label: 'First', score, startSeconds: 4, endSeconds: 10,
+      continuousProject: { version: 1 as const, editableEmptyMeasures: true, title: 'T', classItemId: 'item', sectionIds: ['deleted-section'], durationSeconds: 79, backupPath: '' } };
+    render({ pageWorkspace: false, measureTimings: timings.map(t => ({ ...t, startVideoTimeSeconds: t.startVideoTimeSeconds + 4, endVideoTimeSeconds: t.endVideoTimeSeconds + 4 })),
+      sectionsContext: { sections: [section], activeSectionId: 'first', onSelectSection: vi.fn() } });
+    act(() => vi.advanceTimersByTime(20));
+    expect(signature).toHaveBeenCalledWith('4/4');
+    expect(clef).toHaveBeenCalled();
+    signature.mockRestore(); clef.mockRestore(); width.mockRestore();
+  });
+
+  it('selects empty continuous bars and preserves them through toolbar pointerdown', () => {
+    const blank=makeScore(4);blank.tracks[0].measures.slice(0,3).forEach(m=>m.voices[0].events=[]);
+    const {dispatch}=render({score:blank,measureTimings:timingsFor(4),pageWorkspace:false});
+    const select=host.querySelector<HTMLButtonElement>('[aria-label="Select staff 1, measure 1"]')!;
+    act(()=>{select.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));select.click();});
+    expect(barButton('Delete').disabled).toBe(false);
+    expect(barButton('Edit').disabled).toBe(false);
+    act(()=>{barButton('Delete').dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));barButton('Delete').click();});
+    expect(dispatched(dispatch,'delete-measures')[0]).toMatchObject({start:0,count:1});
+  });
+
   it('keeps Sync measure commands docked even when the selected range is offscreen', () => {
     const { dispatch } = render({ pageWorkspace: false, scrollLeftPx: 3000 });
     const controls = host.querySelector('[data-testid="sync-measure-controls"]')!;
@@ -462,7 +534,7 @@ describe('IntegratedEditor measure bar', () => {
     act(() => { help.click(); });
     const dialog = host.querySelector('[role="dialog"][aria-label="Strip shortcuts"]')!;
     expect(dialog.textContent).toContain('Drag across bars');
-    expect(dialog.textContent).toContain('copy, paste after, duplicate');
+    expect(dialog.textContent).toContain('copy, paste at selection, duplicate');
  
     // A second press on "?" closes it (the menu's outside-press close runs first).
     const down = new MouseEvent('pointerdown', { bubbles: true });
@@ -478,4 +550,32 @@ describe('IntegratedEditor measure bar', () => {
     expect(text).not.toContain('Double bar');
     expect(text).not.toContain('Delete measure');
   });
+});
+
+it('applies a final bar from the palette to the open measure after pointerdown', () => {
+  localStorage.setItem('lmm-floating-palettes-v2',JSON.stringify({panels:['common:Compás y barras']}));
+  const {dispatch}=render({pageWorkspace:false});
+  key('ArrowRight');key('Enter');
+  const palette=host.querySelector('[data-palette="common:Compás y barras"]')!;
+  const symbol=palette.querySelectorAll<HTMLButtonElement>('[data-command-status]')[4];
+  act(()=>{symbol.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));symbol.click();});
+  const apply=Array.from(palette.querySelectorAll('button')).find(b=>b.textContent==='Aplicar a la selección'||b.textContent==='Apply to selection')!;
+  expect(apply).toBeTruthy();expect(apply.disabled).toBe(false);
+  act(()=>{apply.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));apply.click();});
+  expect(dispatched(dispatch,'apply-palette-actions')).toHaveLength(1);
+  expect(JSON.stringify(dispatched(dispatch,'apply-palette-actions')[0])).toContain('final');
+  localStorage.removeItem('lmm-floating-palettes-v2');
+});
+
+it('offers sized text for a selected empty measure without losing selection on pointerdown', () => {
+ const blank=makeScore(3);blank.tracks[0].measures[0].voices[0].events=[];
+ const {dispatch}=render({score:blank,pageWorkspace:false});
+ key('ArrowRight');
+ const button=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Measure text')!;
+ act(()=>{button.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true}));button.click();});
+ const form=host.querySelector<HTMLFormElement>('form[aria-label="Measure text"]')!;
+ expect(form).not.toBeNull();
+ expect(form.querySelector<HTMLInputElement>('input[aria-label="Text size"]')!.value).toBe('16');
+ act(()=>form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(dispatched(dispatch,'set-measure-props').at(-1)).toMatchObject({measureIndex:0,props:{emptyText:{text:'Instructor speaking',fontSize:16}}});
 });
