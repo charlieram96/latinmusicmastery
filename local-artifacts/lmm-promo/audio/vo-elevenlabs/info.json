@@ -1,0 +1,94 @@
+{
+ "L01": {
+  "dur": 3.35,
+  "trim_start": 0.01
+ },
+ "L02": {
+  "dur": 4.08,
+  "trim_start": 0.05
+ },
+ "L03": {
+  "dur": 5.5,
+  "trim_start": 0.02
+ },
+ "L04": {
+  "dur": 4.8,
+  "trim_start": 0.0
+ },
+ "L05": {
+  "dur": 2.63,
+  "trim_start": 0.0
+ },
+ "L06": {
+  "dur": 4.81,
+  "trim_start": 0.0
+ },
+ "L07": {
+  "dur": 5.41,
+  "trim_start": 0.0
+ },
+ "L08": {
+  "dur": 5.82,
+  "trim_start": 0.0
+ },
+ "L09": {
+  "dur": 7.55,
+  "trim_start": 0.0
+ },
+ "L10": {
+  "dur": 3.03,
+  "trim_start": 0.0
+ },
+ "L11": {
+  "dur": 2.52,
+  "trim_start": 0.01
+ },
+ "L12": {
+  "dur": 9.35,
+  "trim_start": 0.01
+ },
+ "L13": {
+  "dur": 2.79,
+  "trim_start": 0.0
+ },
+ "L14": {
+  "dur": 3.52,
+  "trim_start": 0.08
+ },
+ "L15": {
+  "dur": 4.4,
+  "trim_start": 0.0
+ },
+ "L16": {
+  "dur": 4.08,
+  "trim_start": 0.0
+ },
+ "L17": {
+  "dur": 3.97,
+  "trim_start": 0.0
+ },
+ "L18": {
+  "dur": 2.96,
+  "trim_start": 0.0
+ },
+ "L19": {
+  "dur": 5.12,
+  "trim_start": 0.0
+ },
+ "L20": {
+  "dur": 3.88,
+  "trim_start": 0.04
+ },
+ "L21": {
+  "dur": 2.71,
+  "trim_start": 0.01
+ },
+ "L22": {
+  "dur": 1.75,
+  "trim_start": 0.01
+ },
+ "L23": {
+  "dur": 0.86,
+  "trim_start": 0.11
+ }
+}

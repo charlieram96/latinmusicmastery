@@ -1,0 +1,841 @@
+[
+ {
+  "t": 0.05,
+  "name": "room_tone",
+  "gain": 0,
+  "pan": 0
+ },
+ {
+  "t": 7.6,
+  "name": "riser",
+  "gain": 0.32,
+  "pan": 0,
+  "dur": 2.2
+ },
+ {
+  "t": 9.8,
+  "name": "impact",
+  "gain": 0.5,
+  "pan": 0
+ },
+ {
+  "t": 9.808,
+  "name": "sub_boom",
+  "gain": 0.5,
+  "pan": 0
+ },
+ {
+  "t": 9.828,
+  "name": "shimmer",
+  "gain": 0.42,
+  "pan": 0
+ },
+ {
+  "t": 11.021,
+  "name": "whoosh_short",
+  "gain": 0.16,
+  "pan": -0.5
+ },
+ {
+  "t": 12.159,
+  "name": "whoosh_short",
+  "gain": 0.16,
+  "pan": -0.25
+ },
+ {
+  "t": 13.296,
+  "name": "whoosh_short",
+  "gain": 0.16,
+  "pan": 0
+ },
+ {
+  "t": 14.33,
+  "name": "whoosh_short",
+  "gain": 0.16,
+  "pan": 0.25
+ },
+ {
+  "t": 15.595,
+  "name": "whoosh_short",
+  "gain": 0.16,
+  "pan": 0.5
+ },
+ {
+  "t": 16.4,
+  "name": "whoosh",
+  "gain": 0.25,
+  "pan": 0
+ },
+ {
+  "t": 16.55,
+  "name": "ping",
+  "gain": 0.2,
+  "pan": -0.4166666666666667,
+  "pitch": 0
+ },
+ {
+  "t": 16.95,
+  "name": "ping",
+  "gain": 0.2,
+  "pan": 0.17708333333333334,
+  "pitch": 4
+ },
+ {
+  "t": 17.3,
+  "name": "ping",
+  "gain": 0.2,
+  "pan": 0.5,
+  "pitch": 7
+ },
+ {
+  "t": 17.65,
+  "name": "ping",
+  "gain": 0.2,
+  "pan": -0.03125,
+  "pitch": 12
+ },
+ {
+  "t": 23.15,
+  "name": "whoosh",
+  "gain": 0.2,
+  "pan": 0
+ },
+ {
+  "t": 27.49,
+  "name": "error_soft",
+  "gain": 0.1,
+  "pan": 0
+ },
+ {
+  "t": 27.964,
+  "name": "whoosh_big",
+  "gain": 0.3,
+  "pan": 0
+ },
+ {
+  "t": 28.384,
+  "name": "impact_bright",
+  "gain": 0.32,
+  "pan": 0
+ },
+ {
+  "t": 29.75,
+  "name": "whoosh_up",
+  "gain": 0.22,
+  "pan": 0
+ },
+ {
+  "t": 30.6,
+  "name": "shimmer",
+  "gain": 0.2,
+  "pan": 0
+ },
+ {
+  "t": 31.62,
+  "name": "card_swoosh",
+  "gain": 0.14,
+  "pan": -0.3
+ },
+ {
+  "t": 31.73,
+  "name": "card_swoosh",
+  "gain": 0.14,
+  "pan": -0.15
+ },
+ {
+  "t": 31.84,
+  "name": "card_swoosh",
+  "gain": 0.14,
+  "pan": 0
+ },
+ {
+  "t": 31.95,
+  "name": "card_swoosh",
+  "gain": 0.14,
+  "pan": 0.14999999999999997
+ },
+ {
+  "t": 32.06,
+  "name": "card_swoosh",
+  "gain": 0.14,
+  "pan": 0.3
+ },
+ {
+  "t": 35.82,
+  "name": "sparkle",
+  "gain": 0.24,
+  "pan": 0
+ },
+ {
+  "t": 36.95,
+  "name": "pluck",
+  "gain": 0.26,
+  "pan": 0,
+  "pitch": 0
+ },
+ {
+  "t": 38.09,
+  "name": "pluck",
+  "gain": 0.26,
+  "pan": 0,
+  "pitch": 2
+ },
+ {
+  "t": 38.71,
+  "name": "pluck",
+  "gain": 0.26,
+  "pan": 0,
+  "pitch": 4
+ },
+ {
+  "t": 39.43,
+  "name": "pluck",
+  "gain": 0.26,
+  "pan": 0,
+  "pitch": 7
+ },
+ {
+  "t": 40.09,
+  "name": "pluck",
+  "gain": 0.26,
+  "pan": 0,
+  "pitch": 9
+ },
+ {
+  "t": 41.05,
+  "name": "pluck",
+  "gain": 0.26,
+  "pan": 0,
+  "pitch": 12
+ },
+ {
+  "t": 41.98,
+  "name": "sparkle",
+  "gain": 0.24,
+  "pan": 0
+ },
+ {
+  "t": 44.77,
+  "name": "pop",
+  "gain": 0.2,
+  "pan": 0,
+  "pitch": 0
+ },
+ {
+  "t": 45.088,
+  "name": "pop",
+  "gain": 0.2,
+  "pan": 0,
+  "pitch": 2
+ },
+ {
+  "t": 45.406,
+  "name": "pop",
+  "gain": 0.2,
+  "pan": 0,
+  "pitch": 4
+ },
+ {
+  "t": 45.723,
+  "name": "pop",
+  "gain": 0.2,
+  "pan": 0,
+  "pitch": 5
+ },
+ {
+  "t": 46.041,
+  "name": "pop",
+  "gain": 0.2,
+  "pan": 0,
+  "pitch": 7
+ },
+ {
+  "t": 46.359,
+  "name": "pop",
+  "gain": 0.2,
+  "pan": 0,
+  "pitch": 9
+ },
+ {
+  "t": 46.677,
+  "name": "pop",
+  "gain": 0.2,
+  "pan": 0,
+  "pitch": 11
+ },
+ {
+  "t": 46.994,
+  "name": "chime",
+  "gain": 0.28,
+  "pan": 0,
+  "pitch": 12
+ },
+ {
+  "t": 47.312,
+  "name": "pop",
+  "gain": 0.2,
+  "pan": 0,
+  "pitch": 14
+ },
+ {
+  "t": 47.63,
+  "name": "pop",
+  "gain": 0.2,
+  "pan": 0,
+  "pitch": 16
+ },
+ {
+  "t": 47.93,
+  "name": "success",
+  "gain": 0.34,
+  "pan": 0
+ },
+ {
+  "t": 48.6,
+  "name": "pop",
+  "gain": 0.12,
+  "pan": -0.6,
+  "pitch": 0
+ },
+ {
+  "t": 50.14,
+  "name": "pop",
+  "gain": 0.12,
+  "pan": 0,
+  "pitch": 4
+ },
+ {
+  "t": 51.78,
+  "name": "pop",
+  "gain": 0.12,
+  "pan": 0.6,
+  "pitch": 7
+ },
+ {
+  "t": 52.64,
+  "name": "pop",
+  "gain": 0.12,
+  "pan": -0.5,
+  "pitch": 9
+ },
+ {
+  "t": 53.68,
+  "name": "pop",
+  "gain": 0.12,
+  "pan": 0.4,
+  "pitch": 12
+ },
+ {
+  "t": 52.34,
+  "name": "correct",
+  "gain": 0.22,
+  "pan": 0
+ },
+ {
+  "t": 53.04,
+  "name": "flame",
+  "gain": 0.15,
+  "pan": 0
+ },
+ {
+  "t": 53.93,
+  "name": "unlock",
+  "gain": 0.1,
+  "pan": -0.4,
+  "pitch": 0
+ },
+ {
+  "t": 54.15,
+  "name": "unlock",
+  "gain": 0.1,
+  "pan": -0.15000000000000002,
+  "pitch": 4
+ },
+ {
+  "t": 54.37,
+  "name": "unlock",
+  "gain": 0.1,
+  "pan": 0.09999999999999998,
+  "pitch": 7
+ },
+ {
+  "t": 54.59,
+  "name": "unlock",
+  "gain": 0.1,
+  "pan": 0.35,
+  "pitch": 12
+ },
+ {
+  "t": 55.78,
+  "name": "levelup",
+  "gain": 0.22,
+  "pan": 0
+ },
+ {
+  "t": 58.92,
+  "name": "boing",
+  "gain": 0.18,
+  "pan": 0.4
+ },
+ {
+  "t": 59.17,
+  "name": "pop",
+  "gain": 0.18,
+  "pan": 0.4,
+  "pitch": 7
+ },
+ {
+  "t": 59.7,
+  "name": "swish_soft",
+  "gain": 0.16,
+  "pan": 0.4
+ },
+ {
+  "t": 60.85,
+  "name": "swish_soft",
+  "gain": 0.16,
+  "pan": 0.4
+ },
+ {
+  "t": 62,
+  "name": "swish_soft",
+  "gain": 0.16,
+  "pan": 0.4
+ },
+ {
+  "t": 63.15,
+  "name": "swish_soft",
+  "gain": 0.16,
+  "pan": 0.4
+ },
+ {
+  "t": 62.6,
+  "name": "toggle",
+  "gain": 0.22,
+  "pan": 0
+ },
+ {
+  "t": 65.157,
+  "name": "whoosh_up",
+  "gain": 0.22,
+  "pan": 0
+ },
+ {
+  "t": 67.01,
+  "name": "impact_bright",
+  "gain": 0.3,
+  "pan": 0
+ },
+ {
+  "t": 68.15,
+  "name": "whoosh_big",
+  "gain": 0.22,
+  "pan": 0
+ },
+ {
+  "t": 69.95,
+  "name": "click",
+  "gain": 0.35,
+  "pan": 0
+ },
+ {
+  "t": 71.18,
+  "name": "pop",
+  "gain": 0.18,
+  "pan": -0.4,
+  "pitch": 7
+ },
+ {
+  "t": 72.36,
+  "name": "whoosh",
+  "gain": 0.2,
+  "pan": 0
+ },
+ {
+  "t": 73.83,
+  "name": "whoosh_short",
+  "gain": 0.16,
+  "pan": 0
+ },
+ {
+  "t": 74.38,
+  "name": "whoosh_short",
+  "gain": 0.16,
+  "pan": 0
+ },
+ {
+  "t": 74.79,
+  "name": "tick_perfect",
+  "gain": 0.14,
+  "pan": 0
+ },
+ {
+  "t": 75.53,
+  "name": "tick_early",
+  "gain": 0.14,
+  "pan": 0
+ },
+ {
+  "t": 76.19,
+  "name": "tick_late",
+  "gain": 0.14,
+  "pan": 0
+ },
+ {
+  "t": 78.4,
+  "name": "notify",
+  "gain": 0.16,
+  "pan": 0.6,
+  "pitch": 0
+ },
+ {
+  "t": 79,
+  "name": "notify",
+  "gain": 0.16,
+  "pan": 0.6,
+  "pitch": 4
+ },
+ {
+  "t": 79.6,
+  "name": "notify",
+  "gain": 0.16,
+  "pan": 0.6,
+  "pitch": 7
+ },
+ {
+  "t": 81.3,
+  "name": "success",
+  "gain": 0.22,
+  "pan": 0
+ },
+ {
+  "t": 85,
+  "name": "star",
+  "gain": 0.18,
+  "pan": 0.3,
+  "pitch": 0
+ },
+ {
+  "t": 85.18,
+  "name": "star",
+  "gain": 0.18,
+  "pan": 0.3,
+  "pitch": 4
+ },
+ {
+  "t": 85.36,
+  "name": "star",
+  "gain": 0.18,
+  "pan": 0.3,
+  "pitch": 7
+ },
+ {
+  "t": 85.42,
+  "name": "notify",
+  "gain": 0.18,
+  "pan": 0,
+  "pitch": 0
+ },
+ {
+  "t": 87.55,
+  "name": "click",
+  "gain": 0.3,
+  "pan": 0
+ },
+ {
+  "t": 88.5,
+  "name": "chime",
+  "gain": 0.22,
+  "pan": 0,
+  "pitch": 7
+ },
+ {
+  "t": 89.36,
+  "name": "impact",
+  "gain": 0.2,
+  "pan": 0
+ },
+ {
+  "t": 92.46,
+  "name": "chime",
+  "gain": 0.26,
+  "pan": 0
+ },
+ {
+  "t": 92.64,
+  "name": "notify",
+  "gain": 0.15,
+  "pan": 0.5,
+  "pitch": 0
+ },
+ {
+  "t": 92.86,
+  "name": "notify",
+  "gain": 0.15,
+  "pan": 0.5,
+  "pitch": 4
+ },
+ {
+  "t": 93.08,
+  "name": "notify",
+  "gain": 0.15,
+  "pan": 0.5,
+  "pitch": 7
+ },
+ {
+  "t": 95.08,
+  "name": "whoosh_up",
+  "gain": 0.16,
+  "pan": 0
+ },
+ {
+  "t": 96.03,
+  "name": "sent",
+  "gain": 0.26,
+  "pan": 0
+ },
+ {
+  "t": 97.02,
+  "name": "pop",
+  "gain": 0.15,
+  "pan": 0.5,
+  "pitch": 4
+ },
+ {
+  "t": 97.44,
+  "name": "pop",
+  "gain": 0.15,
+  "pan": 0.5,
+  "pitch": 7
+ },
+ {
+  "t": 97.86,
+  "name": "pop",
+  "gain": 0.15,
+  "pan": 0.5,
+  "pitch": 9
+ },
+ {
+  "t": 98.28,
+  "name": "pop",
+  "gain": 0.15,
+  "pan": 0.5,
+  "pitch": 12
+ },
+ {
+  "t": 99.25,
+  "name": "msg",
+  "gain": 0.2,
+  "pan": 0.2,
+  "pitch": 0
+ },
+ {
+  "t": 99.87,
+  "name": "msg",
+  "gain": 0.2,
+  "pan": 0.2,
+  "pitch": 2
+ },
+ {
+  "t": 100.49,
+  "name": "msg",
+  "gain": 0.2,
+  "pan": 0.2,
+  "pitch": 4
+ },
+ {
+  "t": 101.11,
+  "name": "msg",
+  "gain": 0.2,
+  "pan": 0.2,
+  "pitch": 7
+ },
+ {
+  "t": 101.73,
+  "name": "msg",
+  "gain": 0.2,
+  "pan": 0.2,
+  "pitch": 9
+ },
+ {
+  "t": 106.59,
+  "name": "impact",
+  "gain": 0.26,
+  "pan": 0
+ },
+ {
+  "t": 106.77,
+  "name": "impact",
+  "gain": 0.3,
+  "pan": 0
+ },
+ {
+  "t": 104.75,
+  "name": "tick",
+  "gain": 0.12,
+  "pan": -0.6,
+  "pitch": 0
+ },
+ {
+  "t": 104.84,
+  "name": "tick",
+  "gain": 0.12,
+  "pan": -0.36,
+  "pitch": 2
+ },
+ {
+  "t": 104.93,
+  "name": "tick",
+  "gain": 0.12,
+  "pan": -0.12,
+  "pitch": 4
+ },
+ {
+  "t": 105.02,
+  "name": "tick",
+  "gain": 0.12,
+  "pan": 0.12,
+  "pitch": 7
+ },
+ {
+  "t": 105.11,
+  "name": "tick",
+  "gain": 0.12,
+  "pan": 0.36,
+  "pitch": 9
+ },
+ {
+  "t": 105.2,
+  "name": "tick",
+  "gain": 0.12,
+  "pan": 0.6,
+  "pitch": 12
+ },
+ {
+  "t": 104.3,
+  "name": "riser",
+  "gain": 0.24,
+  "pan": 0,
+  "dur": 3.9
+ },
+ {
+  "t": 108.25,
+  "name": "sub_boom",
+  "gain": 0.4,
+  "pan": 0
+ },
+ {
+  "t": 109.09,
+  "name": "pluck",
+  "gain": 0.22,
+  "pan": -0.2539062499999998,
+  "pitch": 0
+ },
+ {
+  "t": 109.89,
+  "name": "pluck",
+  "gain": 0.22,
+  "pan": -0.5078125,
+  "pitch": 4
+ },
+ {
+  "t": 110.63,
+  "name": "pluck",
+  "gain": 0.22,
+  "pan": -0.2539062499999999,
+  "pitch": 7
+ },
+ {
+  "t": 111.43,
+  "name": "pluck",
+  "gain": 0.22,
+  "pan": 0.25390625,
+  "pitch": 9
+ },
+ {
+  "t": 112.33,
+  "name": "pluck",
+  "gain": 0.22,
+  "pan": 0.5078125,
+  "pitch": 12
+ },
+ {
+  "t": 112.45,
+  "name": "pluck",
+  "gain": 0.22,
+  "pan": 0.25390625,
+  "pitch": 16
+ },
+ {
+  "t": 113.85,
+  "name": "whoosh_big",
+  "gain": 0.22,
+  "pan": 0
+ },
+ {
+  "t": 118.009,
+  "name": "whoosh_short",
+  "gain": 0.14,
+  "pan": -0.4
+ },
+ {
+  "t": 119.153,
+  "name": "whoosh_short",
+  "gain": 0.14,
+  "pan": 0.4
+ },
+ {
+  "t": 120.297,
+  "name": "whoosh_short",
+  "gain": 0.14,
+  "pan": -0.4
+ },
+ {
+  "t": 121.441,
+  "name": "whoosh_short",
+  "gain": 0.14,
+  "pan": 0.4
+ },
+ {
+  "t": 122.585,
+  "name": "whoosh_short",
+  "gain": 0.14,
+  "pan": -0.4
+ },
+ {
+  "t": 123.729,
+  "name": "whoosh_short",
+  "gain": 0.14,
+  "pan": 0.4
+ },
+ {
+  "t": 124.873,
+  "name": "whoosh_short",
+  "gain": 0.14,
+  "pan": -0.4
+ },
+ {
+  "t": 126.017,
+  "name": "whoosh_short",
+  "gain": 0.14,
+  "pan": 0.4
+ },
+ {
+  "t": 130.55,
+  "name": "ignite",
+  "gain": 0.34,
+  "pan": 0
+ },
+ {
+  "t": 131.35,
+  "name": "shimmer",
+  "gain": 0.3,
+  "pan": 0
+ },
+ {
+  "t": 136.531,
+  "name": "sub_boom",
+  "gain": 0.4,
+  "pan": 0
+ }
+]

@@ -1,0 +1,25 @@
+{
+  "name": "lmm-promo",
+  "version": "1.0.0",
+  "description": "Latin Music Mastery promo video: motion-graphics scenes and deterministic frame renderer",
+  "scripts": {
+    "serve": "python3 -m http.server 8765",
+    "render": "node render.mjs ../work/frames 0 142.6 4 30"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fontsource/big-shoulders-display": "^5.3.0",
+    "@fontsource/dm-mono": "^5.3.0",
+    "@fontsource/hanken-grotesk": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/montserrat": "^5.3.0",
+    "gsap": "^3.15.0"
+  },
+  "private": true,
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

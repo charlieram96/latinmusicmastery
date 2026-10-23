@@ -1,0 +1,1326 @@
+{
+ "L01": {
+  "file": "final_el/L01.wav",
+  "start": 0.0,
+  "end": 3.12,
+  "words": [
+   [
+    "In",
+    0.0,
+    0.3
+   ],
+   [
+    "Latin",
+    0.3,
+    0.54
+   ],
+   [
+    "music,",
+    0.54,
+    1.08
+   ],
+   [
+    "everything",
+    1.74,
+    2.04
+   ],
+   [
+    "starts",
+    2.04,
+    2.46
+   ],
+   [
+    "with",
+    2.46,
+    2.68
+   ],
+   [
+    "the",
+    2.68,
+    2.9
+   ],
+   [
+    "clave.",
+    2.9,
+    3.12
+   ]
+  ],
+  "heard": "In Latin music, everything starts with the clave."
+ },
+ "L02": {
+  "file": "final_el/L02.wav",
+  "start": 0.0,
+  "end": 3.92,
+  "words": [
+   [
+    "Son,",
+    0.0,
+    0.78
+   ],
+   [
+    "salsa,",
+    1.2,
+    1.52
+   ],
+   [
+    "mambo,",
+    2.02,
+    2.58
+   ],
+   [
+    "timba,",
+    2.84,
+    3.32
+   ],
+   [
+    "bolero.",
+    3.54,
+    3.92
+   ]
+  ],
+  "heard": "Son, salsa, mambo, timba, bolero."
+ },
+ "L03": {
+  "file": "final_el/L03.wav",
+  "start": 0.0,
+  "end": 5.38,
+  "words": [
+   [
+    "Music",
+    0.0,
+    0.48
+   ],
+   [
+    "with",
+    0.48,
+    0.84
+   ],
+   [
+    "history,",
+    0.84,
+    1.36
+   ],
+   [
+    "with",
+    1.62,
+    1.88
+   ],
+   [
+    "soul.",
+    1.88,
+    2.3
+   ],
+   [
+    "You",
+    2.82,
+    3.06
+   ],
+   [
+    "feel",
+    3.06,
+    3.24
+   ],
+   [
+    "it",
+    3.24,
+    3.42
+   ],
+   [
+    "in",
+    3.42,
+    3.5
+   ],
+   [
+    "your",
+    3.5,
+    3.78
+   ],
+   [
+    "body",
+    3.78,
+    4.02
+   ],
+   [
+    "before",
+    4.02,
+    4.5
+   ],
+   [
+    "you",
+    4.5,
+    4.8
+   ],
+   [
+    "understand",
+    4.8,
+    5.2
+   ],
+   [
+    "it.",
+    5.2,
+    5.38
+   ]
+  ],
+  "heard": "Music with history, with soul. You feel it in your body before you understand it."
+ },
+ "L04": {
+  "file": "final_el/L04.wav",
+  "start": 0.0,
+  "end": 4.64,
+  "words": [
+   [
+    "But",
+    0.0,
+    0.36
+   ],
+   [
+    "learning",
+    0.36,
+    0.66
+   ],
+   [
+    "it?",
+    0.66,
+    1.12
+   ],
+   [
+    "Most",
+    1.52,
+    1.66
+   ],
+   [
+    "videos",
+    1.66,
+    2.02
+   ],
+   [
+    "just",
+    2.02,
+    2.34
+   ],
+   [
+    "talk",
+    2.34,
+    2.64
+   ],
+   [
+    "at",
+    2.64,
+    2.98
+   ],
+   [
+    "you.",
+    2.98,
+    3.26
+   ],
+   [
+    "They",
+    3.48,
+    3.7
+   ],
+   [
+    "never",
+    3.7,
+    4.02
+   ],
+   [
+    "listen",
+    4.02,
+    4.28
+   ],
+   [
+    "back.",
+    4.28,
+    4.64
+   ]
+  ],
+  "heard": "But learning it? Most videos just talk at you. They never listen back."
+ },
+ "L05": {
+  "file": "final_el/L05.wav",
+  "start": 0.0,
+  "end": 2.42,
+  "words": [
+   [
+    "Latin",
+    0.0,
+    0.56
+   ],
+   [
+    "music",
+    0.56,
+    1.0
+   ],
+   [
+    "mastery",
+    1.0,
+    1.52
+   ],
+   [
+    "changes",
+    1.52,
+    2.1
+   ],
+   [
+    "that.",
+    2.1,
+    2.42
+   ]
+  ],
+  "heard": "Latin music mastery changes that."
+ },
+ "L06": {
+  "file": "final_el/L06.wav",
+  "start": 0.0,
+  "end": 4.62,
+  "words": [
+   [
+    "Learn",
+    0.0,
+    0.38
+   ],
+   [
+    "from",
+    0.38,
+    0.74
+   ],
+   [
+    "real",
+    0.74,
+    1.1
+   ],
+   [
+    "maestros,",
+    1.1,
+    1.8
+   ],
+   [
+    "the",
+    2.22,
+    2.32
+   ],
+   [
+    "musicians",
+    2.32,
+    2.78
+   ],
+   [
+    "who",
+    2.78,
+    3.1
+   ],
+   [
+    "play",
+    3.1,
+    3.26
+   ],
+   [
+    "this",
+    3.26,
+    3.54
+   ],
+   [
+    "music",
+    3.54,
+    3.86
+   ],
+   [
+    "every",
+    3.86,
+    4.32
+   ],
+   [
+    "night.",
+    4.32,
+    4.62
+   ]
+  ],
+  "heard": "Learn from real maestros, the musicians who play this music every night."
+ },
+ "L07": {
+  "file": "final_el/L07.wav",
+  "start": 0.0,
+  "end": 5.18,
+  "words": [
+   [
+    "Timbales,",
+    0.0,
+    0.86
+   ],
+   [
+    "congas,",
+    1.14,
+    1.5
+   ],
+   [
+    "bongo,",
+    1.76,
+    2.06
+   ],
+   [
+    "piano,",
+    2.48,
+    2.8
+   ],
+   [
+    "bass,",
+    3.14,
+    3.48
+   ],
+   [
+    "the",
+    3.7,
+    3.82
+   ],
+   [
+    "Cuban",
+    3.82,
+    4.1
+   ],
+   [
+    "tres,",
+    4.1,
+    4.54
+   ],
+   [
+    "and",
+    4.84,
+    4.98
+   ],
+   [
+    "more.",
+    4.98,
+    5.18
+   ]
+  ],
+  "heard": "Timbales, congas, bongo, piano, bass, the Cuban tres, and more."
+ },
+ "L08": {
+  "file": "final_el/L08.wav",
+  "start": 0.0,
+  "end": 5.58,
+  "words": [
+   [
+    "Every",
+    0.0,
+    0.44
+   ],
+   [
+    "course",
+    0.44,
+    0.72
+   ],
+   [
+    "is",
+    0.72,
+    1.0
+   ],
+   [
+    "a",
+    1.0,
+    1.2
+   ],
+   [
+    "path,",
+    1.2,
+    1.58
+   ],
+   [
+    "step",
+    2.12,
+    2.24
+   ],
+   [
+    "by",
+    2.24,
+    2.54
+   ],
+   [
+    "step,",
+    2.54,
+    2.92
+   ],
+   [
+    "from",
+    3.22,
+    3.34
+   ],
+   [
+    "your",
+    3.34,
+    3.64
+   ],
+   [
+    "very",
+    3.64,
+    3.9
+   ],
+   [
+    "first",
+    3.9,
+    4.2
+   ],
+   [
+    "beat",
+    4.2,
+    4.44
+   ],
+   [
+    "to",
+    4.44,
+    4.8
+   ],
+   [
+    "your",
+    4.8,
+    5.04
+   ],
+   [
+    "first",
+    5.04,
+    5.28
+   ],
+   [
+    "solo.",
+    5.28,
+    5.58
+   ]
+  ],
+  "heard": "Every course is a path, step by step, from your very first beat to your first solo."
+ },
+ "L09": {
+  "file": "final_el/L09.wav",
+  "start": 0.0,
+  "end": 7.32,
+  "words": [
+   [
+    "Short",
+    0.0,
+    0.48
+   ],
+   [
+    "lessons,",
+    0.48,
+    1.08
+   ],
+   [
+    "playful",
+    1.54,
+    1.84
+   ],
+   [
+    "exercises,",
+    1.84,
+    2.62
+   ],
+   [
+    "quizzes,",
+    3.18,
+    3.6
+   ],
+   [
+    "daily",
+    4.04,
+    4.24
+   ],
+   [
+    "streaks,",
+    4.24,
+    4.7
+   ],
+   [
+    "and",
+    4.96,
+    5.08
+   ],
+   [
+    "rewards",
+    5.08,
+    5.48
+   ],
+   [
+    "that",
+    5.48,
+    5.72
+   ],
+   [
+    "make",
+    5.72,
+    5.94
+   ],
+   [
+    "practice",
+    5.94,
+    6.36
+   ],
+   [
+    "feel",
+    6.36,
+    6.64
+   ],
+   [
+    "like",
+    6.64,
+    6.92
+   ],
+   [
+    "a",
+    6.92,
+    7.08
+   ],
+   [
+    "game.",
+    7.08,
+    7.32
+   ]
+  ],
+  "heard": "Short lessons, playful exercises, quizzes, daily streaks, and rewards that make practice feel like a game."
+ },
+ "L10": {
+  "file": "final_el/L10.wav",
+  "start": 0.0,
+  "end": 2.66,
+  "words": [
+   [
+    "even",
+    0.0,
+    0.2
+   ],
+   [
+    "for",
+    0.2,
+    0.42
+   ],
+   [
+    "kids",
+    0.42,
+    0.84
+   ],
+   [
+    "with",
+    0.84,
+    1.42
+   ],
+   [
+    "Corcheita",
+    1.42,
+    2.06
+   ],
+   [
+    "as",
+    2.06,
+    2.28
+   ],
+   [
+    "their",
+    2.28,
+    2.4
+   ],
+   [
+    "guide.",
+    2.4,
+    2.66
+   ]
+  ],
+  "heard": "even for kids with Corcheita as their guide."
+ },
+ "L11": {
+  "file": "final_el/L11.wav",
+  "start": 0.0,
+  "end": 2.26,
+  "words": [
+   [
+    "And",
+    0.0,
+    0.42
+   ],
+   [
+    "then,",
+    0.42,
+    0.86
+   ],
+   [
+    "there's",
+    1.34,
+    1.76
+   ],
+   [
+    "PlaySense.",
+    1.76,
+    2.26
+   ]
+  ],
+  "heard": "And then, there's PlaySense."
+ },
+ "L12": {
+  "file": "final_el/L12.wav",
+  "start": 0.0,
+  "end": 9.14,
+  "words": [
+   [
+    "Grab",
+    0.0,
+    0.38
+   ],
+   [
+    "your",
+    0.38,
+    0.68
+   ],
+   [
+    "instrument,",
+    0.68,
+    1.06
+   ],
+   [
+    "press",
+    1.4,
+    1.52
+   ],
+   [
+    "play,",
+    1.52,
+    1.96
+   ],
+   [
+    "and",
+    2.3,
+    2.54
+   ],
+   [
+    "PlaySense",
+    2.54,
+    2.98
+   ],
+   [
+    "listens",
+    2.98,
+    3.38
+   ],
+   [
+    "to",
+    3.38,
+    3.68
+   ],
+   [
+    "you.",
+    3.68,
+    4.02
+   ],
+   [
+    "Every",
+    4.26,
+    4.54
+   ],
+   [
+    "hit,",
+    4.54,
+    4.86
+   ],
+   [
+    "every",
+    5.24,
+    5.5
+   ],
+   [
+    "note.",
+    5.5,
+    5.86
+   ],
+   [
+    "Perfect,",
+    6.38,
+    6.84
+   ],
+   [
+    "early,",
+    7.12,
+    7.42
+   ],
+   [
+    "or",
+    7.58,
+    7.78
+   ],
+   [
+    "late,",
+    7.78,
+    8.08
+   ],
+   [
+    "in",
+    8.42,
+    8.6
+   ],
+   [
+    "real",
+    8.6,
+    8.88
+   ],
+   [
+    "time.",
+    8.88,
+    9.14
+   ]
+  ],
+  "heard": "Grab your instrument, press play, and PlaySense listens to you. Every hit, every note. Perfect, early, or late, in real time."
+ },
+ "L13": {
+  "file": "final_el/L13.wav",
+  "start": 0.0,
+  "end": 2.5,
+  "words": [
+   [
+    "It's",
+    0.0,
+    0.32
+   ],
+   [
+    "like",
+    0.32,
+    0.44
+   ],
+   [
+    "having",
+    0.44,
+    0.7
+   ],
+   [
+    "your",
+    0.7,
+    0.98
+   ],
+   [
+    "own",
+    0.98,
+    1.32
+   ],
+   [
+    "maestro",
+    1.32,
+    1.8
+   ],
+   [
+    "by",
+    1.8,
+    2.0
+   ],
+   [
+    "your",
+    2.0,
+    2.3
+   ],
+   [
+    "side.",
+    2.3,
+    2.5
+   ]
+  ],
+  "heard": "It's like having your own maestro by your side."
+ },
+ "L14": {
+  "file": "final_el/L14.wav",
+  "start": 0.0,
+  "end": 3.3,
+  "words": [
+   [
+    "After",
+    0.0,
+    0.42
+   ],
+   [
+    "every",
+    0.42,
+    0.92
+   ],
+   [
+    "take,",
+    0.92,
+    1.18
+   ],
+   [
+    "you",
+    1.44,
+    1.58
+   ],
+   [
+    "see",
+    1.58,
+    1.82
+   ],
+   [
+    "exactly",
+    1.82,
+    2.5
+   ],
+   [
+    "what",
+    2.5,
+    2.72
+   ],
+   [
+    "to",
+    2.72,
+    2.96
+   ],
+   [
+    "improve.",
+    2.96,
+    3.3
+   ]
+  ],
+  "heard": "After every take, you see exactly what to improve."
+ },
+ "L15": {
+  "file": "final_el/L15.wav",
+  "start": 0.0,
+  "end": 4.14,
+  "words": [
+   [
+    "Track",
+    0.0,
+    0.36
+   ],
+   [
+    "your",
+    0.36,
+    0.68
+   ],
+   [
+    "progress,",
+    0.68,
+    1.08
+   ],
+   [
+    "set",
+    1.46,
+    1.6
+   ],
+   [
+    "your",
+    1.6,
+    1.86
+   ],
+   [
+    "goals,",
+    1.86,
+    2.18
+   ],
+   [
+    "and",
+    2.5,
+    2.66
+   ],
+   [
+    "get",
+    2.66,
+    2.84
+   ],
+   [
+    "smart",
+    2.84,
+    3.22
+   ],
+   [
+    "tips",
+    3.22,
+    3.52
+   ],
+   [
+    "to",
+    3.52,
+    3.72
+   ],
+   [
+    "get",
+    3.72,
+    3.88
+   ],
+   [
+    "better.",
+    3.88,
+    4.14
+   ]
+  ],
+  "heard": "Track your progress, set your goals, and get smart tips to get better."
+ },
+ "L16": {
+  "file": "final_el/L16.wav",
+  "start": 0.0,
+  "end": 3.86,
+  "words": [
+   [
+    "Send",
+    0.0,
+    0.36
+   ],
+   [
+    "your",
+    0.36,
+    0.62
+   ],
+   [
+    "maestro",
+    0.62,
+    1.0
+   ],
+   [
+    "a",
+    1.0,
+    1.28
+   ],
+   [
+    "clip",
+    1.28,
+    1.48
+   ],
+   [
+    "and",
+    1.48,
+    2.02
+   ],
+   [
+    "get",
+    2.02,
+    2.28
+   ],
+   [
+    "real,",
+    2.28,
+    2.74
+   ],
+   [
+    "personal",
+    2.9,
+    3.42
+   ],
+   [
+    "feedback.",
+    3.42,
+    3.86
+   ]
+  ],
+  "heard": "Send your maestro a clip and get real, personal feedback."
+ },
+ "L17": {
+  "file": "final_el/L17.wav",
+  "start": 0.0,
+  "end": 3.76,
+  "words": [
+   [
+    "and",
+    0.0,
+    0.3
+   ],
+   [
+    "join",
+    0.3,
+    0.44
+   ],
+   [
+    "our",
+    0.44,
+    0.72
+   ],
+   [
+    "Discord",
+    0.72,
+    1.06
+   ],
+   [
+    "community",
+    1.06,
+    1.72
+   ],
+   [
+    "full",
+    1.72,
+    2.12
+   ],
+   [
+    "of",
+    2.12,
+    2.34
+   ],
+   [
+    "musicians",
+    2.34,
+    2.86
+   ],
+   [
+    "just",
+    2.86,
+    3.28
+   ],
+   [
+    "like",
+    3.28,
+    3.54
+   ],
+   [
+    "you.",
+    3.54,
+    3.76
+   ]
+  ],
+  "heard": "and join our Discord community full of musicians just like you."
+ },
+ "L18": {
+  "file": "final_el/L18.wav",
+  "start": 0.0,
+  "end": 2.7,
+  "words": [
+   [
+    "Then",
+    0.0,
+    0.38
+   ],
+   [
+    "comes",
+    0.38,
+    0.66
+   ],
+   [
+    "the",
+    0.66,
+    0.96
+   ],
+   [
+    "best",
+    0.96,
+    1.2
+   ],
+   [
+    "part,",
+    1.2,
+    1.64
+   ],
+   [
+    "jam",
+    2.12,
+    2.3
+   ],
+   [
+    "sessions.",
+    2.3,
+    2.7
+   ]
+  ],
+  "heard": "Then comes the best part, jam sessions."
+ },
+ "L19": {
+  "file": "final_el/L19.wav",
+  "start": 0.0,
+  "end": 4.96,
+  "words": [
+   [
+    "The",
+    0.0,
+    0.34
+   ],
+   [
+    "bass,",
+    0.34,
+    0.76
+   ],
+   [
+    "the",
+    1.08,
+    1.14
+   ],
+   [
+    "piano,",
+    1.14,
+    1.58
+   ],
+   [
+    "bongo,",
+    1.88,
+    2.34
+   ],
+   [
+    "guiro,",
+    2.68,
+    2.98
+   ],
+   [
+    "the",
+    3.44,
+    3.58
+   ],
+   [
+    "whole",
+    3.58,
+    3.92
+   ],
+   [
+    "band",
+    3.92,
+    4.28
+   ],
+   [
+    "plays",
+    4.28,
+    4.58
+   ],
+   [
+    "with",
+    4.58,
+    4.82
+   ],
+   [
+    "you.",
+    4.82,
+    4.96
+   ]
+  ],
+  "heard": "The bass, the piano, bongo, guiro, the whole band plays with you."
+ },
+ "L20": {
+  "file": "final_el/L20.wav",
+  "start": 0.0,
+  "end": 3.62,
+  "words": [
+   [
+    "You're",
+    0.0,
+    0.3
+   ],
+   [
+    "not",
+    0.3,
+    0.44
+   ],
+   [
+    "just",
+    0.44,
+    0.76
+   ],
+   [
+    "practicing",
+    0.76,
+    1.24
+   ],
+   [
+    "anymore,",
+    1.24,
+    1.72
+   ],
+   [
+    "you're",
+    2.28,
+    2.56
+   ],
+   [
+    "playing",
+    2.56,
+    2.86
+   ],
+   [
+    "in",
+    2.86,
+    3.06
+   ],
+   [
+    "the",
+    3.06,
+    3.22
+   ],
+   [
+    "orchestra.",
+    3.22,
+    3.62
+   ]
+  ],
+  "heard": "You're not just practicing anymore, you're playing in the orchestra."
+ },
+ "L21": {
+  "file": "final_el/L21.wav",
+  "start": 0.0,
+  "end": 2.42,
+  "words": [
+   [
+    "The",
+    0.0,
+    0.28
+   ],
+   [
+    "band",
+    0.28,
+    0.46
+   ],
+   [
+    "is",
+    0.46,
+    0.74
+   ],
+   [
+    "ready.",
+    0.74,
+    0.98
+   ],
+   [
+    "Your",
+    1.42,
+    1.7
+   ],
+   [
+    "part",
+    1.7,
+    1.94
+   ],
+   [
+    "is",
+    1.94,
+    2.22
+   ],
+   [
+    "missing.",
+    2.22,
+    2.42
+   ]
+  ],
+  "heard": "The band is ready. Your part is missing."
+ },
+ "L22": {
+  "file": "final_el/L22.wav",
+  "start": 0.0,
+  "end": 1.6,
+  "words": [
+   [
+    "Latin",
+    0.0,
+    0.48
+   ],
+   [
+    "Music",
+    0.48,
+    0.96
+   ],
+   [
+    "Mastery.",
+    0.96,
+    1.6
+   ]
+  ],
+  "heard": "Latin Music Mastery."
+ },
+ "L23": {
+  "file": "final_el/L23.wav",
+  "start": 0.0,
+  "end": 0.66,
+  "words": [
+   [
+    "Tu",
+    0.0,
+    0.26
+   ],
+   [
+    "turno!",
+    0.26,
+    0.66
+   ]
+  ],
+  "heard": "Tu turno!"
+ }
+}

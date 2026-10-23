@@ -1,0 +1,14 @@
+const { chromium } = await import(process.env.PLAYWRIGHT || 'playwright');
+const [,, statePath] = process.argv;
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 1600, height: 900 } });
+const page = await ctx.newPage();
+await page.goto('http://localhost:3000/login', { waitUntil: 'load', timeout: 180000 });
+await page.fill('input[name=email]', 'sofia@example.com');
+await page.fill('input[name=password]', 'whatever123');
+await Promise.all([page.waitForURL(/dashboard/, { timeout: 180000 }).catch(e => console.log('nav wait', String(e).slice(0,120))), page.click('button[type=submit]')]);
+await page.waitForTimeout(3000);
+console.log('url now', page.url());
+await ctx.storageState({ path: statePath });
+console.log((await ctx.cookies()).map(c => c.name + '=' + c.value.slice(0, 40)).join('\n'));
+await browser.close();

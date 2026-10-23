@@ -1,0 +1,82 @@
+/* Brand faces (same families as the marketing site) */
+@font-face { font-family: 'BigShoulders'; font-weight: 700; src: url(../node_modules/@fontsource/big-shoulders-display/files/big-shoulders-display-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'BigShoulders'; font-weight: 800; src: url(../node_modules/@fontsource/big-shoulders-display/files/big-shoulders-display-latin-800-normal.woff2) format('woff2'); }
+@font-face { font-family: 'BigShoulders'; font-weight: 900; src: url(../node_modules/@fontsource/big-shoulders-display/files/big-shoulders-display-latin-900-normal.woff2) format('woff2'); }
+@font-face { font-family: 'InstrumentSerif'; font-style: italic; font-weight: 400; src: url(../node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2) format('woff2'); }
+@font-face { font-family: 'InstrumentSerif'; font-style: normal; font-weight: 400; src: url(../node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Hanken'; font-weight: 400; src: url(../node_modules/@fontsource/hanken-grotesk/files/hanken-grotesk-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Hanken'; font-weight: 500; src: url(../node_modules/@fontsource/hanken-grotesk/files/hanken-grotesk-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Hanken'; font-weight: 600; src: url(../node_modules/@fontsource/hanken-grotesk/files/hanken-grotesk-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Hanken'; font-weight: 700; src: url(../node_modules/@fontsource/hanken-grotesk/files/hanken-grotesk-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Hanken'; font-weight: 800; src: url(../node_modules/@fontsource/hanken-grotesk/files/hanken-grotesk-latin-800-normal.woff2) format('woff2'); }
+@font-face { font-family: 'DMMono'; font-weight: 400; src: url(../node_modules/@fontsource/dm-mono/files/dm-mono-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'DMMono'; font-weight: 500; src: url(../node_modules/@fontsource/dm-mono/files/dm-mono-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 400; src: url(../node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 500; src: url(../node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 600; src: url(../node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 700; src: url(../node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 800; src: url(../node_modules/@fontsource/inter/files/inter-latin-800-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 700; src: url(../node_modules/@fontsource/montserrat/files/montserrat-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 800; src: url(../node_modules/@fontsource/montserrat/files/montserrat-latin-800-normal.woff2) format('woff2'); }
+
+:root {
+  --noche: #100A13; --noche-2: #170F1B; --noche-3: #211625; --noche-4: #2C1E31;
+  --line: rgba(246,235,221,.09); --line-2: rgba(246,235,221,.16);
+  --hueso: #F6EBDD; --humo: #B7A7AE; --humo-2: #85747D;
+  --ambar: #FFA524; --naranja: #FF6A3A; --carmin: #FF324D;
+  --grad: linear-gradient(100deg, #FFA524 0%, #FF6A3A 45%, #FF324D 100%);
+  --teal: #2FD1B5; --gold: #FFC94D; --violet: #A58BFF; --blurple: #5865F2;
+  --app-orange: #EE8C2B; --app-bg: #0E0C0B; --app-card: #171413; --app-line: rgba(255,240,225,.08);
+  --f-display: 'BigShoulders', 'Arial Narrow', sans-serif;
+  --f-serif: 'InstrumentSerif', 'Times New Roman', serif;
+  --f-body: 'Hanken', system-ui, sans-serif;
+  --f-mono: 'DMMono', ui-monospace, monospace;
+  --f-app: 'Inter', system-ui, sans-serif;
+  --f-app-head: 'Montserrat', 'Inter', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+body { font-family: var(--f-body); color: var(--hueso); -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; }
+#stage { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--noche); }
+
+/* animated brand atmosphere */
+#bg { position: absolute; inset: 0; overflow: hidden; }
+.aurora { position: absolute; border-radius: 50%; filter: blur(120px); opacity: .55; will-change: transform; }
+.aurora.a1 { width: 1100px; height: 900px; left: -200px; top: -300px; background: radial-gradient(circle, rgba(255,106,58,.55), rgba(255,106,58,0) 70%); }
+.aurora.a2 { width: 1200px; height: 1000px; right: -350px; bottom: -420px; background: radial-gradient(circle, rgba(255,50,77,.42), rgba(255,50,77,0) 70%); }
+.aurora.a3 { width: 900px; height: 800px; left: 700px; top: 250px; background: radial-gradient(circle, rgba(165,139,255,.25), rgba(165,139,255,0) 70%); }
+.bg-grid { position: absolute; inset: -200px; opacity: .0;
+  background-image: linear-gradient(rgba(246,235,221,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(246,235,221,.05) 1px, transparent 1px);
+  background-size: 80px 80px; }
+
+#scenes { position: absolute; inset: 0; }
+.scene { position: absolute; inset: 0; visibility: hidden; opacity: 0; overflow: hidden; }
+#fx { position: absolute; inset: 0; pointer-events: none; }
+#flash { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, #fffaf0 0%, #ffe3b8 38%, rgba(255,184,110,.85) 70%, rgba(255,150,80,.6) 100%); opacity: 0; mix-blend-mode: screen; pointer-events: none; }
+#vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%); }
+#grain { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: .045; mix-blend-mode: overlay; pointer-events: none; image-rendering: pixelated; }
+
+/* typography helpers */
+.display { font-family: var(--f-display); font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; line-height: .86; }
+.serif { font-family: var(--f-serif); font-style: italic; font-weight: 400; letter-spacing: -.01em; }
+.grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.mono { font-family: var(--f-mono); text-transform: uppercase; letter-spacing: .22em; font-size: 18px; color: var(--humo); }
+.eyebrow { font-family: var(--f-mono); font-size: 18px; letter-spacing: .28em; text-transform: uppercase; color: var(--ambar); }
+.abs { position: absolute; }
+.center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.word { display: inline-block; will-change: transform, opacity; }
+.char { display: inline-block; will-change: transform, opacity; }
+
+/* glass + app surfaces */
+.glass { background: linear-gradient(180deg, rgba(33,22,37,.86), rgba(23,15,27,.92)); border: 1px solid var(--line-2); border-radius: 28px; box-shadow: 0 40px 120px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06); }
+.app { font-family: var(--f-app); color: #F2EAE3; }
+.app-card { background: #161211; border: 1px solid var(--app-line); border-radius: 18px; }
+.btn-orange { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(180deg, #F59A3A, #E87E1C); color: #1B0F05; font-family: var(--f-app); font-weight: 800; border-radius: 12px; box-shadow: 0 6px 0 #B85F12, 0 18px 40px rgba(238,140,43,.35); letter-spacing: .02em; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(246,235,221,.05); font-family: var(--f-body); font-weight: 600; font-size: 20px; color: var(--hueso); }
+.frame { position: absolute; border-radius: 22px; overflow: hidden; box-shadow: 0 50px 140px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08); background: #0b0809; }
+.frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.browser-bar { height: 44px; background: #1a1416; display: flex; align-items: center; gap: 9px; padding: 0 18px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.browser-bar i { width: 13px; height: 13px; border-radius: 50%; background: #3a2f33; display: block; }
+.browser-bar .url { margin-left: 18px; height: 26px; flex: 0 0 520px; border-radius: 8px; background: #0f0b0c; color: #9b8d92; font: 500 14px var(--f-app); display: flex; align-items: center; padding: 0 14px; letter-spacing: .01em; }
+.shine { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.18) 48%, rgba(255,255,255,0) 60%); transform: translateX(-120%); }
+.ring-glow { box-shadow: 0 0 0 2px rgba(255,165,36,.9), 0 0 40px rgba(255,140,40,.55); }

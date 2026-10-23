@@ -1,0 +1,154 @@
+{
+ "voice_direction": "You are the narrator of a premium promo for Latin Music Mastery, an online school for Latin music. You are a charismatic Puerto Rican salsa musician and TV host: a native Spanish speaker who speaks fluent English with a warm, natural, clearly audible Latin American accent. Warm, smiling, confident and proud, with musical rhythm in your phrasing. Never cheesy, never over the top. Pronounce Spanish words natively.",
+ "lines": [
+  {
+   "id": "L01",
+   "at": 0.9,
+   "text": "In Latin music... everything starts with the clave.",
+   "how": "Quiet, intimate and confident, almost a whisper to the listener, slow, with a short pause after 'music'."
+  },
+  {
+   "id": "L02",
+   "at": 10.55,
+   "text": "Son. Salsa. Mambo. Timba. Bolero.",
+   "how": "Punchy and rhythmic, each word like a drum hit, short gap between words, proud energy."
+  },
+  {
+   "id": "L03",
+   "at": 15.0,
+   "text": "Music with history, with soul. You feel it in your body before you understand it.",
+   "how": "Warm, heartfelt, slightly smiling."
+  },
+  {
+   "id": "L04",
+   "at": 20.3,
+   "text": "But learning it? Most videos just talk at you. They never listen back.",
+   "how": "Conversational and a little playful, with a knowing tone on 'They never listen back'."
+  },
+  {
+   "id": "L05",
+   "at": 28.25,
+   "text": "Latin Music Mastery changes that.",
+   "how": "Confident and bright, a turning point."
+  },
+  {
+   "id": "L06",
+   "at": 31.0,
+   "text": "Learn from real maestros, the musicians who play this music every night.",
+   "how": "Proud and warm."
+  },
+  {
+   "id": "L07",
+   "at": 35.6,
+   "text": "Timbales, congas, bongó, piano, bass, the Cuban tres, and more.",
+   "how": "Rhythmic list, energetic, each instrument clearly separated."
+  },
+  {
+   "id": "L08",
+   "at": 40.0,
+   "text": "Every course is a path. Step by step, from your very first beat to your first solo.",
+   "how": "Encouraging and inspiring, building."
+  },
+  {
+   "id": "L09",
+   "at": 46.2,
+   "text": "Short lessons. Playful exercises. Quizzes, daily streaks, and rewards that make practice feel like a game.",
+   "how": "Fun and upbeat, smiling, light."
+  },
+  {
+   "id": "L10",
+   "at": 52.2,
+   "text": "Even for kids, with Corcheita as their guide.",
+   "how": "Sweet and playful, warm smile."
+  },
+  {
+   "id": "L11",
+   "at": 56.4,
+   "text": "And then... there's PlaySense.",
+   "how": "Dramatic reveal, slower, with a pause after 'And then'."
+  },
+  {
+   "id": "L12",
+   "at": 59.6,
+   "text": "Grab your instrument, press play, and PlaySense listens to you. Every hit, every note: perfect, early, or late, in real time.",
+   "how": "Energetic and impressed, clear and precise, building excitement."
+  },
+  {
+   "id": "L13",
+   "at": 68.3,
+   "text": "It's like having your own maestro by your side.",
+   "how": "Warm and impressed."
+  },
+  {
+   "id": "L14",
+   "at": 75.2,
+   "text": "After every take, you see exactly what to improve.",
+   "how": "Calm, clear and reassuring."
+  },
+  {
+   "id": "L15",
+   "at": 80.5,
+   "text": "Track your progress, set your goals, and get smart tips to get better.",
+   "how": "Upbeat and confident."
+  },
+  {
+   "id": "L16",
+   "at": 85.2,
+   "text": "Send your maestro a clip, and get real, personal feedback.",
+   "how": "Friendly and personal."
+  },
+  {
+   "id": "L17",
+   "at": 90.3,
+   "text": "And join our Discord community, full of musicians just like you.",
+   "how": "Warm, inclusive, smiling."
+  },
+  {
+   "id": "L18",
+   "at": 99.4,
+   "text": "Then comes the best part: jam sessions.",
+   "how": "Excited, building anticipation."
+  },
+  {
+   "id": "L19",
+   "at": 102.8,
+   "text": "Bass, piano, bongó, güiro... the whole band plays with you.",
+   "how": "Joyful and energetic, rhythmic."
+  },
+  {
+   "id": "L20",
+   "at": 107.6,
+   "text": "You're not just practicing anymore. You're playing in the orquesta.",
+   "how": "Proud and triumphant, with a smile."
+  },
+  {
+   "id": "L21",
+   "at": 117.4,
+   "text": "The band is ready. Your part is missing.",
+   "how": "Confident, inviting, slower, with weight."
+  },
+  {
+   "id": "L22",
+   "at": 122.2,
+   "text": "Latin Music Mastery.",
+   "how": "Proud brand signature, warm and strong."
+  },
+  {
+   "id": "L23",
+   "at": 125.3,
+   "text": "¡Tu turno!",
+   "how": "Joyful, energetic Spanish exclamation with a big smile."
+  }
+ ],
+ "picks": {
+  "L07": "takes6/L07_t2.wav",
+  "L09": "takes3/L09_t1.wav",
+  "L13": "takes5/L13_t2.wav",
+  "L16": "takes2/L16_t1.wav",
+  "L21": "takes/L21_t3.wav",
+  "L03": "takes3/L03_t1.wav",
+  "L05": "takes3/L05_t3.wav",
+  "L04": "takes4/L04_t3.wav",
+  "L01": "takes6/L01_t1.wav"
+ }
+}
