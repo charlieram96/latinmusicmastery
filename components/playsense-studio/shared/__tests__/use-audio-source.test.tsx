@@ -2,7 +2,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import {expect,it,vi} from 'vitest';
-import {useSelectedAudio} from '../use-audio-source';
+import {useAudioSource,useSelectedAudio} from '../use-audio-source';
 import type {AudioSourceSettings} from '@/lib/playsense-studio/audio-source';
 it('routes audio exclusively and follows video seeking, pause, rate, volume and source switches',async()=>{
  Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});
@@ -47,4 +47,19 @@ it('routes audio exclusively and follows video seeking, pause, rate, volume and 
   await act(async()=>{paused=false;video.currentTime=10;video.dispatchEvent(new Event('play'));});expect(video.muted).toBe(true);expect(audio.muted).toBe(false);expect(audio.paused).toBe(false);
   await act(async()=>{video.currentTime=1;video.dispatchEvent(new Event('seeked'));});expect(video.muted).toBe(true);expect(audio.paused).toBe(true);
  }finally{await act(async()=>root.unmount());host.remove();vi.unstubAllGlobals();}
+});
+
+it('restores original sound after a settings failure and clears the warning on retry',async()=>{
+ Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});
+ const fetcher=vi.fn().mockResolvedValueOnce({ok:false}).mockResolvedValueOnce({ok:true,json:async()=>({selected:'original',offsetSeconds:0})});
+ vi.stubGlobal('fetch',fetcher);
+ const host=document.createElement('div'),root=createRoot(host),video=document.createElement('video');
+ const ref={current:video};let result!:ReturnType<typeof useAudioSource>;
+ function Test(){result=useAudioSource('item','watch','/video.mp4');useSelectedAudio(ref,result.settings,{volume:1,muted:false,loaded:result.loaded});return null;}
+ try{
+  await act(async()=>root.render(<Test/>));
+  expect(result.loaded).toBe(true);expect(result.error).toBeTruthy();expect(video.muted).toBe(false);
+  await act(async()=>window.dispatchEvent(new CustomEvent('lmm-audio-source-change',{detail:new URLSearchParams({item:'item',part:'watch',video:'/video.mp4'}).toString()})));
+  expect(result.error).toBe('');expect(video.muted).toBe(false);
+ }finally{await act(async()=>root.unmount());vi.unstubAllGlobals();}
 });

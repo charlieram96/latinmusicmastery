@@ -9,7 +9,7 @@ export function useAudioSource(item:string,part:AudioSourcePart,video:string|nul
  const [error,setError]=useState('');const [busy,setBusy]=useState(false);
  useEffect(()=>{
   if(!video||!item)return;let alive=true;let revision=0;
-  const load=async()=>{const run=++revision;try{const response=await fetch('/api/studio-audio-source?'+query,{cache:'no-store'});if(!response.ok)throw new Error('Could not load audio source');const settings=await response.json();if(alive&&run===revision)setRecord({key:query,settings});}catch(e){if(alive)setError((e as Error).message);}};
+  const load=async()=>{const run=++revision;try{const response=await fetch('/api/studio-audio-source?'+query,{cache:'no-store'});if(!response.ok)throw new Error('Could not load audio source');const settings=await response.json();if(alive&&run===revision){setRecord({key:query,settings});setError('');}}catch(e){if(alive&&run===revision){setRecord({key:query,settings:ORIGINAL_AUDIO});setError((e as Error).message);}}};
   void load();const changed=(event:Event)=>{if((event as CustomEvent).detail===query)void load();};
   const channel=typeof BroadcastChannel==='undefined'?null:new BroadcastChannel(changeEvent);if(channel)channel.onmessage=e=>{if(e.data===query)void load();};
   window.addEventListener(changeEvent,changed);return()=>{alive=false;channel?.close();window.removeEventListener(changeEvent,changed);};

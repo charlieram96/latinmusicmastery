@@ -37,7 +37,17 @@ export async function readReleaseDocument(file: string): Promise<string> {
   const value = entry(file)
   await authorize(file.endsWith('/studio-preview/drafts.json') || file.includes('/studio-preview/backups/'), /\/(?:solfeo-course|solfeo-infantil-course)\/structure\.json$/.test(file) || file.startsWith('local-artifacts/studio-preview/audio-sources/'), file.includes('/studio-preview/') ? '197b393d-6d41-4147-9802-574919aa51fa' : courseId)
   const { data, error } = await getSupabaseAdmin().storage.from(bucket).download(value.key)
-  if (error || !data) { if (error && ['404','400'].includes(String((error as {statusCode?:string}).statusCode)) && !files[file]) throw missing(); throw new Error('Unable to read published course document') }
+  if (error || !data) {
+    // Storage's binary download wraps failed HTTP responses in StorageUnknownError.
+    // Inspect the service code, not HTTP 400 alone (which can also mean bad input).
+    let code = String((error as {statusCode?: string} | null)?.statusCode ?? '')
+    const response = (error as {originalError?: Response} | null)?.originalError
+    if (response && typeof response.clone === 'function') {
+      try { code = String((await response.clone().json()).statusCode ?? code) } catch { /* Keep genuine service failures visible. */ }
+    }
+    if (code === '404' && !files[file]) throw missing()
+    throw new Error('Unable to read published course document')
+  }
   const archive = await JSZip.loadAsync(await data.arrayBuffer())
   const document = archive.file('document.json')
   if (!document) throw new Error('Invalid published course document')

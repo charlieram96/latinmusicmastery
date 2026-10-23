@@ -39,3 +39,12 @@ it('stores admin edits in an actual private ZIP without changing permissions', a
   expect(JSON.parse(await archive.file('document.json')!.async('string'))).toEqual({ title: 'Updated' })
   expect(mocks.upload.mock.calls[0][2]).toMatchObject({ contentType: 'application/zip' })
 })
+
+it('recognizes a missing optional audio setting wrapped by binary Storage downloads', async () => {
+  mocks.download.mockResolvedValue({data:null,error:{name:'StorageUnknownError',originalError:new Response(JSON.stringify({statusCode:'404',code:'NoSuchKey'}),{status:400})}})
+  await expect(readReleaseDocument('local-artifacts/studio-preview/audio-sources/'+ '0'.repeat(64)+'.json')).rejects.toMatchObject({code:'ENOENT'})
+})
+it('does not disguise authorization or service failures as missing audio settings', async () => {
+  mocks.download.mockResolvedValue({data:null,error:{originalError:new Response(JSON.stringify({statusCode:'403'}),{status:400})}})
+  await expect(readReleaseDocument('local-artifacts/studio-preview/audio-sources/'+ '0'.repeat(64)+'.json')).rejects.toThrow('Unable to read published course document')
+})
