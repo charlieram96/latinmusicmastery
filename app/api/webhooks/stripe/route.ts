@@ -1,12 +1,19 @@
 // Stripe webhook handler. Routes by `subscription.metadata.flow`:
 //   - flow === 'per_course' → write to instrument_subscriptions + subscription_courses (new model).
 //   - flow missing          → write to the legacy `subscriptions` table (old two-tier model).
+//   - flow === 'ticket'     → one-time event ticket orders (Checkout mode 'payment').
 // The legacy branch stays alive until M5 cleanup deletes it.
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import {
+  deliverOrderEmail,
+  expirePendingOrder,
+  fulfillPaidOrder,
+  refundOrderByPaymentIntent,
+} from '@/lib/tickets/orders'
 
 type SubStatus = 'active' | 'canceled' | 'past_due' | 'incomplete'
 
@@ -41,8 +48,16 @@ export async function POST(request: NextRequest) {
     }
 
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded':
+      case 'checkout.session.async_payment_failed':
+      case 'checkout.session.expired': {
         const session = event.data.object as Stripe.Checkout.Session
+        if (session.metadata?.flow === 'ticket') {
+          await handleTicketSession(supabaseAdmin, event.type, session)
+          break
+        }
+        if (event.type !== 'checkout.session.completed') break
         if (session.mode !== 'subscription') break
 
         const flow = session.metadata?.flow ?? null
@@ -102,6 +117,17 @@ export async function POST(request: NextRequest) {
         break
       }
 
+      case 'charge.refunded': {
+        // Full refunds of ticket orders void the tickets. Subscription charges
+        // have no ticket order, so this is a no-op for them.
+        const charge = event.data.object as Stripe.Charge
+        const paymentIntentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id
+        if (paymentIntentId && charge.refunded) {
+          await refundOrderByPaymentIntent(supabaseAdmin, paymentIntentId)
+        }
+        break
+      }
+
       default:
         // Other events are ignored for now.
         break
@@ -112,6 +138,55 @@ export async function POST(request: NextRequest) {
     console.error('[stripe webhook] handler error:', error)
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 })
   }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Ticket orders
+// ──────────────────────────────────────────────────────────────────────────
+
+async function handleTicketSession(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  type: Stripe.Event.Type,
+  session: Stripe.Checkout.Session
+) {
+  const orderId = session.metadata?.order_id
+  if (!orderId) {
+    console.error('[stripe webhook] ticket session without order_id', session.id)
+    return
+  }
+  const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id ?? null
+
+  if (type === 'checkout.session.expired' || type === 'checkout.session.async_payment_failed') {
+    await expirePendingOrder(supabaseAdmin, orderId)
+    return
+  }
+
+  const paid = session.payment_status === 'paid' || session.payment_status === 'no_payment_required'
+  if (!paid) {
+    // Delayed payment methods: keep holding the seats until Stripe reports
+    // async_payment_succeeded / async_payment_failed.
+    await supabaseAdmin
+      .from('ticket_orders')
+      .update({
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        stripe_payment_intent_id: paymentIntentId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', orderId)
+      .eq('status', 'pending')
+    return
+  }
+
+  const order = await fulfillPaidOrder(supabaseAdmin, orderId, {
+    paymentIntentId,
+    amountTotal: session.amount_total,
+  })
+  if (!order) {
+    console.error('[stripe webhook] paid ticket order could not be fulfilled', orderId)
+    return
+  }
+  // Tickets exist now; the PDF email can go out after Stripe gets its 200.
+  after(() => deliverOrderEmail(supabaseAdmin, orderId))
 }
 
 // ──────────────────────────────────────────────────────────────────────────

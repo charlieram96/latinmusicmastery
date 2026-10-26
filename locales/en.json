@@ -2448,5 +2448,163 @@
         "finishLesson": "Finish lesson"
       }
     }
+  },
+  "tickets": {
+    "pdf": {
+      "date": "Date",
+      "time": "Time",
+      "doors": "Doors {time}",
+      "venue": "Venue",
+      "admitOne": "Admit one",
+      "ticket": "Ticket",
+      "order": "Order {ref}",
+      "free": "Free",
+      "comp": "Complimentary"
+    },
+    "email": {
+      "subject": "Your tickets for {event}",
+      "eyebrow": "Your tickets are ready",
+      "greeting": "Hi {name}!",
+      "introOne": "Thanks for your order. Your ticket is attached to this email as a PDF.",
+      "introMany": "Thanks for your order. Your {count} tickets are attached to this email as a PDF.",
+      "when": "When",
+      "where": "Where",
+      "order": "Order",
+      "total": "Total",
+      "doors": "doors {time}",
+      "viewOnline": "View your tickets online",
+      "howTo": "Each ticket has its own QR code. Show it on your phone or bring it printed — it is scanned once at the entrance.",
+      "footer": "You received this email because you got tickets from Latin Music Mastery.",
+      "messageEnglishOnly": "Message from the organizer (in English):",
+      "introCompOne": "Here is your complimentary ticket, attached to this email as a PDF.",
+      "introCompMany": "Here are your {count} complimentary tickets, attached to this email as a PDF."
+    },
+    "list": {
+      "metaTitle": "Live events",
+      "crumb": "Events",
+      "title": "Live",
+      "titleAccent": "events.",
+      "lede": "Concerts, workshops and jam sessions from Latin Music Mastery. Get your tickets online and receive them by email.",
+      "empty": "No upcoming events right now. Check back soon!",
+      "view": "Tickets",
+      "salesClosed": "Sales closed"
+    },
+    "event": {
+      "crumb": "Events",
+      "doors": "Doors open {time}",
+      "about": "About the event",
+      "tickets": "Tickets",
+      "getFree": "Get free tickets",
+      "free": "Free",
+      "soldOut": "Sold out",
+      "soon": "Coming soon",
+      "onSaleFrom": "On sale {date}",
+      "salesEnded": "Sales ended",
+      "unavailable": "Unavailable",
+      "left": "Only {count} left",
+      "quantityFor": "Quantity for {tier}",
+      "decrease": "Remove one ticket",
+      "increase": "Add one ticket",
+      "name": "Full name",
+      "email": "Email for your tickets",
+      "total": "Total · {count} tickets",
+      "checkout": "Continue to payment",
+      "reserve": "Get my tickets",
+      "processing": "One moment…",
+      "secureNote": "Secure payment by Stripe. Your tickets arrive by email as a PDF with a QR code.",
+      "freeNote": "Your tickets arrive by email as a PDF with a QR code.",
+      "noTiers": "Tickets will be available soon.",
+      "draftPreview": "Draft preview: only admins can see this page. Checkout opens once the event is published.",
+      "cancelled": "This event has been cancelled.",
+      "closed": "Ticket sales for this event are closed.",
+      "checkoutCanceled": "Checkout canceled. You were not charged and your tickets were released.",
+      "errors": {
+        "empty": "Choose at least one ticket.",
+        "name": "Enter your full name.",
+        "email": "Enter a valid email address.",
+        "invalid_request": "Please check your details and try again.",
+        "invalid_quantity": "Please check the ticket quantities.",
+        "too_many": "That is more tickets than one order allows.",
+        "unknown_tier": "That ticket type is no longer available. Refresh the page.",
+        "tier_unavailable": "That ticket type is not on sale right now.",
+        "sold_out": "Sorry, there are not enough tickets left. Try fewer tickets or another type.",
+        "event_unavailable": "Ticket sales for this event are closed.",
+        "payment_unavailable": "Payments are unavailable right now. Please try again in a few minutes.",
+        "generic": "Something went wrong. Please try again."
+      },
+      "getTickets": "Get tickets",
+      "englishOnly": "Description available in English only"
+    },
+    "order": {
+      "eyebrow": "Order {ref}",
+      "title": "Your tickets",
+      "pending": "Confirming your payment… this page updates by itself.",
+      "ready": "You're all set! We emailed your tickets to {email}.",
+      "refunded": "This order was refunded. Its tickets are no longer valid.",
+      "expired": "This checkout was not completed, so no tickets were issued.",
+      "eventCancelled": "This event has been cancelled.",
+      "downloadAll": "Download PDF",
+      "viewEvent": "Event details"
+    },
+    "ticket": {
+      "eyebrow": "Your ticket",
+      "present": "Show this QR code at the entrance. It can be scanned once.",
+      "invalid": "This ticket is not valid for entry."
+    },
+    "card": {
+      "qrLabel": "QR code for ticket {number}",
+      "valid": "Valid",
+      "notValid": "Not valid",
+      "checkedIn": "Checked in {time}",
+      "open": "Open ticket",
+      "download": "Download PDF"
+    },
+    "dashboard": {
+      "menu": "My tickets",
+      "title": "My tickets",
+      "subtitle": "Event tickets you bought while signed in.",
+      "browse": "Browse events",
+      "empty": "You have no event tickets yet.",
+      "orderLine": "Order {ref} · {count} tickets",
+      "refunded": "Refunded",
+      "view": "View tickets"
+    },
+    "scanner": {
+      "title": "Ticket scanner",
+      "checkedIn": "checked in",
+      "start": "Start scanning",
+      "stop": "Stop camera",
+      "switch": "Switch camera",
+      "checking": "Checking…",
+      "mode": "Scanner mode",
+      "modes": {
+        "checkin": "Check in",
+        "verify": "Verify only"
+      },
+      "cameraDenied": "Camera access was blocked. Allow the camera in your browser settings, or type ticket numbers below.",
+      "cameraUnsupported": "This browser cannot open the camera. Type ticket numbers below, or open this page in Safari or Chrome.",
+      "manualLabel": "Ticket number",
+      "check": "Check",
+      "recent": "Recent scans",
+      "firstScan": "First scanned at {time} by {by}",
+      "errorHint": "Check the connection and try again.",
+      "outcomes": {
+        "admitted": "Admitted",
+        "verified": "Valid ticket",
+        "already_checked_in": "Already checked in",
+        "void": "Ticket not valid",
+        "refunded": "Ticket refunded",
+        "wrong_event": "Ticket for another event",
+        "not_found": "Ticket not found",
+        "error": "Could not check this ticket"
+      },
+      "lockedTitle": "Scanner unavailable",
+      "locked": {
+        "link_revoked": "The organizer turned off this scanner link.",
+        "link_expired": "This scanner link has expired. Ask the organizer for a new one.",
+        "link_not_found": "This scanner link is not valid. Ask the organizer for a new one."
+      },
+      "signedAs": "Scanning as {label}"
+    }
   }
 }

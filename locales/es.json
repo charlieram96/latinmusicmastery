@@ -2448,5 +2448,163 @@
         "finishLesson": "Terminar lección"
       }
     }
+  },
+  "tickets": {
+    "pdf": {
+      "date": "Fecha",
+      "time": "Hora",
+      "doors": "Puertas {time}",
+      "venue": "Lugar",
+      "admitOne": "Válido para 1 persona",
+      "ticket": "Entrada",
+      "order": "Pedido {ref}",
+      "free": "Gratis",
+      "comp": "Cortesía"
+    },
+    "email": {
+      "subject": "Tus entradas para {event}",
+      "eyebrow": "Tus entradas están listas",
+      "greeting": "¡Hola, {name}!",
+      "introOne": "Gracias por tu pedido. Tu entrada va adjunta a este correo en PDF.",
+      "introMany": "Gracias por tu pedido. Tus {count} entradas van adjuntas a este correo en PDF.",
+      "when": "Cuándo",
+      "where": "Dónde",
+      "order": "Pedido",
+      "total": "Total",
+      "doors": "puertas {time}",
+      "viewOnline": "Ver tus entradas en línea",
+      "howTo": "Cada entrada tiene su propio código QR. Muéstralo en tu teléfono o llévalo impreso: se escanea una sola vez en la entrada.",
+      "footer": "Recibiste este correo porque obtuviste entradas de Latin Music Mastery.",
+      "messageEnglishOnly": "Mensaje del organizador (en inglés):",
+      "introCompOne": "Aquí tienes tu entrada de cortesía, adjunta a este correo en PDF.",
+      "introCompMany": "Aquí tienes tus {count} entradas de cortesía, adjuntas a este correo en PDF."
+    },
+    "list": {
+      "metaTitle": "Eventos en vivo",
+      "crumb": "Eventos",
+      "title": "Eventos",
+      "titleAccent": "en vivo.",
+      "lede": "Conciertos, talleres y jam sessions de Latin Music Mastery. Compra tus entradas en línea y recíbelas por correo.",
+      "empty": "No hay eventos próximos por ahora. ¡Vuelve pronto!",
+      "view": "Entradas",
+      "salesClosed": "Venta cerrada"
+    },
+    "event": {
+      "crumb": "Eventos",
+      "doors": "Puertas a las {time}",
+      "about": "Sobre el evento",
+      "tickets": "Entradas",
+      "getFree": "Obtener entradas gratis",
+      "free": "Gratis",
+      "soldOut": "Agotado",
+      "soon": "Próximamente",
+      "onSaleFrom": "A la venta el {date}",
+      "salesEnded": "Venta finalizada",
+      "unavailable": "No disponible",
+      "left": "Solo quedan {count}",
+      "quantityFor": "Cantidad de {tier}",
+      "decrease": "Quitar una entrada",
+      "increase": "Añadir una entrada",
+      "name": "Nombre completo",
+      "email": "Correo para tus entradas",
+      "total": "Total · {count} entradas",
+      "checkout": "Continuar al pago",
+      "reserve": "Obtener mis entradas",
+      "processing": "Un momento…",
+      "secureNote": "Pago seguro con Stripe. Tus entradas llegan por correo en PDF con código QR.",
+      "freeNote": "Tus entradas llegan por correo en PDF con código QR.",
+      "noTiers": "Las entradas estarán disponibles pronto.",
+      "draftPreview": "Vista previa de borrador: solo los administradores ven esta página. La venta se abre al publicar el evento.",
+      "cancelled": "Este evento ha sido cancelado.",
+      "closed": "La venta de entradas para este evento está cerrada.",
+      "checkoutCanceled": "Pago cancelado. No se te cobró y tus entradas quedaron liberadas.",
+      "errors": {
+        "empty": "Elige al menos una entrada.",
+        "name": "Escribe tu nombre completo.",
+        "email": "Escribe un correo válido.",
+        "invalid_request": "Revisa tus datos e inténtalo de nuevo.",
+        "invalid_quantity": "Revisa las cantidades de entradas.",
+        "too_many": "Son más entradas de las permitidas por pedido.",
+        "unknown_tier": "Ese tipo de entrada ya no está disponible. Actualiza la página.",
+        "tier_unavailable": "Ese tipo de entrada no está a la venta en este momento.",
+        "sold_out": "Lo sentimos, no quedan suficientes entradas. Prueba con menos o con otro tipo.",
+        "event_unavailable": "La venta de entradas para este evento está cerrada.",
+        "payment_unavailable": "Los pagos no están disponibles ahora. Inténtalo de nuevo en unos minutos.",
+        "generic": "Algo salió mal. Inténtalo de nuevo."
+      },
+      "getTickets": "Comprar entradas",
+      "englishOnly": "Descripción disponible solo en inglés"
+    },
+    "order": {
+      "eyebrow": "Pedido {ref}",
+      "title": "Tus entradas",
+      "pending": "Confirmando tu pago… esta página se actualiza sola.",
+      "ready": "¡Todo listo! Enviamos tus entradas a {email}.",
+      "refunded": "Este pedido fue reembolsado. Sus entradas ya no son válidas.",
+      "expired": "Este pago no se completó, así que no se emitieron entradas.",
+      "eventCancelled": "Este evento ha sido cancelado.",
+      "downloadAll": "Descargar PDF",
+      "viewEvent": "Detalles del evento"
+    },
+    "ticket": {
+      "eyebrow": "Tu entrada",
+      "present": "Muestra este código QR en la entrada. Se puede escanear una vez.",
+      "invalid": "Esta entrada no es válida para ingresar."
+    },
+    "card": {
+      "qrLabel": "Código QR de la entrada {number}",
+      "valid": "Válida",
+      "notValid": "No válida",
+      "checkedIn": "Ingresó {time}",
+      "open": "Abrir entrada",
+      "download": "Descargar PDF"
+    },
+    "dashboard": {
+      "menu": "Mis entradas",
+      "title": "Mis entradas",
+      "subtitle": "Entradas de eventos que compraste con tu cuenta.",
+      "browse": "Ver eventos",
+      "empty": "Todavía no tienes entradas de eventos.",
+      "orderLine": "Pedido {ref} · {count} entradas",
+      "refunded": "Reembolsado",
+      "view": "Ver entradas"
+    },
+    "scanner": {
+      "title": "Escáner de entradas",
+      "checkedIn": "ingresaron",
+      "start": "Empezar a escanear",
+      "stop": "Detener cámara",
+      "switch": "Cambiar cámara",
+      "checking": "Verificando…",
+      "mode": "Modo del escáner",
+      "modes": {
+        "checkin": "Registrar ingreso",
+        "verify": "Solo verificar"
+      },
+      "cameraDenied": "Se bloqueó el acceso a la cámara. Permite la cámara en la configuración del navegador o escribe los números de entrada abajo.",
+      "cameraUnsupported": "Este navegador no puede abrir la cámara. Escribe los números de entrada abajo o abre esta página en Safari o Chrome.",
+      "manualLabel": "Número de entrada",
+      "check": "Verificar",
+      "recent": "Escaneos recientes",
+      "firstScan": "Escaneada por primera vez a las {time} por {by}",
+      "errorHint": "Revisa la conexión e inténtalo de nuevo.",
+      "outcomes": {
+        "admitted": "Ingreso registrado",
+        "verified": "Entrada válida",
+        "already_checked_in": "Ya ingresó",
+        "void": "Entrada no válida",
+        "refunded": "Entrada reembolsada",
+        "wrong_event": "Entrada de otro evento",
+        "not_found": "Entrada no encontrada",
+        "error": "No se pudo verificar la entrada"
+      },
+      "lockedTitle": "Escáner no disponible",
+      "locked": {
+        "link_revoked": "El organizador desactivó este enlace de escáner.",
+        "link_expired": "Este enlace de escáner venció. Pide uno nuevo al organizador.",
+        "link_not_found": "Este enlace de escáner no es válido. Pide uno nuevo al organizador."
+      },
+      "signedAs": "Escaneando como {label}"
+    }
   }
 }

@@ -14,6 +14,9 @@ export interface BrandedEmailInput {
   bodyHtml: string
   /** Optional signature appended below the body. Plain text, blank-line paragraphs. */
   signature?: string
+  /** Why the recipient got this email (footer). Defaults to the waitlist notice. */
+  footerNote?: string
+  lang?: 'en' | 'es'
 }
 
 export interface BrandedEmail {
@@ -21,10 +24,12 @@ export interface BrandedEmail {
   text: string
 }
 
-export function wrapBrandedEmail({ subject, bodyHtml, signature }: BrandedEmailInput): BrandedEmail {
+const WAITLIST_NOTE = `You received this email because you joined the ${BRAND_NAME} waitlist.`
+
+export function wrapBrandedEmail({ subject, bodyHtml, signature, footerNote = WAITLIST_NOTE, lang = 'en' }: BrandedEmailInput): BrandedEmail {
   const sig = (signature ?? '').trim()
-  const html = renderHtml({ subject, bodyHtml, signature: sig })
-  const text = renderText(bodyHtml, sig)
+  const html = renderHtml({ subject, bodyHtml, signature: sig, footerNote, lang })
+  const text = renderText(bodyHtml, sig, footerNote)
   return { html, text }
 }
 
@@ -32,10 +37,14 @@ function renderHtml({
   subject,
   bodyHtml,
   signature,
+  footerNote,
+  lang,
 }: {
   subject: string
   bodyHtml: string
   signature: string
+  footerNote: string
+  lang: 'en' | 'es'
 }): string {
   const signatureHtml = signature
     ? `<tr>
@@ -50,7 +59,7 @@ function renderHtml({
   const siteHost = SITE_URL.replace(/^https?:\/\//, '')
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -86,7 +95,7 @@ function renderHtml({
                   &nbsp;&nbsp;·&nbsp;&nbsp;
                   <a href="${SITE_URL}" style="color:#ffffff;text-decoration:underline;">${siteHost}</a>
                 </p>
-                <p style="margin:0 0 4px 0;font-size:12px;color:rgba(255,255,255,0.85);line-height:1.5;">You received this email because you joined the ${BRAND_NAME} waitlist.</p>
+                <p style="margin:0 0 4px 0;font-size:12px;color:rgba(255,255,255,0.85);line-height:1.5;">${escapeHtml(footerNote)}</p>
                 <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.85);line-height:1.5;">© ${new Date().getFullYear()} ${BRAND_NAME}</p>
               </td>
             </tr>
@@ -110,10 +119,10 @@ function renderParagraphs(text: string, color: string, fontSize: string): string
     .join('')
 }
 
-function renderText(bodyHtml: string, signature: string): string {
+function renderText(bodyHtml: string, signature: string, footerNote: string): string {
   const body = emailHtmlToText(bodyHtml)
   const sigBlock = signature ? `\n\n${signature.trim()}` : ''
-  return `${body}${sigBlock}\n\n—\n${CONTACT_EMAIL} · ${SITE_URL}\nYou received this email because you joined the ${BRAND_NAME} waitlist.\n`
+  return `${body}${sigBlock}\n\n—\n${CONTACT_EMAIL} · ${SITE_URL}\n${footerNote}\n`
 }
 
 function escapeHtml(s: string): string {

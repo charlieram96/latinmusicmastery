@@ -17,11 +17,19 @@ function ensureInitialized() {
   initialized = true
 }
 
+export interface EmailAttachment {
+  /** Base64-encoded file contents. */
+  content: string
+  filename: string
+  type: string
+}
+
 export interface SendEmailInput {
   to: string[]
   subject: string
   html: string
   text: string
+  attachments?: EmailAttachment[]
 }
 
 export interface SendEmailResult {
@@ -61,6 +69,9 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
         text: input.text,
         // Each personalization gets its own `to` so recipients never see each other.
         personalizations: batch.map((email) => ({ to: [{ email }] })),
+        ...(input.attachments?.length
+          ? { attachments: input.attachments.map((a) => ({ ...a, disposition: 'attachment' })) }
+          : {}),
       })
       const first = Array.isArray(response) ? response[0] : response
       console.log('[sendgrid] response', {

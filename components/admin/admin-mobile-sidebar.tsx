@@ -9,7 +9,7 @@ import { AdminText } from '@/components/admin/admin-text'
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ArrowLeft, Menu, Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare, DollarSign, Drum, Guitar, Tag } from 'lucide-react'
+import { ArrowLeft, Menu, Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare, DollarSign, Drum, Guitar, Tag, Ticket } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/financials', label: 'Financials', icon: DollarSign },
   { href: '/admin/pricing', label: 'Pricing', icon: Tag },
+  { href: '/admin/events', label: 'Ticketed Events', icon: Ticket },
   { href: '/admin/feedback', label: 'Feedback', icon: MessageSquare },
   { href: '/admin/countries', label: 'Countries', icon: Globe },
   { href: '/admin/styles', label: 'Musical Styles', icon: Music },

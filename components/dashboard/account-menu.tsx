@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { CircleHelp, CreditCard, GraduationCap, LogOut, Shield, TrendingUp, UserRound } from 'lucide-react'
+import { CircleHelp, CreditCard, GraduationCap, LogOut, Shield, Ticket, TrendingUp, UserRound } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +65,12 @@ export function AccountMenu({ name, email, avatarUrl, hasSubscription, isAdmin, 
             <span className="ml-auto text-xs text-muted-foreground">
               {hasSubscription ? t('dashboard.nav.plan.active') : t('dashboard.nav.plan.free')}
             </span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/tickets">
+            <Ticket />
+            {t('tickets.dashboard.menu')}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

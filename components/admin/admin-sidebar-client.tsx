@@ -13,7 +13,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3,
   MessageSquare, DollarSign, Drum, LayoutDashboard, Guitar, ArrowLeft, Mail, Tag,
-  Loader2, type LucideIcon,
+  Loader2, Ticket, type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LanguageToggle } from '@/components/language-toggle'
@@ -65,6 +65,7 @@ const navGroups: NavGroup[] = [
       { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
       { href: '/admin/financials', label: 'Financials', icon: DollarSign },
       { href: '/admin/pricing', label: 'Pricing', icon: Tag },
+      { href: '/admin/events', label: 'Ticketed Events', icon: Ticket },
     ],
   },
 ]

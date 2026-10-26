@@ -1,0 +1,102 @@
+/* Ticketed events: listing, event page, order and ticket pages. Scoped under .mkt like every marketing style. */
+.mkt .ev-top{padding-top:calc(72px + env(safe-area-inset-top,0px));position:relative;overflow:hidden;isolation:isolate;border-bottom:1px solid var(--line)}
+.mkt .ev-top .lights .beam{opacity:.16}
+.mkt .ev-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(24px,4vw,64px);align-items:center;padding-block:clamp(36px,5vw,80px)}
+.mkt .ev-art{position:relative;aspect-ratio:4/5;border-radius:28px;overflow:hidden;background:var(--grad);box-shadow:0 30px 80px -40px rgba(255,80,60,.55)}
+.mkt .ev-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mkt .ev-art .ev-art-date{position:absolute;left:22px;bottom:22px;display:grid;place-items:center;min-width:76px;padding:12px 14px;border-radius:18px;background:rgba(16,10,19,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line-2)}
+.mkt .ev-art-date b{font:900 34px/.9 var(--f-display)}
+.mkt .ev-art-date span{font:500 11px/1 var(--f-mono);letter-spacing:.14em;color:var(--ambar);margin-bottom:6px}
+.mkt .ev-title{margin-top:18px;font:900 clamp(44px,6.4vw,104px)/.86 var(--f-display);text-transform:uppercase;letter-spacing:-.005em;overflow-wrap:anywhere}
+.mkt .ev-sub{margin-top:18px}
+.mkt .ev-facts{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:14px}
+.mkt .ev-facts li{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.mkt .ev-facts svg{width:20px;height:20px;color:var(--ambar);margin-top:2px}
+.mkt .ev-facts b{display:block;font-weight:600}
+.mkt .ev-facts span, .mkt .ev-facts a{color:var(--humo);font-size:15px}
+.mkt .ev-facts a:hover{color:var(--ambar)}
+.mkt .ev-status{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;border:1px solid var(--line-2);font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.mkt .ev-status.hot{border-color:rgba(255,165,36,.5);color:var(--ambar)}
+.mkt .ev-status.off{color:var(--humo)}
+.mkt .ev-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);gap:clamp(28px,5vw,80px);align-items:start}
+.mkt .ev-desc{display:grid;gap:16px;color:var(--humo);font-size:17px;line-height:1.7;max-width:64ch}
+.mkt .ev-desc h2{color:var(--hueso);font:800 clamp(30px,3.6vw,48px)/.95 var(--f-display);text-transform:uppercase;margin-bottom:6px}
+.mkt .ev-buy{position:sticky;top:96px}
+.mkt .ev-notice{padding:14px 16px;border-radius:16px;border:1px solid var(--line-2);background:rgba(246,235,221,.04);font-size:14.5px;line-height:1.5}
+.mkt .ev-notice.warn{border-color:rgba(255,201,77,.4);background:rgba(255,201,77,.08)}
+.mkt .ev-notice.bad{border-color:rgba(255,138,138,.4);background:rgba(255,50,77,.08);color:#FFC2C2}
+.mkt .ev-notice.good{border-color:rgba(47,209,181,.4);background:rgba(47,209,181,.08)}
+
+/* Ticket picker */
+.mkt .tp{border:1px solid var(--line);border-radius:28px;background:var(--noche-2);padding:clamp(20px,2.6vw,30px);display:grid;gap:18px}
+.mkt .tp h2{font:800 30px/.95 var(--f-display);text-transform:uppercase}
+.mkt .tp-tiers{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.mkt .tp-tier{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--line-2);border-radius:18px;background:rgba(16,10,19,.45)}
+.mkt .tp-tier[data-active="true"]{border-color:rgba(255,165,36,.55);box-shadow:0 0 0 3px rgba(255,165,36,.1)}
+.mkt .tp-tier[data-disabled="true"]{opacity:.62}
+.mkt .tp-name{font-weight:600;line-height:1.3}
+.mkt .tp-desc{color:var(--humo);font-size:14px;line-height:1.45;margin-top:3px}
+.mkt .tp-price{font:500 14px/1 var(--f-mono);color:var(--ambar);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.mkt .tp-price small{color:var(--humo-2);font-size:12px;letter-spacing:.04em}
+.mkt .tp-step{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line-2);border-radius:999px;padding:3px}
+.mkt .tp-step button{width:34px;height:34px;border-radius:50%;border:0;background:rgba(246,235,221,.07);cursor:pointer;font:500 18px/1 var(--f-mono);display:grid;place-items:center}
+.mkt .tp-step button:hover:not(:disabled){background:rgba(246,235,221,.14)}
+.mkt .tp-step button:disabled{opacity:.35;cursor:not-allowed}
+.mkt .tp-step output{min-width:24px;text-align:center;font:500 15px/1 var(--f-mono)}
+.mkt .tp-tag{font:500 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--humo);border:1px solid var(--line-2);border-radius:999px;padding:6px 10px;white-space:nowrap}
+.mkt .tp-fields{display:grid;gap:12px}
+.mkt .tp-fields label{display:grid;gap:8px;font:500 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--humo-2)}
+.mkt .tp-fields input{font:500 16px var(--f-body);color:var(--hueso);background:rgba(16,10,19,.6);border:1px solid var(--line-2);border-radius:14px;padding:13px 15px;text-transform:none;letter-spacing:0}
+.mkt .tp-fields input:focus{outline:0;border-color:var(--ambar);box-shadow:0 0 0 4px rgba(255,165,36,.14)}
+.mkt .tp-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-top:14px;border-top:1px solid var(--line)}
+.mkt .tp-total span{font:500 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--humo)}
+.mkt .tp-total b{font:800 32px/1 var(--f-display)}
+.mkt .tp .btn{width:100%;--h:54px;font-size:16px}
+.mkt .tp .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.mkt .tp-fine{font-size:12.5px;color:var(--humo-2);line-height:1.5;text-align:center}
+
+/* Event listing */
+.mkt .ev-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:clamp(16px,2vw,28px)}
+.mkt .ev-card{display:grid;border:1px solid var(--line);border-radius:26px;overflow:hidden;background:var(--noche-2);text-decoration:none;transition:transform .3s var(--ease-out),border-color .3s}
+.mkt .ev-card:hover{transform:translateY(-4px);border-color:var(--line-2)}
+.mkt .ev-card .ev-art{aspect-ratio:16/10;border-radius:0;box-shadow:none}
+.mkt .ev-card-body{padding:20px 22px 22px;display:grid;gap:8px}
+.mkt .ev-card-body h2{font:800 30px/.95 var(--f-display);text-transform:uppercase;overflow-wrap:anywhere}
+.mkt .ev-card-meta{color:var(--humo);font-size:14.5px}
+.mkt .ev-card-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+.mkt .ev-card-foot b{font:500 14px/1 var(--f-mono);color:var(--ambar)}
+.mkt .ev-empty{border:1px dashed var(--line-2);border-radius:26px;padding:clamp(28px,5vw,64px);text-align:center;color:var(--humo)}
+
+/* Order + ticket pages */
+.mkt .tk-page{padding:calc(72px + env(safe-area-inset-top,0px) + clamp(28px,4vw,56px)) 0 clamp(56px,7vw,110px)}
+.mkt .tk-title{margin-top:14px;font:900 clamp(46px,7vw,110px)/.86 var(--f-display);text-transform:uppercase}
+.mkt .tk-head{display:grid;gap:16px;max-width:900px}
+.mkt .tk-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.mkt .tk-grid{margin-top:clamp(28px,4vw,48px);display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:18px}
+.mkt .tk-card{position:relative;display:grid;border-radius:24px;background:var(--noche-2);border:1px solid var(--line);overflow:hidden}
+.mkt .tk-card-top{padding:20px 22px 18px;display:grid;gap:6px;border-bottom:1.5px dashed var(--line-2)}
+.mkt .tk-card-top .eyebrow{color:var(--ambar)}
+.mkt .tk-card-top h2{font:800 26px/.95 var(--f-display);text-transform:uppercase}
+.mkt .tk-card-top p{color:var(--humo);font-size:14.5px}
+.mkt .tk-card-qr{padding:20px 22px 22px;display:grid;justify-items:center;gap:12px}
+.mkt .tk-qr{width:min(100%,220px);aspect-ratio:1;border-radius:16px;overflow:hidden;background:#fff}
+.mkt .tk-qr svg{display:block;width:100%;height:100%}
+.mkt .tk-card[data-dim="true"] .tk-qr{opacity:.25;filter:grayscale(1)}
+.mkt .tk-num{font:500 16px/1 var(--f-mono);letter-spacing:.06em}
+.mkt .tk-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font:500 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line-2)}
+.mkt .tk-chip.ok{color:var(--ok);border-color:rgba(47,209,181,.45)}
+.mkt .tk-chip.used{color:var(--late);border-color:rgba(255,201,77,.45)}
+.mkt .tk-chip.void{color:#FF8A8A;border-color:rgba(255,138,138,.45)}
+.mkt .tk-card-links{display:flex;gap:14px;font-size:14px}
+.mkt .tk-card-links a{color:var(--humo)}
+.mkt .tk-card-links a:hover{color:var(--ambar)}
+.mkt .tk-single{max-width:440px;margin:clamp(24px,4vw,40px) auto 0}
+
+@media (max-width:900px){
+  .mkt .ev-hero, .mkt .ev-body{grid-template-columns:1fr}
+  .mkt .ev-art{aspect-ratio:16/11}
+  .mkt .ev-buy{position:static}
+}
+@media (prefers-reduced-motion:reduce){
+  .mkt .ev-card, .mkt .ev-card:hover{transition:none;transform:none}
+}
